@@ -46,6 +46,9 @@ export async function GET(req: NextRequest) {
       recoveredRevenueThisMonthCents: 0,
       missedRevenueThisMonthCents: 0,
       netLossThisMonthCents: 0,
+      // "Vandaag in je praktijk" — today-scoped KPIs
+      noShowsToday: 0,
+      revenueTodayCents: 0,
     },
     highRiskUpcoming: [],
     recentCancellations: [],
@@ -58,6 +61,8 @@ export async function GET(req: NextRequest) {
   try {
     const [
       appointmentsToday,
+      noShowsToday,
+      revenueTodayAgg,
       totalClients,
       statusCounts,
       openSlotsCreated,
@@ -73,6 +78,26 @@ export async function GET(req: NextRequest) {
       // Appointments today
       prisma.appointment.count({
         where: { practiceId, startTime: { gte: todayStart, lt: todayEnd } },
+      }),
+
+      // No-shows today — drives the "Vandaag in je praktijk" panel
+      prisma.appointment.count({
+        where: {
+          practiceId,
+          startTime: { gte: todayStart, lt: todayEnd },
+          status: "NO_SHOW",
+        },
+      }),
+
+      // Revenue earned today — only COMPLETED appointments count toward
+      // realized revenue; SCHEDULED/CONFIRMED are still pending.
+      prisma.appointment.aggregate({
+        where: {
+          practiceId,
+          startTime: { gte: todayStart, lt: todayEnd },
+          status: "COMPLETED",
+        },
+        _sum: { revenueEstimateCents: true },
       }),
 
       // Total active clients
@@ -236,6 +261,9 @@ export async function GET(req: NextRequest) {
       recoveredRevenueThisMonthCents,
       missedRevenueThisMonthCents,
       netLossThisMonthCents,
+      // "Vandaag in je praktijk"
+      noShowsToday,
+      revenueTodayCents: revenueTodayAgg._sum.revenueEstimateCents ?? 0,
     };
 
     let finalOpenSlots: typeof recentOpenSlots | Array<

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import toast from "react-hot-toast";
 import {
   LayoutDashboard,
   Calendar,
@@ -14,18 +15,83 @@ import {
   CalendarClock,
   ClipboardList,
   HelpCircle,
+  Sparkles,
 } from "lucide-react";
 
 const sidebarLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/appointments", label: "Afspraken", icon: Calendar },
-  { href: "/open-slots", label: "Open plekken", icon: CalendarClock },
-  { href: "/waitlist", label: "Wachtlijst", icon: ClipboardList },
-  { href: "/patients", label: "Patiënten", icon: Users },
-  { href: "/facturatie", label: "Facturatie", icon: CreditCard },
+  { href: "/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
+  { href: "/appointments", label: "Afspraken",    icon: Calendar },
+  { href: "/open-slots",   label: "Open plekken", icon: CalendarClock },
+  { href: "/waitlist",     label: "Wachtlijst",   icon: ClipboardList },
+  { href: "/patients",     label: "Patiënten",    icon: Users },
+  { href: "/facturatie",   label: "Facturatie",   icon: CreditCard },
   { href: "/instellingen", label: "Instellingen", icon: Settings },
-  { href: "/help", label: "Hulp", icon: HelpCircle },
+  { href: "/help",         label: "Hulp",         icon: HelpCircle },
 ];
+
+/**
+ * Demo banner. Shown only when the auth bypass is active. Lets the user
+ * trigger the idempotent demo-seed with one click — far safer than the
+ * "auto-seed inside getCurrentUser" pattern (race conditions, hidden writes).
+ */
+function DemoBanner({ profile }: { profile: { fullName?: string | null } | null }) {
+  const router = useRouter();
+  const [seeding, setSeeding] = useState(false);
+
+  async function handleSeed() {
+    setSeeding(true);
+    try {
+      const res = await fetch("/api/admin/seed-demo", { method: "POST" });
+      const data: {
+        alreadySeeded?: boolean;
+        error?: string;
+        hint?: string;
+        counts?: { clients: number; appointments: number };
+      } = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const message = data.hint ? `${data.error ?? "Fout"} — ${data.hint}` : (data.error ?? "Demo-data laden mislukt");
+        toast.error(message);
+        return;
+      }
+
+      if (data.alreadySeeded) {
+        toast.success("Demo-data is al aanwezig — pagina ververst.");
+      } else {
+        toast.success(`Demo-data geladen: ${data.counts?.clients ?? 0} patiënten, ${data.counts?.appointments ?? 0} afspraken.`);
+      }
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Demo-data laden mislukt");
+    } finally {
+      setSeeding(false);
+    }
+  }
+
+  return (
+    <div className="border-b border-amber-300/40 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-200">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4" aria-hidden="true" />
+          <span>
+            <strong className="font-semibold">Demo-modus actief</strong>
+            <span className="ml-2 text-amber-800/80 dark:text-amber-200/80">
+              data is fictief{profile?.fullName ? ` · ingelogd als ${profile.fullName}` : ""}
+            </span>
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleSeed}
+          disabled={seeding}
+          className="inline-flex items-center gap-1.5 rounded-md border border-amber-400/60 bg-white/60 px-3 py-1 text-xs font-medium text-amber-900 transition hover:bg-white disabled:opacity-50 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-100 dark:hover:bg-amber-900/50"
+        >
+          {seeding ? "Bezig met laden…" : "Demo-data laden"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading, signOut, profile, devMode } = useAuth();
@@ -92,11 +158,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        {devMode && (
-          <div className="border-b border-amber-300/40 bg-amber-50 px-4 py-1.5 text-center text-xs font-medium text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
-            Dev-modus — Firebase auth overgeslagen — ingelogd als {profile?.fullName ?? "dev user"}
-          </div>
-        )}
+        {devMode && <DemoBanner profile={profile} />}
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
           {children}
         </div>

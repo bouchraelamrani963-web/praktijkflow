@@ -143,6 +143,11 @@ let _devUser: SessionUser | undefined;
  * Cached after first call to avoid repeated DB hits.
  */
 async function getDevUser(): Promise<SessionUser> {
+  // Return a *cached real user* if we have one — that's stable across requests
+  // on a warm serverless instance. Crucially we do NOT cache the fallback user
+  // here: when the user clicks "Demo-data laden" the DB transitions from empty
+  // to populated, and the next request must pick up the real seeded user
+  // without waiting for a cold start.
   if (_devUser !== undefined) return _devUser;
 
   try {
@@ -158,9 +163,9 @@ async function getDevUser(): Promise<SessionUser> {
     });
 
     if (!user) {
+      // No users → return fallback WITHOUT caching, so the next request retries.
       console.warn("[AUTH_BYPASS] No users in database. Run: npm run db:seed");
-      _devUser = FALLBACK_DEV_USER;
-      return _devUser;
+      return FALLBACK_DEV_USER;
     }
 
     const membership = user.memberships[0] ?? null;
@@ -180,11 +185,13 @@ async function getDevUser(): Promise<SessionUser> {
 
     return _devUser;
   } catch (err) {
+    // DB unreachable → return fallback WITHOUT caching. A transient outage
+    // shouldn't pin every subsequent request to the fallback even after the
+    // DB recovers.
     console.warn(
       "[AUTH_BYPASS] Database not reachable, using fallback dev user:",
       err instanceof Error ? err.message : err,
     );
-    _devUser = FALLBACK_DEV_USER;
-    return _devUser;
+    return FALLBACK_DEV_USER;
   }
 }
