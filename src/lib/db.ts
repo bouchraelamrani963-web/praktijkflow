@@ -62,17 +62,21 @@ export async function safeQuery<T>(
   query: () => Promise<T>,
   fallback: T,
 ): Promise<T> {
+  // Missing DATABASE_URL: warn in EVERY environment (including production) so
+  // operators can spot the cause when a deployed page reads as empty. The
+  // previous dev-only gate hid this from Vercel logs, which made the
+  // "everything is empty but the build succeeded" symptom hard to diagnose.
   if (!isDatabaseConfigured()) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(`[${label}] DATABASE_URL not set — returning fallback`);
-    }
+    console.warn(`[safeQuery:${label}] DATABASE_URL not set — returning fallback`);
     return fallback;
   }
   try {
     return await query();
   } catch (err) {
+    // Always log query failures — these are runtime DB-reach problems and
+    // operators need to see them in production logs.
     console.error(
-      `[${label}] query failed — returning fallback:`,
+      `[safeQuery:${label}] query failed — returning fallback:`,
       err instanceof Error ? err.message : err,
     );
     return fallback;

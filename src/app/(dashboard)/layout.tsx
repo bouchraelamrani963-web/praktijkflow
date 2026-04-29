@@ -44,61 +44,114 @@ function isLinkActive(linkHref: string, pathname: string | null): boolean {
  * Demo banner. Shown only when the auth bypass is active. Lets the user
  * trigger the idempotent demo-seed with one click — far safer than the
  * "auto-seed inside getCurrentUser" pattern (race conditions, hidden writes).
+ *
+ * State machine:
+ *   - idle:              ready, button enabled
+ *   - seeding:           POST in flight, button disabled with spinner copy
+ *   - missing-db:        last attempt returned `databaseConfigured: false`;
+ *                        show persistent inline guidance below the row so
+ *                        the user knows the toast wasn't a one-off
+ *   - error:             last attempt returned an unexpected error message;
+ *                        show inline message + still allow retry
  */
+type SeedUiState =
+  | { kind: "idle" }
+  | { kind: "seeding" }
+  | { kind: "missing-db"; hint: string }
+  | { kind: "error"; message: string };
+
 function DemoBanner({ profile }: { profile: { fullName?: string | null } | null }) {
   const router = useRouter();
-  const [seeding, setSeeding] = useState(false);
+  const [state, setState] = useState<SeedUiState>({ kind: "idle" });
+  const seeding = state.kind === "seeding";
 
   async function handleSeed() {
-    setSeeding(true);
+    setState({ kind: "seeding" });
     try {
       const res = await fetch("/api/admin/seed-demo", { method: "POST" });
       const data: {
+        success?: boolean;
+        databaseConfigured?: boolean;
         alreadySeeded?: boolean;
         error?: string;
         hint?: string;
-        counts?: { clients: number; appointments: number };
+        message?: string;
+        counts?: { clients?: number; appointments?: number };
       } = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        const message = data.hint ? `${data.error ?? "Fout"} — ${data.hint}` : (data.error ?? "Demo-data laden mislukt");
-        toast.error(message);
+      if (!res.ok || data.success === false) {
+        // Persist DB-missing state inline so the user sees the cause even
+        // after the toast disappears. Other errors clear back to idle on
+        // next interaction but show a one-shot inline message until then.
+        if (data.databaseConfigured === false) {
+          const hint = data.hint ?? "Configureer DATABASE_URL in Vercel.";
+          setState({ kind: "missing-db", hint });
+          toast.error(`${data.error ?? "Geen database"} — ${hint}`);
+        } else {
+          const message = data.message ?? data.error ?? "Demo-data laden mislukt";
+          setState({ kind: "error", message });
+          toast.error(message);
+        }
         return;
       }
 
       if (data.alreadySeeded) {
         toast.success("Demo-data is al aanwezig — pagina ververst.");
       } else {
-        toast.success(`Demo-data geladen: ${data.counts?.clients ?? 0} patiënten, ${data.counts?.appointments ?? 0} afspraken.`);
+        const c = data.counts ?? {};
+        toast.success(
+          `Demo-data geladen: ${c.clients ?? 0} patiënten · ${c.appointments ?? 0} afspraken.`,
+        );
       }
+      setState({ kind: "idle" });
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Demo-data laden mislukt");
-    } finally {
-      setSeeding(false);
+      const message = err instanceof Error ? err.message : "Demo-data laden mislukt";
+      setState({ kind: "error", message });
+      toast.error(message);
     }
   }
 
   return (
-    <div className="border-b border-amber-300/40 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-200">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4" aria-hidden="true" />
-          <span>
-            <strong className="font-semibold">Demo-modus actief</strong>
-            <span className="ml-2 text-amber-800/80 dark:text-amber-200/80">
-              data is fictief{profile?.fullName ? ` · ingelogd als ${profile.fullName}` : ""}
+    <div className="border-b border-amber-300/40 bg-amber-50 text-sm text-amber-900 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-200">
+      <div className="mx-auto max-w-6xl px-4 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+            <span>
+              <strong className="font-semibold">Demo-modus actief</strong>
+              <span className="ml-2 text-amber-800/80 dark:text-amber-200/80">
+                data is fictief{profile?.fullName ? ` · ingelogd als ${profile.fullName}` : ""}
+              </span>
             </span>
-          </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleSeed}
+            disabled={seeding}
+            aria-busy={seeding}
+            className="inline-flex items-center gap-1.5 rounded-md border border-amber-400/60 bg-white/60 px-3 py-1 text-xs font-medium text-amber-900 transition hover:bg-white disabled:opacity-60 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-100 dark:hover:bg-amber-900/50"
+          >
+            {seeding && (
+              <span
+                aria-hidden="true"
+                className="h-3 w-3 animate-spin rounded-full border-2 border-amber-700/40 border-t-amber-800 dark:border-amber-300/30 dark:border-t-amber-100"
+              />
+            )}
+            {seeding ? "Bezig met laden…" : "Demo-data laden"}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={handleSeed}
-          disabled={seeding}
-          className="inline-flex items-center gap-1.5 rounded-md border border-amber-400/60 bg-white/60 px-3 py-1 text-xs font-medium text-amber-900 transition hover:bg-white disabled:opacity-50 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-100 dark:hover:bg-amber-900/50"
-        >
-          {seeding ? "Bezig met laden…" : "Demo-data laden"}
-        </button>
+
+        {state.kind === "missing-db" && (
+          <p className="mt-1.5 text-xs text-amber-800/90 dark:text-amber-200/90">
+            <strong>DATABASE_URL ontbreekt.</strong> {state.hint}
+          </p>
+        )}
+        {state.kind === "error" && (
+          <p className="mt-1.5 text-xs text-amber-800/90 dark:text-amber-200/90">
+            <strong>Laden mislukt:</strong> {state.message}
+          </p>
+        )}
       </div>
     </div>
   );
