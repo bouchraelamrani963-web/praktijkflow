@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { SlotFillPanel } from "@/components/dashboard/SlotFillPanel";
 import { STATUS_LABELS, RISK_LABELS, TYPE_LABELS } from "@/lib/labels";
+import { StatCard, Section } from "@/components/ui";
 
 interface DashboardData {
   kpis: {
@@ -252,55 +253,41 @@ export default function DashboardPage() {
       {/* "Vandaag in je praktijk" — three at-a-glance numbers scoped to today.
           Helps the user orient themselves the moment they open the dashboard:
           how busy is today, how many no-shows so far, what was actually billed.
-          Each card links into the appointments list pre-filtered for context. */}
-      <section className="mb-8" aria-labelledby="today-heading">
-        <h2 id="today-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Vandaag in je praktijk
-        </h2>
+          Each card links into the appointments list pre-filtered for context.
+          Implemented via the shared StatCard primitive so all KPI cards share
+          one visual contract. */}
+      <Section
+        title="Vandaag in je praktijk"
+        variant="eyebrow"
+        id="today-heading"
+      >
         <div className="grid gap-3 sm:grid-cols-3">
-          <Link
+          <StatCard
+            label="Afspraken vandaag"
+            value={k.appointmentsToday ?? 0}
+            icon={Calendar}
+            tone="info"
             href={`/appointments?dateFrom=${todayIso}&dateTo=${todayIso}`}
-            className="group rounded-xl border border-zinc-200 bg-white p-4 transition hover:border-blue-300 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-700"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-600 dark:text-zinc-400">Afspraken vandaag</span>
-              <Calendar className="h-4 w-4 text-blue-500" />
-            </div>
-            <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">{k.appointmentsToday ?? 0}</p>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-              {k.appointmentsToday > 0 ? "Bekijk alle afspraken van vandaag" : "Geen afspraken gepland"}
-            </p>
-          </Link>
-
-          <Link
+            hint={k.appointmentsToday > 0 ? "Bekijk alle afspraken van vandaag" : "Geen afspraken gepland"}
+          />
+          <StatCard
+            label="No-shows vandaag"
+            value={k.noShowsToday ?? 0}
+            icon={AlertTriangle}
+            tone="warning"
             href={`/appointments?status=NO_SHOW&dateFrom=${todayIso}&dateTo=${todayIso}`}
-            className="group rounded-xl border border-zinc-200 bg-white p-4 transition hover:border-amber-300 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-amber-700"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-600 dark:text-zinc-400">No-shows vandaag</span>
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-            </div>
-            <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">{k.noShowsToday ?? 0}</p>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-              {(k.noShowsToday ?? 0) > 0 ? "Plekken in te vullen vanuit wachtlijst" : "Alles op koers"}
-            </p>
-          </Link>
-
-          <Link
+            hint={(k.noShowsToday ?? 0) > 0 ? "Plekken in te vullen vanuit wachtlijst" : "Alles op koers"}
+          />
+          <StatCard
+            label="Omzet vandaag"
+            value={formatCents(k.revenueTodayCents)}
+            icon={TrendingUp}
+            tone="success"
             href={`/appointments?status=COMPLETED&dateFrom=${todayIso}&dateTo=${todayIso}`}
-            className="group rounded-xl border border-zinc-200 bg-white p-4 transition hover:border-emerald-300 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-700"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-600 dark:text-zinc-400">Omzet vandaag</span>
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-            </div>
-            <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">{formatCents(k.revenueTodayCents)}</p>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-              Som van afgeronde afspraken vandaag
-            </p>
-          </Link>
+            hint="Som van afgeronde afspraken vandaag"
+          />
         </div>
-      </section>
+      </Section>
 
       {/* Prominent recovered-revenue banner — the headline number for the month.
           T4: force the click through router.push so the user always lands on

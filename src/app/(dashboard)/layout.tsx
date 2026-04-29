@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import {
@@ -28,6 +28,17 @@ const sidebarLinks = [
   { href: "/instellingen", label: "Instellingen", icon: Settings },
   { href: "/help",         label: "Hulp",         icon: HelpCircle },
 ];
+
+/**
+ * Match a sidebar link to the current path. The /dashboard root is matched
+ * exactly — sub-routes like /dashboard/foo would still highlight Dashboard,
+ * which is the right UX. All other links match their root prefix.
+ */
+function isLinkActive(linkHref: string, pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (linkHref === "/dashboard") return pathname === "/dashboard";
+  return pathname === linkHref || pathname.startsWith(`${linkHref}/`);
+}
 
 /**
  * Demo banner. Shown only when the auth bypass is active. Lets the user
@@ -96,6 +107,7 @@ function DemoBanner({ profile }: { profile: { fullName?: string | null } | null 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading, signOut, profile, devMode } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -123,16 +135,32 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {sidebarLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              <link.icon className="h-5 w-5" />
-              {link.label}
-            </Link>
-          ))}
+          {sidebarLinks.map((link) => {
+            const active = isLinkActive(link.href, pathname);
+            // Active state: blue-tinted background + left accent bar + glow on
+            // the icon. Hover state for inactive links keeps the existing
+            // soft-zinc affordance so the click target reads consistently.
+            const cls = active
+              ? "relative flex items-center gap-3 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 shadow-sm shadow-blue-500/10 ring-1 ring-blue-500/15 dark:bg-blue-900/30 dark:text-blue-200 dark:ring-blue-700/40"
+              : "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800";
+            return (
+              <Link
+                key={link.label}
+                href={link.href}
+                className={cls}
+                aria-current={active ? "page" : undefined}
+              >
+                {active && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-blue-500"
+                  />
+                )}
+                <link.icon className={`h-5 w-5 ${active ? "text-blue-600 dark:text-blue-300" : ""}`} />
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
           <div className="flex items-center gap-3">

@@ -1,10 +1,21 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Upload, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Upload,
+  AlertTriangle,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  PlayCircle,
+  CalendarCheck,
+} from "lucide-react";
 import { RISK_LABELS, TYPE_LABELS } from "@/lib/labels";
+import { Badge } from "@/components/ui";
 
 type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
@@ -39,20 +50,31 @@ interface ApiResponse {
   pageSize: number;
 }
 
-const riskColors: Record<AppointmentRow["client"]["riskLevel"], string> = {
-  LOW: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-  MEDIUM: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-  HIGH: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
-  CRITICAL: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+type RiskTone = "success" | "warning" | "danger";
+const riskTone: Record<AppointmentRow["client"]["riskLevel"], RiskTone> = {
+  LOW: "success",
+  MEDIUM: "warning",
+  HIGH: "warning",
+  CRITICAL: "danger",
 };
 
-const statusColors: Record<AppointmentRow["status"], string> = {
-  SCHEDULED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  CONFIRMED: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
-  IN_PROGRESS: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-  COMPLETED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-  CANCELLED: "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
-  NO_SHOW: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+type StatusTone = "info" | "success" | "danger" | "muted" | "warning";
+const statusTone: Record<AppointmentRow["status"], StatusTone> = {
+  SCHEDULED:   "info",
+  CONFIRMED:   "info",
+  IN_PROGRESS: "warning",
+  COMPLETED:   "success",
+  CANCELLED:   "muted",
+  NO_SHOW:     "danger",
+};
+
+const statusIcon: Record<AppointmentRow["status"], ComponentType<{ className?: string }>> = {
+  SCHEDULED:   Calendar,
+  CONFIRMED:   CalendarCheck,
+  IN_PROGRESS: PlayCircle,
+  COMPLETED:   CheckCircle2,
+  CANCELLED:   Clock,
+  NO_SHOW:     XCircle,
 };
 
 const statusLabels: Record<AppointmentRow["status"], string> = {
@@ -72,6 +94,30 @@ function formatDateTime(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * Bucket an appointment timestamp into a short relative label that orients
+ * the user faster than the full date — "Vandaag", "Morgen", "Deze week",
+ * "Vorige week" or null (no badge for further-out dates).
+ *
+ * Boundaries are computed against the local-day start so a 23:30 appointment
+ * still reads as "Vandaag" and a 00:30 next-day appointment reads as "Morgen".
+ */
+function relativeDayLabel(iso: string): { label: string; tone: "info" | "success" | "neutral" } | null {
+  const start = new Date(iso);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startDay = new Date(start);
+  startDay.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((startDay.getTime() - today.getTime()) / 86_400_000);
+
+  if (diffDays === 0)  return { label: "Vandaag",     tone: "success" };
+  if (diffDays === 1)  return { label: "Morgen",      tone: "info" };
+  if (diffDays >= 2 && diffDays <= 6)  return { label: "Deze week",   tone: "info" };
+  if (diffDays === -1) return { label: "Gisteren",    tone: "neutral" };
+  if (diffDays >= -7 && diffDays < -1) return { label: "Vorige week", tone: "neutral" };
+  return null;
 }
 
 export function AppointmentsList({
@@ -282,13 +328,22 @@ function Inner({
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
           </div>
         ) : items.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Geen afspraken gevonden.</p>
+          <div className="flex flex-col items-center justify-center gap-3 p-14 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+              <Calendar className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">Geen afspraken gevonden</p>
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                Plan je eerste afspraak om te beginnen.
+              </p>
+            </div>
             <Link
               href="/appointments/new"
-              className="mt-4 inline-flex text-sm font-medium text-blue-600 hover:text-blue-500"
+              className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-blue-500/20 transition hover:from-blue-700 hover:to-indigo-700"
             >
-              Maak je eerste afspraak
+              <Plus className="h-4 w-4" />
+              Nieuwe afspraak
             </Link>
           </div>
         ) : (
@@ -306,57 +361,69 @@ function Inner({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {items.map((a) => (
-                  <tr
-                    key={a.id}
-                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-                    onClick={() => router.push(`/appointments/${a.id}`)}
-                  >
-                    <td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
-                      {formatDateTime(a.startTime)}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">
-                      {a.client.firstName} {a.client.lastName}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${riskColors[a.riskLevel]}`}>
-                        {RISK_LABELS[a.riskLevel] ?? a.riskLevel}
-                      </span>
-                      <span className="ml-1 text-xs tabular-nums text-zinc-500">{a.riskScore}</span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                      {a.practitioner.firstName} {a.practitioner.lastName}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                      {a.appointmentType
-                        ? (TYPE_LABELS[a.appointmentType.name] ?? a.appointmentType.name)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[a.status]}`}>
-                        {statusLabels[a.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-mono">
-                      {countsForRevenue(a) ? (
-                        <span className="text-zinc-700 dark:text-zinc-300">
-                          €{((Number.isFinite(a.revenueEstimateCents) ? a.revenueEstimateCents : 0) / 100).toFixed(2)}
-                        </span>
-                      ) : (
-                        <span
-                          className="text-zinc-400 line-through"
-                          title={
-                            a.status === "CANCELLED"
-                              ? "Geannuleerd — geen omzet"
-                              : "Niet verschenen — geen omzet"
-                          }
+                {items.map((a) => {
+                  const StatusIcon = statusIcon[a.status];
+                  const rel = relativeDayLabel(a.startTime);
+                  return (
+                    <tr
+                      key={a.id}
+                      className="cursor-pointer transition hover:bg-blue-50/40 dark:hover:bg-blue-900/10"
+                      onClick={() => router.push(`/appointments/${a.id}`)}
+                    >
+                      <td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+                        <div className="flex items-center gap-2">
+                          <span>{formatDateTime(a.startTime)}</span>
+                          {rel && (
+                            <Badge tone={rel.tone} className="font-normal">{rel.label}</Badge>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">
+                        {a.client.firstName} {a.client.lastName}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge tone={riskTone[a.riskLevel]}>
+                          {RISK_LABELS[a.riskLevel] ?? a.riskLevel}
+                        </Badge>
+                        <span className="ml-1 text-xs tabular-nums text-zinc-500">{a.riskScore}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                        {a.practitioner.firstName} {a.practitioner.lastName}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                        {a.appointmentType
+                          ? (TYPE_LABELS[a.appointmentType.name] ?? a.appointmentType.name)
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          tone={statusTone[a.status]}
+                          icon={<StatusIcon className="h-3 w-3" />}
                         >
-                          €0,00
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          {statusLabels[a.status]}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-mono">
+                        {countsForRevenue(a) ? (
+                          <span className="text-zinc-700 dark:text-zinc-300">
+                            €{((Number.isFinite(a.revenueEstimateCents) ? a.revenueEstimateCents : 0) / 100).toFixed(2)}
+                          </span>
+                        ) : (
+                          <span
+                            className="text-zinc-400 line-through"
+                            title={
+                              a.status === "CANCELLED"
+                                ? "Geannuleerd — geen omzet"
+                                : "Niet verschenen — geen omzet"
+                            }
+                          >
+                            €0,00
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
