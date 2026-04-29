@@ -41,16 +41,22 @@ export interface SessionUser {
  * @param req - Optional NextRequest (for Route Handlers). If omitted, reads from next/headers cookies.
  */
 export async function getCurrentUser(req?: NextRequest): Promise<SessionUser | null> {
+  // Read the cookie up front, *before* the bypass branch. The mere invocation
+  // of `cookies()` in a Server Component is what marks the calling page as
+  // dynamic in Next.js. Without this, a bypass-mode page that touches no
+  // other dynamic inputs would be statically prerendered at build time —
+  // and the DB call inside getDevUser() would fail on Vercel before
+  // DATABASE_URL is configured (DriverAdapterError: DatabaseNotReachable).
+  const sessionCookie = req
+    ? req.cookies.get("session")?.value
+    : (await cookies()).get("session")?.value;
+
   // Bypass: when Firebase admin is not configured, return first seeded user
   if (DEV_AUTH_BYPASS) {
     return getDevUser();
   }
 
   try {
-    const sessionCookie = req
-      ? req.cookies.get("session")?.value
-      : (await cookies()).get("session")?.value;
-
     if (!sessionCookie) return null;
 
     const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
