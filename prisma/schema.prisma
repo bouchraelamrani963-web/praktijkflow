@@ -1,0 +1,487 @@
+// ============================================================================
+// PraktijkFlow — Prisma Schema (MVP)
+// PostgreSQL · UUID PKs · Multi-tenant via practice_id
+// ============================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  ADMIN
+  PRACTITIONER
+  ASSISTANT
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum WaitlistStatus {
+  WAITING
+  OFFERED
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum CommunicationPreference {
+  EMAIL
+  SMS
+  PHONE
+  NONE
+}
+
+enum OpenSlotStatus {
+  AVAILABLE
+  CLAIMED
+  EXPIRED
+}
+
+// ─── Practice (tenant) ─────────────────────────────────────────────────────
+
+model Practice {
+  id        String  @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String  @unique
+  phone     String?
+  email     String?
+  address   String?
+  city      String?
+  zipCode   String?
+  kvkNumber String? // Dutch Chamber of Commerce number
+  agbCode   String? // Dutch healthcare provider code
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members              PracticeMember[]
+  clients              Client[]
+  appointments         Appointment[]
+  appointmentTypes     AppointmentType[]
+  invoices             Invoice[]
+  waitlistEntries      WaitlistEntry[]
+  availabilitySlots    AvailabilitySlot[]
+  messageTemplates     MessageTemplate[]
+  messageLogs          MessageLog[]
+  patientActionTokens  PatientActionToken[]
+  actionLogs           ActionLog[]
+  openSlots            OpenSlot[]
+
+  @@map("practices")
+}
+
+// ─── User (linked to Firebase Auth) ────────────────────────────────────────
+
+model User {
+  id          String  @id @default(uuid()) @db.Uuid
+  firebaseUid String  @unique
+  email       String  @unique
+  firstName   String
+  lastName    String
+  phone       String?
+  avatarUrl   String?
+
+  // Stripe
+  stripeCustomerId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships       PracticeMember[]
+  appointments      Appointment[]      @relation("practitioner")
+  availabilitySlots AvailabilitySlot[]
+  openSlots         OpenSlot[]
+
+  @@index([firebaseUid])
+  @@map("users")
+}
+
+// ─── Practice ↔ User join (multi-tenant membership) ────────────────────────
+
+model PracticeMember {
+  id         String  @id @default(uuid()) @db.Uuid
+  practiceId String  @db.Uuid
+  userId     String  @db.Uuid
+  role       Role    @default(PRACTITIONER)
+  isActive   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([practiceId, userId])
+  @@index([practiceId])
+  @@index([userId])
+  @@map("practice_members")
+}
+
+// ─── Client (patient) ──────────────────────────────────────────────────────
+
+model Client {
+  id          String    @id @default(uuid()) @db.Uuid
+  practiceId  String    @db.Uuid
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  dateOfBirth DateTime? @db.Date
+  bsn         String? // Dutch citizen service number (encrypted at app level)
+  address     String?
+  city        String?
+  zipCode     String?
+  riskLevel   RiskLevel @default(LOW)
+  notes       String?   @db.Text
+  isActive    Boolean   @default(true)
+
+  waitlistOptIn           Boolean                 @default(false)
+  communicationPreference CommunicationPreference @default(EMAIL)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice            Practice              @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  appointments        Appointment[]
+  invoices            Invoice[]
+  waitlistEntries     WaitlistEntry[]
+  messageLogs         MessageLog[]
+  patientActionTokens PatientActionToken[]
+
+  @@index([practiceId])
+  @@index([practiceId, lastName])
+  @@index([practiceId, isActive])
+  @@map("clients")
+}
+
+// ─── Appointment type (e.g. "Intake", "Follow-up", "Assessment") ───────────
+
+model AppointmentType {
+  id              String  @id @default(uuid()) @db.Uuid
+  practiceId      String  @db.Uuid
+  name            String
+  durationMinutes Int     @default(60)
+  color           String  @default("#3B82F6") // hex for calendar UI
+  price           Int     @default(0) // cents
+  isActive        Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice        Practice        @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  openSlots       OpenSlot[]
+  waitlistEntries WaitlistEntry[]
+
+  @@index([practiceId])
+  @@map("appointment_types")
+}
+
+// ─── Appointment ───────────────────────────────────────────────────────────
+
+model Appointment {
+  id                String            @id @default(uuid()) @db.Uuid
+  practiceId        String            @db.Uuid
+  clientId          String            @db.Uuid
+  practitionerId    String            @db.Uuid
+  appointmentTypeId String?           @db.Uuid
+  status            AppointmentStatus @default(SCHEDULED)
+
+  startTime            DateTime
+  endTime              DateTime
+  notes                String?  @db.Text
+  isRecurring          Boolean  @default(false)
+  revenueEstimateCents Int      @default(0)
+
+  riskScore Int       @default(0)
+  riskLevel RiskLevel @default(LOW)
+
+  reminder48hSent Boolean @default(false)
+  reminder24hSent Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice        Practice         @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  client          Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  practitioner    User             @relation("practitioner", fields: [practitionerId], references: [id], onDelete: Cascade)
+  appointmentType     AppointmentType?     @relation(fields: [appointmentTypeId], references: [id], onDelete: SetNull)
+  messageLogs         MessageLog[]
+  patientActionTokens PatientActionToken[]
+  // Slot BIRTHED by this appointment (this appointment was cancelled → slot opened)
+  openSlot            OpenSlot?            @relation("SlotSource")
+  // Slot FILLED by this appointment (this appointment was created from claiming an open slot)
+  claimedForOpenSlot  OpenSlot?            @relation("SlotClaim")
+
+  @@index([practiceId, startTime])
+  @@index([practiceId, status])
+  @@index([practitionerId, startTime])
+  @@index([clientId])
+  @@map("appointments")
+}
+
+// ─── Invoice ───────────────────────────────────────────────────────────────
+
+model Invoice {
+  id         String        @id @default(uuid()) @db.Uuid
+  practiceId String        @db.Uuid
+  clientId   String        @db.Uuid
+  number     String // e.g. "INV-2026-0001"
+  status     InvoiceStatus @default(DRAFT)
+  issueDate  DateTime      @default(now()) @db.Date
+  dueDate    DateTime      @db.Date
+  subtotal   Int           @default(0) // cents
+  taxRate    Int           @default(21) // Dutch BTW %
+  taxAmount  Int           @default(0) // cents
+  total      Int           @default(0) // cents
+  notes      String?       @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice Practice      @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  client   Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items    InvoiceItem[]
+
+  @@unique([practiceId, number])
+  @@index([practiceId, status])
+  @@index([clientId])
+  @@map("invoices")
+}
+
+// ─── Invoice line item ─────────────────────────────────────────────────────
+
+model InvoiceItem {
+  id          String @id @default(uuid()) @db.Uuid
+  invoiceId   String @db.Uuid
+  description String
+  quantity    Int    @default(1)
+  unitPrice   Int // cents
+  total       Int // cents (quantity × unitPrice)
+
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+// ─── Waitlist entry ────────────────────────────────────────────────────────
+
+model WaitlistEntry {
+  id                String         @id @default(uuid()) @db.Uuid
+  practiceId        String         @db.Uuid
+  clientId          String         @db.Uuid
+  appointmentTypeId String?        @db.Uuid
+  status            WaitlistStatus @default(WAITING)
+
+  preferredDay  DayOfWeek?
+  preferredTime String? // e.g. "morning", "afternoon", "09:00-12:00"
+  isFlexible    Boolean    @default(false) // accepts any available slot regardless of preferences
+  notes         String?    @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice        Practice         @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  client          Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  appointmentType AppointmentType? @relation(fields: [appointmentTypeId], references: [id], onDelete: SetNull)
+
+  @@index([practiceId, status])
+  @@index([clientId])
+  @@map("waitlist_entries")
+}
+
+// ─── Availability slot (practitioner recurring schedule) ───────────────────
+
+model AvailabilitySlot {
+  id             String    @id @default(uuid()) @db.Uuid
+  practiceId     String    @db.Uuid
+  practitionerId String    @db.Uuid
+  dayOfWeek      DayOfWeek
+  startTime      String // "09:00" (HH:mm, local time)
+  endTime        String // "17:00"
+  isActive       Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice     Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  practitioner User     @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  @@index([practiceId, practitionerId])
+  @@map("availability_slots")
+}
+
+// ─── Message template ──────────────────────────────────────────────────────
+
+model MessageTemplate {
+  id         String  @id @default(uuid()) @db.Uuid
+  practiceId String  @db.Uuid
+  name       String // e.g. "Appointment Reminder", "Welcome Email"
+  subject    String
+  body       String  @db.Text // supports {{client_name}}, {{date}}, {{time}} placeholders
+  channel    String  @default("email") // "email" | "sms"
+  isActive   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+
+  @@index([practiceId])
+  @@map("message_templates")
+}
+
+// ─── Message log (sent/skipped SMS & email history) ───────────────────────
+
+model MessageLog {
+  id            String  @id @default(uuid()) @db.Uuid
+  practiceId    String  @db.Uuid
+  appointmentId String? @db.Uuid
+  clientId      String  @db.Uuid
+  channel       String  // "sms" | "email"
+  to            String  // phone number or email address
+  body          String  @db.Text
+  status        String  // "sent" | "skipped" | "failed" | "mock"
+  errorMessage  String?
+  externalSid   String? // Twilio SID or other provider reference
+  reminderType  String? // "48h" | "24h"
+
+  createdAt DateTime @default(now())
+
+  practice    Practice     @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([practiceId])
+  @@index([appointmentId])
+  @@index([clientId])
+  @@map("message_logs")
+}
+
+// ─── Patient action token (confirm/cancel/claim via link) ─────────────────
+
+model PatientActionToken {
+  id            String    @id @default(uuid()) @db.Uuid
+  practiceId    String    @db.Uuid
+  appointmentId String?   @db.Uuid
+  clientId      String    @db.Uuid
+  tokenHash     String    @unique // SHA-256 hex of the raw token
+  action        String    // "confirm_appointment" | "cancel_appointment" | "claim_open_slot"
+  expiresAt     DateTime
+  usedAt        DateTime?
+
+  createdAt DateTime @default(now())
+
+  practice    Practice     @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([practiceId])
+  @@index([appointmentId])
+  @@map("patient_action_tokens")
+}
+
+// ─── Open slot (available time from cancelled appointment or manual) ──────
+
+model OpenSlot {
+  id                  String         @id @default(uuid()) @db.Uuid
+  practiceId          String         @db.Uuid
+  sourceAppointmentId String?        @unique @db.Uuid // prevents duplicate slots per cancellation
+  practitionerId      String         @db.Uuid
+  appointmentTypeId   String?        @db.Uuid
+  startTime           DateTime
+  endTime             DateTime
+  durationMinutes     Int
+  status              OpenSlotStatus @default(AVAILABLE)
+  notes               String?        @db.Text
+
+  // ─── Claim audit (IMMUTABLE SNAPSHOT — populated atomically on CLAIM) ──
+  // These fields are the SOURCE OF TRUTH for recovered revenue. They never
+  // change after the slot is CLAIMED, even if the downstream appointment is
+  // edited, cancelled, or deleted. If status === CLAIMED, all five fields
+  // MUST be populated (enforced at the claim transaction layer).
+  claimedAppointmentId    String?   @unique @db.Uuid
+  claimedAt               DateTime?
+  claimedClientName       String?   // snapshot — "Firstname Lastname" at time of claim
+  claimedAppointmentType  String?   // snapshot — AppointmentType.name at time of claim
+  recoveredRevenueCents   Int?      // snapshot — revenueEstimateCents at time of claim
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice          Practice         @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  sourceAppointment Appointment?     @relation("SlotSource", fields: [sourceAppointmentId], references: [id], onDelete: SetNull)
+  claimedAppointment Appointment?    @relation("SlotClaim", fields: [claimedAppointmentId], references: [id], onDelete: SetNull)
+  practitioner      User             @relation(fields: [practitionerId], references: [id])
+  appointmentType   AppointmentType? @relation(fields: [appointmentTypeId], references: [id], onDelete: SetNull)
+
+  @@index([practiceId, status])
+  @@index([practiceId, startTime])
+  @@index([practiceId, claimedAt]) // powers "recovered this month" KPI
+  @@map("open_slots")
+}
+
+// ─── Action audit log ─────────────────────────────────────────────────────
+
+model ActionLog {
+  id            String  @id @default(uuid()) @db.Uuid
+  practiceId    String  @db.Uuid
+  appointmentId String? @db.Uuid
+  clientId      String? @db.Uuid
+  tokenId       String? @db.Uuid
+  action        String  // action attempted
+  outcome       String  // "success" | "expired" | "already_used" | "invalid" | "failed"
+  ipAddress     String?
+  userAgent     String?
+  details       String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+
+  @@index([practiceId])
+  @@index([tokenId])
+  @@map("action_logs")
+}
