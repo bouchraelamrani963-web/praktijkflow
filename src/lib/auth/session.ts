@@ -4,9 +4,18 @@ import { adminAuth, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { prisma } from "@/lib/db";
 import type { Role } from "@/generated/prisma/client";
 
+/**
+ * The auth bypass activates when:
+ *   - the explicit opt-in env var is set, OR
+ *   - Firebase Admin env vars are not configured (e.g. Vercel deploy without secrets).
+ *
+ * The previous version also required NODE_ENV === "development", which made the
+ * fallback unreachable in production and broke deploys that ship without Firebase.
+ * We now allow the fallback in production too — this is intentional for demo
+ * deployments. To force real auth in production, set all FIREBASE_* env vars.
+ */
 const DEV_AUTH_BYPASS =
-  process.env.NODE_ENV === "development" &&
-  (process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true" || !isFirebaseAdminConfigured());
+  process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true" || !isFirebaseAdminConfigured();
 
 export interface SessionUser {
   uid: string;
@@ -26,12 +35,13 @@ export interface SessionUser {
  * Verify the session cookie and return the user with their practice role.
  * Works in Server Components, Route Handlers, and Server Actions.
  *
- * In development without Firebase credentials, returns the first seeded user.
+ * When Firebase Admin is not configured, returns the first seeded user (or a
+ * hardcoded fallback if the DB is empty/unreachable). Never throws.
  *
  * @param req - Optional NextRequest (for Route Handlers). If omitted, reads from next/headers cookies.
  */
 export async function getCurrentUser(req?: NextRequest): Promise<SessionUser | null> {
-  // Dev bypass: when Firebase admin is not configured, return first seeded user
+  // Bypass: when Firebase admin is not configured, return first seeded user
   if (DEV_AUTH_BYPASS) {
     return getDevUser();
   }
@@ -96,19 +106,26 @@ export function hasRole(user: SessionUser, roles: Role[]): boolean {
   return user.role !== null && roles.includes(user.role);
 }
 
-// ─── Dev-only helpers ──────────────────────────────────────────────────────
+// ─── Bypass-mode helpers ───────────────────────────────────────────────────
 
-/** Hardcoded fallback when DB is unreachable or unseeded. */
+/**
+ * Hardcoded fallback when DB is unreachable or unseeded.
+ *
+ * `practiceId` is set to a non-null sentinel so dashboard pages that guard
+ * with `if (!user.practiceId) redirect("/dashboard")` don't redirect-loop.
+ * Multi-tenant queries that filter by `practiceId: "demo-practice-id"` simply
+ * return zero rows, which the dashboard tolerates (empty state).
+ */
 const FALLBACK_DEV_USER: SessionUser = {
   uid: "dev-000",
   firebaseUid: "firebase-demo-uid-001",
-  email: "dev@localhost",
-  firstName: "Dev",
-  lastName: "User",
-  fullName: "Dev User",
+  email: "demo@praktijkflow.local",
+  firstName: "Demo",
+  lastName: "Gebruiker",
+  fullName: "Demo Gebruiker",
   avatarUrl: null,
-  practiceId: null,
-  practiceName: null,
+  practiceId: "demo-practice-id",
+  practiceName: "Demo praktijk",
   role: null,
 };
 
@@ -135,7 +152,7 @@ async function getDevUser(): Promise<SessionUser> {
     });
 
     if (!user) {
-      console.warn("[DEV_AUTH_BYPASS] No users in database. Run: npm run db:seed");
+      console.warn("[AUTH_BYPASS] No users in database. Run: npm run db:seed");
       _devUser = FALLBACK_DEV_USER;
       return _devUser;
     }
@@ -150,15 +167,15 @@ async function getDevUser(): Promise<SessionUser> {
       lastName: user.lastName,
       fullName: `${user.firstName} ${user.lastName}`,
       avatarUrl: user.avatarUrl,
-      practiceId: membership?.practice.id ?? null,
-      practiceName: membership?.practice.name ?? null,
+      practiceId: membership?.practice.id ?? FALLBACK_DEV_USER.practiceId,
+      practiceName: membership?.practice.name ?? FALLBACK_DEV_USER.practiceName,
       role: membership?.role ?? null,
     };
 
     return _devUser;
   } catch (err) {
     console.warn(
-      "[DEV_AUTH_BYPASS] Database not reachable, using fallback dev user:",
+      "[AUTH_BYPASS] Database not reachable, using fallback dev user:",
       err instanceof Error ? err.message : err,
     );
     _devUser = FALLBACK_DEV_USER;

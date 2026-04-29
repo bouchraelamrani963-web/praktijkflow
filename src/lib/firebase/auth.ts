@@ -8,17 +8,32 @@ import {
 } from "firebase/auth";
 import { getFirebaseAuth, isFirebaseConfigured } from "./config";
 
-/** True when Firebase should not be touched (explicit env var OR missing config). */
+/**
+ * True when Firebase should not be touched: explicit opt-in env var, or no
+ * Firebase config present. Activates in any NODE_ENV — production deploys
+ * without Firebase secrets fall through to the bypass path so the demo
+ * dashboard remains reachable.
+ */
 function skipFirebase(): boolean {
   return process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true" || !isFirebaseConfigured();
+}
+
+/** Stable error code the login form can detect to switch into demo navigation. */
+export const FIREBASE_NOT_CONFIGURED = "auth/firebase-not-configured";
+
+class FirebaseNotConfiguredError extends Error {
+  code = FIREBASE_NOT_CONFIGURED;
+  constructor() {
+    super("Firebase is niet geconfigureerd. Demo-modus actief.");
+  }
 }
 
 /**
  * Register a new user: create in Firebase, then create Prisma user + session via server.
  */
-export async function signUp(email: string, password: string, displayName: string) {
+export async function signUp(email: string, password: string, displayName: string): Promise<User> {
   if (skipFirebase()) {
-    throw new Error("Firebase is not configured. In dev mode, navigate directly to /dashboard.");
+    throw new FirebaseNotConfiguredError();
   }
 
   const { user } = await createUserWithEmailAndPassword(getFirebaseAuth(), email, password);
@@ -35,7 +50,7 @@ export async function signUp(email: string, password: string, displayName: strin
   });
 
   if (!res.ok) {
-    throw new Error("Failed to register");
+    throw new Error("Registratie mislukt");
   }
 
   return user;
@@ -44,9 +59,9 @@ export async function signUp(email: string, password: string, displayName: strin
 /**
  * Sign in and create a server-side session.
  */
-export async function signIn(email: string, password: string) {
+export async function signIn(email: string, password: string): Promise<User> {
   if (skipFirebase()) {
-    throw new Error("Firebase is not configured. In dev mode, navigate directly to /dashboard.");
+    throw new FirebaseNotConfiguredError();
   }
 
   const { user } = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
@@ -57,9 +72,9 @@ export async function signIn(email: string, password: string) {
 /**
  * Sign out: clear server session, then sign out of Firebase.
  */
-export async function signOut() {
+export async function signOut(): Promise<void> {
   if (skipFirebase()) {
-    // Dev mode: nothing to sign out from
+    // Bypass mode: nothing to sign out from
     return;
   }
 
@@ -69,7 +84,7 @@ export async function signOut() {
 
 /**
  * Listen for Firebase auth state changes.
- * In dev mode without Firebase, fires callback with null once (AuthProvider handles the rest).
+ * In bypass mode, fires callback with null once (AuthProvider handles the rest).
  */
 export function onAuthChange(callback: (user: User | null) => void) {
   if (skipFirebase()) {
@@ -91,6 +106,6 @@ async function createServerSession(user: User) {
     body: JSON.stringify({ idToken }),
   });
   if (!res.ok) {
-    throw new Error("Failed to create session");
+    throw new Error("Sessie aanmaken mislukt");
   }
 }

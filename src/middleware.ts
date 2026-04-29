@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Dev bypass: skip all auth redirects when explicitly enabled in development.
-// In production NODE_ENV is "production", so this is always false.
+/**
+ * Auth bypass: skip all auth redirects when Firebase isn't configured or when
+ * explicitly opted-in via NEXT_PUBLIC_DEV_AUTH_BYPASS=true.
+ *
+ * Previously this was gated to NODE_ENV === "development" only, which made
+ * production deploys without Firebase credentials fail with a redirect loop
+ * (no cookie → /login → cookie still missing → /login). The gate is now
+ * environment-agnostic so demo deployments without Firebase still work.
+ *
+ * NEXT_PUBLIC_ vars are inlined at build time, so this is evaluated once.
+ */
 const DEV_AUTH_BYPASS =
-  process.env.NODE_ENV === "development" &&
-  (process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true" ||
-    !(process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID));
+  process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true" ||
+  !(process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
 
 // All routes that require authentication
 const protectedPrefixes = [
@@ -23,7 +31,7 @@ const protectedPrefixes = [
 const authOnlyPaths = ["/login", "/register"];
 
 export function middleware(req: NextRequest) {
-  // In dev bypass mode, let every request through without cookie checks
+  // In bypass mode, let every request through without cookie checks
   if (DEV_AUTH_BYPASS) {
     return NextResponse.next();
   }
