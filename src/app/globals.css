@@ -1,10 +1,85 @@
 @import "tailwindcss";
 
+/* ─── Fonts ──────────────────────────────────────────────────────────────
+   Sora (display) + DM Sans (body) per the PraktijkFlow Design System.
+   Loaded once globally so any page can opt in via the .pf-dark scope or
+   the --font-display / --font-body custom properties. */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ─── Existing app theme (zinc/blue, used by dashboard) ────────────────── */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* ─── PraktijkFlow Design System tokens ──────────────────────────────
+     Available everywhere as CSS vars but only *applied* inside the
+     .pf-dark scope below — so the dashboard's existing zinc styling is
+     untouched. */
+
+  /* Backgrounds */
+  --pf-bg-base:        #0a0612;
+  --pf-bg-deep:        #07040e;
+  --pf-bg-mid:         #150d2e;
+  --pf-bg-surface:     rgba(255, 255, 255, 0.04);
+  --pf-bg-surface-2:   rgba(255, 255, 255, 0.07);
+  --pf-bg-overlay:     rgba(10, 6, 18, 0.85);
+
+  /* Borders */
+  --pf-border-subtle:  rgba(255, 255, 255, 0.07);
+  --pf-border-dim:     rgba(255, 255, 255, 0.12);
+  --pf-border-bright:  rgba(255, 255, 255, 0.22);
+
+  /* Foreground */
+  --pf-fg-1:           #ffffff;
+  --pf-fg-2:           rgba(255, 255, 255, 0.65);
+  --pf-fg-3:           rgba(255, 255, 255, 0.38);
+
+  /* Accent — Purple (primary) */
+  --pf-purple:         #7c3aed;
+  --pf-purple-light:   #a78bfa;
+  --pf-purple-dark:    #3b1f6e;
+  --pf-purple-glow:    rgba(124, 58, 237, 0.35);
+  --pf-purple-dim:     rgba(124, 58, 237, 0.12);
+  --pf-purple-border:  rgba(124, 58, 237, 0.28);
+
+  /* Accent — Teal (secondary) */
+  --pf-teal:           #00d4b4;
+  --pf-teal-light:     #4dffd8;
+  --pf-teal-dim:       rgba(0, 212, 180, 0.12);
+  --pf-teal-glow:      rgba(0, 212, 180, 0.28);
+
+  /* Semantic */
+  --pf-success:        #22c55e;
+  --pf-warning:        #f59e0b;
+  --pf-error:          #ef4444;
+
+  /* Gradients */
+  --pf-grad-hero:      linear-gradient(160deg, #07040e 0%, #150d2e 50%, #0a0e22 100%);
+  --pf-grad-text:      linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.75) 100%);
+  --pf-grad-accent:    linear-gradient(135deg, #7c3aed 0%, #00d4b4 100%);
+
+  /* Elevation */
+  --pf-shadow-1:       0 4px 16px rgba(0, 0, 0, 0.3);
+  --pf-shadow-2:       0 12px 40px rgba(0, 0, 0, 0.45);
+  --pf-shadow-3:       0 24px 64px rgba(0, 0, 0, 0.55);
+  --pf-shadow-glow-purple: 0 0 40px rgba(124, 58, 237, 0.28);
+  --pf-shadow-glow-teal:   0 0 40px rgba(0, 212, 180, 0.22);
+
+  /* Radius */
+  --pf-radius-sm:      6px;
+  --pf-radius-md:      10px;
+  --pf-radius-lg:      16px;
+  --pf-radius-xl:      24px;
+  --pf-radius-full:    9999px;
+
+  /* Fonts */
+  --pf-font-display:   'Sora', sans-serif;
+  --pf-font-body:      'DM Sans', sans-serif;
+
+  /* Easing */
+  --pf-ease:           cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
@@ -23,4 +98,157 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PraktijkFlow Design System scope.
+
+   Any element inside `.pf-dark` switches to the dark-purple SaaS theme.
+   The dashboard does NOT add this class — it keeps the existing zinc/blue
+   light theme. Only the marketing landing opts in.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pf-dark {
+  background: var(--pf-bg-base);
+  color: var(--pf-fg-1);
+  font-family: var(--pf-font-body);
+}
+
+/* Display typography — Sora, tight tracking */
+.pf-dark .pf-display {
+  font-family: var(--pf-font-display);
+}
+.pf-dark h1.pf-display { letter-spacing: -0.03em; }
+.pf-dark h2.pf-display,
+.pf-dark h3.pf-display { letter-spacing: -0.02em; }
+
+/* Eyebrow — small uppercase label */
+.pf-dark .pf-eyebrow {
+  font-family: var(--pf-font-body);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pf-fg-3);
+}
+
+/* Glassmorphism card */
+.pf-dark .pf-card {
+  background: var(--pf-bg-surface);
+  border: 1px solid var(--pf-border-subtle);
+  border-radius: var(--pf-radius-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--pf-shadow-1);
+  transition: border-color 250ms var(--pf-ease), transform 250ms var(--pf-ease);
+}
+.pf-dark .pf-card:hover {
+  border-color: var(--pf-border-dim);
+  transform: translateY(-2px);
+}
+
+.pf-dark .pf-card-featured {
+  background: var(--pf-purple-dim);
+  border-color: var(--pf-purple-border);
+  box-shadow: 0 0 40px rgba(124, 58, 237, 0.18);
+}
+
+/* Buttons — pill-shaped, font-weight 600 body */
+.pf-dark .pf-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--pf-purple);
+  color: #fff;
+  border: none;
+  border-radius: var(--pf-radius-full);
+  padding: 14px 28px;
+  font-family: var(--pf-font-body);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 0 24px var(--pf-purple-glow);
+  transition: box-shadow 200ms var(--pf-ease), transform 150ms var(--pf-ease);
+  cursor: pointer;
+  text-decoration: none;
+}
+.pf-dark .pf-btn-primary:hover {
+  box-shadow: 0 0 36px rgba(124, 58, 237, 0.6);
+  transform: translateY(-1px);
+}
+
+.pf-dark .pf-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--pf-fg-1);
+  border: 1px solid var(--pf-border-bright);
+  border-radius: var(--pf-radius-full);
+  padding: 13px 26px;
+  font-family: var(--pf-font-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 200ms var(--pf-ease), background 200ms var(--pf-ease);
+  text-decoration: none;
+}
+.pf-dark .pf-btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Feature icon container — 48×48 with subtle purple frame */
+.pf-dark .pf-icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--pf-radius-md);
+  background: var(--pf-purple-dim);
+  border: 1px solid var(--pf-purple-border);
+  color: var(--pf-purple-light);
+}
+
+/* Background utilities */
+.pf-dot-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+}
+.pf-grad-hero {
+  background: linear-gradient(160deg, #07040e 0%, #150d2e 50%, #0a0e22 100%);
+}
+
+/* Ambient glow blobs — absolute-positioned divs with these classes
+   for top-left purple and bottom-right teal accents. */
+.pf-glow-purple {
+  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.22) 0%, transparent 65%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+.pf-glow-teal {
+  background: radial-gradient(ellipse at center, rgba(0, 212, 180, 0.16) 0%, transparent 65%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+/* Sticky navbar — translucent dark with blur */
+.pf-dark .pf-nav {
+  background: rgba(10, 6, 18, 0.82);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--pf-border-subtle);
+}
+
+/* Section padding helper */
+.pf-section {
+  padding-top: 96px;
+  padding-bottom: 96px;
+}
+@media (max-width: 640px) {
+  .pf-section { padding-top: 64px; padding-bottom: 64px; }
 }

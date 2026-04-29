@@ -14,12 +14,21 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+
+/**
+ * Landing page restyled to the PraktijkFlow Design System (dark purple,
+ * glassmorphism, Sora display + DM Sans body, purple CTAs). All copy is
+ * preserved from the prior light-theme version — only the visual layer
+ * changed. The dashboard pages do NOT inherit this theme; the .pf-dark
+ * scope class on the wrapper isolates these styles to this page.
+ *
+ * Per the design system handoff: only src/app/page.tsx + globals.css are
+ * touched. The legacy <Navbar /> and <Footer /> components are replaced
+ * inline with dark-theme equivalents so we don't have to modify shared
+ * layout components that the dashboard also uses.
+ */
 
 // TODO: replace with the real PraktijkFlow demo embed (YouTube or Loom).
-// YouTube format:  https://www.youtube.com/embed/<VIDEO_ID>?rel=0&modestbranding=1
-// Loom format:     https://www.loom.com/embed/<VIDEO_ID>
 const DEMO_VIDEO_EMBED_URL =
   "https://www.youtube.com/embed/aqz-KE-bpKQ?rel=0&modestbranding=1";
 const DEMO_VIDEO_IS_PLACEHOLDER = true;
@@ -103,131 +112,186 @@ const impactCards = [
     label: "Teruggewonnen omzet",
     value: "Tot €8.400 p/m*",
     description: "uit plekken die anders leeg zouden blijven.",
-    color: "text-emerald-500",
-    bg: "bg-emerald-50 dark:bg-emerald-900/20",
   },
   {
     icon: Clock3,
     label: "Snelle invultijd",
     value: "Vaak < 5 min",
     description: "tussen vrijgekomen plek en bevestigde claim.",
-    color: "text-purple-500",
-    bg: "bg-purple-50 dark:bg-purple-900/20",
   },
   {
     icon: TrendingDown,
     label: "Minder no-shows",
     value: "Tot −38%*",
     description: "door automatische herinneringen en bevestigingen.",
-    color: "text-blue-500",
-    bg: "bg-blue-50 dark:bg-blue-900/20",
   },
   {
     icon: CheckCheck,
     label: "Invulpercentage",
     value: "Tot 72%*",
     description: "van vrijgekomen plekken wordt automatisch opnieuw bezet.",
-    color: "text-amber-500",
-    bg: "bg-amber-50 dark:bg-amber-900/20",
   },
 ];
 
+// Word-mark per design system: "Praktijk" weight 700 white, "Flow" weight 300 dim.
+function WordMark() {
+  return (
+    <span className="select-none text-lg leading-none" style={{ fontFamily: "var(--pf-font-display)" }}>
+      <span style={{ fontWeight: 700, color: "var(--pf-fg-1)" }}>Praktijk</span>
+      <span style={{ fontWeight: 300, color: "var(--pf-fg-3)" }}>Flow</span>
+    </span>
+  );
+}
+
 export default function HomePage() {
   return (
-    <>
-      <Navbar />
-      <main className="flex-1">
-        {/* ─── 1. Hero ───────────────────────────────────────────── */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900">
-          <div
-            className="absolute inset-x-0 top-0 -z-10 h-[600px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/50 via-transparent to-transparent dark:from-blue-900/20"
-            aria-hidden="true"
-          />
-          <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
-            {/* Two-column hero row — text left, clinic visual right on lg+.
-                On smaller screens the image stacks below the text. Layout
-                primitive itself is unchanged; only the inner row is split. */}
-            <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-16">
-              <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">
-                <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+    <div className="pf-dark min-h-screen">
+      {/* ─── Inline dark navbar ─────────────────────────────────────── */}
+      <header className="pf-nav fixed inset-x-0 top-0 z-50">
+        <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center gap-2">
+            <WordMark />
+          </Link>
+          <nav className="hidden items-center gap-8 text-sm md:flex" style={{ color: "var(--pf-fg-2)" }}>
+            <a href="#how" className="transition hover:text-white">Hoe het werkt</a>
+            <a href="#demo" className="transition hover:text-white">Demo</a>
+            <a href="#pricing" className="transition hover:text-white">Prijzen</a>
+            <Link href="/login" className="transition hover:text-white">Inloggen</Link>
+          </nav>
+          <Link href="#contact" className="pf-btn-primary text-xs" style={{ padding: "10px 20px" }}>
+            Plan demo
+          </Link>
+        </div>
+      </header>
+
+      <main>
+        {/* ═══ 1. HERO ════════════════════════════════════════════════ */}
+        <section className="relative overflow-hidden pf-grad-hero pt-32 pb-20 sm:pt-40">
+          {/* Dot-grid texture overlay */}
+          <div className="pf-dot-grid pointer-events-none absolute inset-0 opacity-100" aria-hidden="true" />
+          {/* Ambient glows — top-left purple, bottom-right teal */}
+          <div className="pf-glow-purple absolute -left-32 -top-32 h-[600px] w-[600px]" aria-hidden="true" />
+          <div className="pf-glow-teal absolute -right-40 bottom-0 h-[500px] w-[500px]" aria-hidden="true" />
+
+          <div className="relative mx-auto max-w-[1100px] px-6">
+            <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,500px)] lg:gap-16">
+              {/* ─── Text column ─── */}
+              <div className="text-center lg:text-left">
+                <div
+                  className="mb-8 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs"
+                  style={{
+                    background: "var(--pf-purple-dim)",
+                    border: "1px solid var(--pf-purple-border)",
+                    color: "var(--pf-purple-light)",
+                    fontWeight: 500,
+                  }}
+                >
                   <Sparkles className="h-3.5 w-3.5" />
                   Slim wachtlijstbeheer voor tandartspraktijken
                 </div>
-                {/* T1: value-first headline — concrete range upfront, mechanism second */}
-                <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-4xl sm:leading-[1.15]">
-                  €95–€800 omzet per maand teruggewonnen — automatisch ingevuld binnen minuten
+
+                <h1
+                  className="pf-display"
+                  style={{
+                    fontWeight: 800,
+                    fontSize: "clamp(40px, 6.5vw, 72px)",
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.03em",
+                    color: "var(--pf-fg-1)",
+                  }}
+                >
+                  €95–€800 omzet per maand{" "}
+                  <span
+                    style={{
+                      background: "var(--pf-grad-accent)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    teruggewonnen
+                  </span>{" "}
+                  — automatisch ingevuld binnen minuten
                 </h1>
-                {/* Real-proof line — specific, recent, low-key so it reads as a
-                    fact rather than a marketing claim. */}
-                <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+
+                <p className="mt-5 text-sm" style={{ color: "var(--pf-fg-3)" }}>
                   Bij een praktijk zoals deze werd gisteren €95 teruggewonnen na een annulering.
                 </p>
-                {/* T2: tighter, direct subtext — no "elke gemiste" vagueness */}
-                <p className="mt-7 text-lg leading-7 text-zinc-600 dark:text-zinc-300">
+
+                <p className="mt-7" style={{ fontSize: 18, lineHeight: 1.6, color: "var(--pf-fg-2)" }}>
                   Geannuleerde afspraken worden direct aangeboden aan uw wachtlijst — zonder bellen of handmatig plannen.
                 </p>
-                {/* T5 + T6: CTA row with updated secondary label + trust anchor */}
-                <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 lg:justify-start">
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
-                  >
+
+                <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 lg:items-start lg:justify-start">
+                  <Link href="/dashboard" className="pf-btn-primary">
                     <PlayCircle className="h-4 w-4" />
                     Bekijk direct hoe een afspraak wordt ingevuld
                   </Link>
-                  <Link
-                    href="#contact"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-6 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700 sm:w-auto"
-                  >
-                    Plan korte demo (we reageren binnen 1 uur)
+                  <Link href="#contact" className="pf-btn-secondary">
+                    Plan korte demo (binnen 1 uur reactie)
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
-                {/* Mini-flow — three compact steps showing how a cancellation
-                    turns into a filled slot. Inline row, not a new section. */}
-                <ol className="mt-5 flex flex-col items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-2 sm:gap-y-1 lg:justify-start">
+
+                <ol
+                  className="mt-6 flex flex-col items-center gap-1.5 text-xs sm:flex-row sm:flex-wrap sm:gap-x-2 lg:items-start lg:justify-start"
+                  style={{ color: "var(--pf-fg-3)" }}
+                >
                   <li>Annulering</li>
-                  <li aria-hidden="true" className="hidden sm:inline text-zinc-300 dark:text-zinc-600">→</li>
+                  <li aria-hidden="true" className="hidden sm:inline" style={{ color: "var(--pf-purple-light)" }}>→</li>
                   <li>Automatisch aangeboden aan wachtlijst</li>
-                  <li aria-hidden="true" className="hidden sm:inline text-zinc-300 dark:text-zinc-600">→</li>
+                  <li aria-hidden="true" className="hidden sm:inline" style={{ color: "var(--pf-purple-light)" }}>→</li>
                   <li>Binnen minuten ingevuld</li>
                 </ol>
-                {/* Speed trust — concrete onboarding promise, own line so it
-                    reads as a commitment rather than a buried disclaimer. */}
-                <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-                  Binnen 1 dag live in uw praktijk
+
+                <p className="mt-5 text-sm" style={{ color: "var(--pf-fg-3)" }}>
+                  Binnen 1 dag live in uw praktijk · Geen contract — maandelijks opzegbaar
                 </p>
-                {/* T6: friction-free trust anchor — replaces vague "gebruikt door" */}
-                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  Geen contract — maandelijks opzegbaar
-                </p>
-                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">
+                <p className="mt-1 text-xs" style={{ color: "var(--pf-fg-3)", opacity: 0.7 }}>
                   Geen creditcard nodig · AVG-conform
                 </p>
               </div>
 
-              {/* Hero visual — professional dental clinic interior. Bounded
-                  width so it never overpowers the headline column, lazy-
-                  loaded via Next/Image with explicit sizes for correct
-                  responsive asset selection. */}
-              <div className="relative mx-auto w-full max-w-[480px] lg:mx-0">
-                {/* Context label — tells the viewer the visual is a
-                    real-practice illustration, not stock marketing. */}
-                <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400 lg:text-left">
-                  Live voorbeeld uit een praktijk
-                </p>
-                <div className="relative aspect-[16/9] overflow-hidden rounded-xl shadow-md shadow-zinc-900/10 ring-1 ring-zinc-900/5 dark:shadow-black/30 dark:ring-white/10">
+              {/* ─── Hero visual ─── */}
+              <div className="relative mx-auto w-full max-w-[500px] lg:mx-0">
+                <p className="pf-eyebrow mb-2 text-center lg:text-left">Live voorbeeld uit een praktijk</p>
+                <div
+                  className="relative aspect-[16/10] overflow-hidden"
+                  style={{
+                    borderRadius: "var(--pf-radius-lg)",
+                    border: "1px solid var(--pf-border-dim)",
+                    boxShadow: "var(--pf-shadow-2)",
+                  }}
+                >
                   <Image
                     src="https://images.unsplash.com/photo-1629909615184-74f495363b67?auto=format&fit=crop&w=1400&q=85"
                     alt="Rustige, moderne tandartsbehandelkamer met lege behandelstoel en natuurlijk licht"
                     fill
-                    sizes="(min-width: 1024px) 480px, (min-width: 640px) 80vw, 100vw"
+                    sizes="(min-width: 1024px) 500px, (min-width: 640px) 80vw, 100vw"
                     priority
                     className="object-cover object-center opacity-90"
                   />
-                  {/* Overlay success pill — raised slightly from the corner
-                      so it rests on a quieter area of the minimal frame. */}
-                  <div className="absolute bottom-6 left-6 inline-flex items-center gap-1.5 rounded-full bg-emerald-50/95 px-3 py-1 text-xs font-medium text-emerald-800 shadow-sm ring-1 ring-emerald-200/80 backdrop-blur-sm dark:bg-emerald-900/80 dark:text-emerald-200 dark:ring-emerald-800/60">
+                  {/* Dark gradient overlay so the image blends with the dark theme */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: "linear-gradient(180deg, transparent 50%, rgba(10,6,18,0.55) 100%)",
+                    }}
+                    aria-hidden="true"
+                  />
+                  {/* Overlay success pill — teal accent, glassmorphism */}
+                  <div
+                    className="absolute bottom-5 left-5 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
+                    style={{
+                      background: "rgba(0, 212, 180, 0.18)",
+                      border: "1px solid rgba(0, 212, 180, 0.4)",
+                      borderRadius: "var(--pf-radius-full)",
+                      color: "var(--pf-teal-light)",
+                      fontWeight: 600,
+                      backdropFilter: "blur(12px)",
+                      WebkitBackdropFilter: "blur(12px)",
+                    }}
+                  >
                     <CheckCheck className="h-3.5 w-3.5" />
                     €95 omzet teruggewonnen in 3 minuten
                   </div>
@@ -235,72 +299,97 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Dashboard preview */}
-            <div className="mx-auto mt-16 max-w-4xl">
-              <div className="relative rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl shadow-blue-500/5 ring-1 ring-zinc-900/5 dark:border-zinc-700 dark:bg-zinc-900">
+            {/* ─── Dashboard preview ─── */}
+            <div className="mx-auto mt-20 max-w-4xl">
+              <div className="pf-card relative p-4">
                 <div className="mb-3 flex items-center gap-2 px-1">
-                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                  <span className="ml-2 text-xs text-zinc-500">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--pf-error)" }} />
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--pf-warning)" }} />
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--pf-success)" }} />
+                  <span className="ml-2 text-xs" style={{ color: "var(--pf-fg-3)" }}>
                     praktijkflow.nl/dashboard
                   </span>
                 </div>
-                <div className="grid gap-3 rounded-xl bg-zinc-50 p-4 sm:grid-cols-2 lg:grid-cols-4 dark:bg-zinc-800/50">
+                <div
+                  className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4"
+                  style={{
+                    background: "rgba(0, 0, 0, 0.25)",
+                    borderRadius: "var(--pf-radius-md)",
+                  }}
+                >
                   {[
-                    { icon: CalendarX, label: "Vrijgekomen plekken", value: "12", color: "text-red-500" },
-                    { icon: Send, label: "Verstuurde aanbiedingen", value: "47", color: "text-blue-500" },
-                    { icon: CheckCheck, label: "Ingevulde plekken", value: "9", color: "text-emerald-500" },
-                    { icon: Clock3, label: "Gem. invultijd", value: "4 min", color: "text-purple-500" },
+                    { icon: CalendarX, label: "Vrijgekomen plekken", value: "12", color: "var(--pf-error)" },
+                    { icon: Send, label: "Verstuurde aanbiedingen", value: "47", color: "var(--pf-purple-light)" },
+                    { icon: CheckCheck, label: "Ingevulde plekken", value: "9", color: "var(--pf-teal)" },
+                    { icon: Clock3, label: "Gem. invultijd", value: "4 min", color: "var(--pf-purple-light)" },
                   ].map((m) => (
                     <div
                       key={m.label}
-                      className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800"
+                      className="p-4"
+                      style={{
+                        background: "var(--pf-bg-surface)",
+                        border: "1px solid var(--pf-border-subtle)",
+                        borderRadius: "var(--pf-radius-md)",
+                      }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                        <span className="text-xs" style={{ color: "var(--pf-fg-2)" }}>
                           {m.label}
                         </span>
-                        <m.icon className={`h-4 w-4 ${m.color}`} />
+                        <m.icon className="h-4 w-4" style={{ color: m.color }} />
                       </div>
-                      <p className="mt-1.5 text-xl font-bold text-zinc-900 dark:text-white">
+                      <p className="pf-display mt-1.5 text-xl" style={{ fontWeight: 700, color: "var(--pf-fg-1)" }}>
                         {m.value}
                       </p>
                     </div>
                   ))}
                 </div>
-                <div className="mt-3 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                <div
+                  className="mt-3 p-4"
+                  style={{
+                    background: "rgba(0, 0, 0, 0.25)",
+                    borderRadius: "var(--pf-radius-md)",
+                  }}
+                >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-600 dark:text-zinc-400">
-                      Invulpercentage
-                    </span>
-                    <span className="font-semibold text-zinc-900 dark:text-white">
-                      75%
-                    </span>
+                    <span style={{ color: "var(--pf-fg-2)" }}>Invulpercentage</span>
+                    <span className="pf-display" style={{ fontWeight: 600, color: "var(--pf-fg-1)" }}>75%</span>
                   </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                    <div className="h-full w-3/4 rounded-full bg-emerald-500" />
+                  <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: "var(--pf-bg-surface-2)" }}>
+                    <div
+                      className="h-full w-3/4 rounded-full"
+                      style={{ background: "var(--pf-grad-accent)" }}
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* T7: proof strip — three scannable facts anchored at the bottom
-              of the hero. Inline row, no new section, no new layout zone. */}
-          <div className="border-t border-zinc-200 dark:border-zinc-800">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <dl className="flex flex-col items-center justify-center gap-6 py-8 sm:flex-row sm:gap-12">
+          {/* ─── Proof strip — three big numbers anchoring the hero ─── */}
+          <div className="relative mt-20 border-t" style={{ borderColor: "var(--pf-border-subtle)" }}>
+            <div className="mx-auto max-w-[1100px] px-6">
+              <dl className="flex flex-col items-center justify-center gap-8 py-10 sm:flex-row sm:gap-16">
                 {[
                   { value: "€300–€800", label: "per maand teruggewonnen" },
                   { value: "1 dag",      label: "tot u live bent" },
                   { value: "100%",       label: "automatisch, geen handmatig werk" },
                 ].map((item) => (
                   <div key={item.label} className="text-center">
-                    <dt className="text-xl font-semibold text-zinc-900 dark:text-white">
+                    <dt
+                      className="pf-display"
+                      style={{
+                        fontWeight: 700,
+                        fontSize: 32,
+                        background: "var(--pf-grad-accent)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
                       {item.value}
                     </dt>
-                    <dd className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+                    <dd className="mt-1 text-sm" style={{ color: "var(--pf-fg-2)" }}>
                       {item.label}
                     </dd>
                   </div>
@@ -310,63 +399,80 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ─── 2. Probleem → Oplossing ───────────────────────────── */}
-        <section className="bg-white py-24 dark:bg-zinc-950">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* ═══ 2. PROBLEM → SOLUTION ══════════════════════════════════ */}
+        <section className="pf-section relative">
+          <div className="mx-auto max-w-[1100px] px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
+              <p className="pf-eyebrow">Het probleem</p>
+              <h2
+                className="pf-display mt-3"
+                style={{
+                  fontWeight: 700,
+                  fontSize: "clamp(32px, 4vw, 52px)",
+                  lineHeight: 1.1,
+                  color: "var(--pf-fg-1)",
+                }}
+              >
                 Elke lege stoel is verloren omzet
               </h2>
-              <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-                De meeste praktijken verliezen duizenden euro&apos;s per kwartaal
-                aan plekken die niet op tijd opnieuw worden gevuld.
+              <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
+                De meeste praktijken verliezen duizenden euro&apos;s per kwartaal aan plekken die niet op tijd opnieuw worden gevuld.
               </p>
             </div>
 
-            {/* Pijnpunten */}
             <div className="mt-16 grid gap-6 sm:grid-cols-3">
               {painPoints.map((p) => (
-                <div
-                  key={p.title}
-                  className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
-                >
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300">
-                    <p.icon className="h-5 w-5" />
+                <div key={p.title} className="pf-card p-6">
+                  <div
+                    className="pf-icon-tile"
+                    style={{
+                      background: "rgba(239, 68, 68, 0.12)",
+                      borderColor: "rgba(239, 68, 68, 0.28)",
+                      color: "var(--pf-error)",
+                    }}
+                  >
+                    <p.icon className="h-5 w-5" strokeWidth={1.5} />
                   </div>
-                  <h3 className="mt-4 text-base font-semibold text-zinc-900 dark:text-white">
+                  <h3 className="pf-display mt-5" style={{ fontWeight: 600, fontSize: 18, color: "var(--pf-fg-1)" }}>
                     {p.title}
                   </h3>
-                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--pf-fg-2)" }}>
                     {p.description}
                   </p>
                 </div>
               ))}
             </div>
 
-            {/* Oplossing */}
-            <div className="mt-20">
+            {/* Solution sub-section */}
+            <div className="mt-24">
               <div className="mx-auto max-w-2xl text-center">
-                <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
+                <p className="pf-eyebrow" style={{ color: "var(--pf-purple-light)" }}>De oplossing</p>
+                <h3
+                  className="pf-display mt-3"
+                  style={{
+                    fontWeight: 700,
+                    fontSize: "clamp(28px, 3.5vw, 42px)",
+                    lineHeight: 1.15,
+                    color: "var(--pf-fg-1)",
+                  }}
+                >
                   PraktijkFlow lost dit volledig automatisch op
                 </h3>
-                <p className="mt-4 text-base text-zinc-600 dark:text-zinc-400">
-                  Geen telefoonrondes meer. Geen lege stoelen. Geen verloren
-                  omzet.
+                <p className="mt-4" style={{ color: "var(--pf-fg-2)" }}>
+                  Geen telefoonrondes meer. Geen lege stoelen. Geen verloren omzet.
                 </p>
               </div>
+
               <div className="mt-12 grid gap-6 sm:grid-cols-3">
                 {solutionPoints.map((s) => (
-                  <div
-                    key={s.title}
-                    className="rounded-xl border border-blue-100 bg-blue-50/50 p-6 dark:border-blue-900/40 dark:bg-blue-900/10"
-                  >
-                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
-                      <s.icon className="h-5 w-5" />
+                  <div key={s.title} className="pf-card pf-card-featured p-6">
+                    <div className="pf-icon-tile">
+                      <s.icon className="h-5 w-5" strokeWidth={1.5} />
                     </div>
-                    <h4 className="mt-4 text-base font-semibold text-zinc-900 dark:text-white">
+                    <h4 className="pf-display mt-5" style={{ fontWeight: 600, fontSize: 18, color: "var(--pf-fg-1)" }}>
                       {s.title}
                     </h4>
-                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+                    <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--pf-fg-2)" }}>
                       {s.description}
                     </p>
                   </div>
@@ -376,34 +482,35 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ─── 3. Hoe het werkt ─────────────────────────────────── */}
-        <section id="how" className="bg-zinc-50 py-24 dark:bg-zinc-900">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* ═══ 3. HOE HET WERKT ═══════════════════════════════════════ */}
+        <section id="how" className="pf-section relative" style={{ background: "var(--pf-bg-deep)" }}>
+          <div className="pf-glow-purple absolute right-0 top-0 h-[400px] w-[400px] opacity-60" aria-hidden="true" />
+          <div className="relative mx-auto max-w-[1100px] px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
-                Hoe het werkt
+              <p className="pf-eyebrow">Hoe het werkt</p>
+              <h2
+                className="pf-display mt-3"
+                style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
+              >
+                Vier stappen, volledig geautomatiseerd
               </h2>
-              <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-                Vier stappen — volledig geautomatiseerd, vanaf annulering tot
-                ingevulde plek.
+              <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
+                Vanaf annulering tot ingevulde plek — zonder dat u of uw assistente iets hoeft te doen.
               </p>
             </div>
             <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {steps.map((step) => (
-                <div
-                  key={step.number}
-                  className="relative rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  <span className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                <div key={step.number} className="pf-card p-6">
+                  <span className="pf-eyebrow" style={{ color: "var(--pf-purple-light)" }}>
                     Stap {step.number}
                   </span>
-                  <div className="mt-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
-                    <step.icon className="h-5 w-5" />
+                  <div className="pf-icon-tile mt-3">
+                    <step.icon className="h-5 w-5" strokeWidth={1.5} />
                   </div>
-                  <h3 className="mt-4 text-base font-semibold text-zinc-900 dark:text-white">
+                  <h3 className="pf-display mt-5" style={{ fontWeight: 600, fontSize: 17, color: "var(--pf-fg-1)" }}>
                     {step.title}
                   </h3>
-                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--pf-fg-2)" }}>
                     {step.description}
                   </p>
                 </div>
@@ -412,21 +519,31 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ─── 4. Demo ──────────────────────────────────────────── */}
-        <section id="demo" className="bg-white py-24 dark:bg-zinc-950">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        {/* ═══ 4. DEMO VIDEO ══════════════════════════════════════════ */}
+        <section id="demo" className="pf-section relative">
+          <div className="mx-auto max-w-5xl px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
+              <p className="pf-eyebrow">Demo</p>
+              <h2
+                className="pf-display mt-3"
+                style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
+              >
                 Zie het in actie
               </h2>
-              <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-                Een echte annulering. Een echte SMS. Een echte claim — in
-                minder dan een minuut.
+              <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
+                Een echte annulering. Een echte SMS. Een echte claim — in minder dan een minuut.
               </p>
             </div>
 
-            <div className="mt-12 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-800">
-              <div className="relative aspect-video w-full bg-zinc-900">
+            <div
+              className="mt-12 overflow-hidden"
+              style={{
+                borderRadius: "var(--pf-radius-xl)",
+                border: "1px solid var(--pf-border-dim)",
+                boxShadow: "var(--pf-shadow-3)",
+              }}
+            >
+              <div className="relative aspect-video w-full" style={{ background: "var(--pf-bg-deep)" }}>
                 <iframe
                   src={DEMO_VIDEO_EMBED_URL}
                   title="PraktijkFlow demo — Binnen 1 minuut opnieuw ingevuld"
@@ -436,7 +553,14 @@ export default function HomePage() {
                   className="absolute inset-0 h-full w-full"
                 />
                 {DEMO_VIDEO_IS_PLACEHOLDER && (
-                  <div className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white backdrop-blur">
+                  <div
+                    className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide text-white backdrop-blur"
+                    style={{
+                      background: "rgba(0,0,0,0.6)",
+                      fontWeight: 600,
+                      letterSpacing: "0.1em",
+                    }}
+                  >
                     <PlayCircle className="h-3 w-3" />
                     Voorbeeldvideo
                   </div>
@@ -444,109 +568,237 @@ export default function HomePage() {
               </div>
             </div>
             <div className="mt-6 text-center">
-              <p className="text-base font-semibold text-zinc-900 dark:text-white">
+              <p className="pf-display" style={{ fontWeight: 600, fontSize: 18, color: "var(--pf-fg-1)" }}>
                 Binnen 1 minuut opnieuw ingevuld
               </p>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                Zie hoe een geannuleerde afspraak automatisch opnieuw wordt
-                ingevuld.
+              <p className="mt-1 text-sm" style={{ color: "var(--pf-fg-2)" }}>
+                Zie hoe een geannuleerde afspraak automatisch opnieuw wordt ingevuld.
               </p>
             </div>
           </div>
         </section>
 
-        {/* ─── 5. Resultaten / Impact ──────────────────────────── */}
-        <section className="bg-zinc-50 py-24 dark:bg-zinc-900">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* ═══ 5. RESULTATEN / IMPACT ═════════════════════════════════ */}
+        <section className="pf-section relative" style={{ background: "var(--pf-bg-deep)" }}>
+          <div className="pf-glow-teal absolute -right-32 top-1/2 h-[500px] w-[500px] -translate-y-1/2 opacity-70" aria-hidden="true" />
+          <div className="relative mx-auto max-w-[1100px] px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
-                Concrete resultaten voor uw praktijk
+              <p className="pf-eyebrow">Resultaten</p>
+              <h2
+                className="pf-display mt-3"
+                style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
+              >
+                Concrete cijfers voor uw praktijk
               </h2>
-              <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-                Cijfers die gemiddeld door praktijken op PraktijkFlow worden
-                gehaald in het eerste kwartaal.
+              <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
+                Gemiddeld behaald door praktijken op PraktijkFlow in het eerste kwartaal.
               </p>
             </div>
             <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {impactCards.map((c) => (
-                <div
-                  key={c.label}
-                  className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  <div
-                    className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${c.bg}`}
-                  >
-                    <c.icon className={`h-6 w-6 ${c.color}`} />
+                <div key={c.label} className="pf-card p-6">
+                  <div className="pf-icon-tile">
+                    <c.icon className="h-5 w-5" strokeWidth={1.5} />
                   </div>
-                  <p className="mt-4 text-3xl font-bold text-zinc-900 dark:text-white">
+                  <p
+                    className="pf-display mt-5"
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 28,
+                      background: "var(--pf-grad-accent)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
                     {c.value}
                   </p>
-                  <p className="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <p className="pf-display mt-2" style={{ fontWeight: 600, fontSize: 14, color: "var(--pf-fg-1)" }}>
                     {c.label}
                   </p>
-                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--pf-fg-2)" }}>
                     {c.description}
                   </p>
                 </div>
               ))}
             </div>
-            <p className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="mt-6 text-center text-xs" style={{ color: "var(--pf-fg-3)" }}>
               *Afhankelijk van praktijkgrootte, wachtlijst en tarieven.
             </p>
           </div>
         </section>
 
-        {/* ─── 6. Final CTA ─────────────────────────────────────── */}
+        {/* ═══ 6. PRICING ═════════════════════════════════════════════ */}
+        <section id="pricing" className="pf-section relative">
+          <div className="mx-auto max-w-[1100px] px-6">
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="pf-eyebrow">Prijzen</p>
+              <h2
+                className="pf-display mt-3"
+                style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
+              >
+                PraktijkFlow wint verloren omzet uit annuleringen automatisch voor u terug
+              </h2>
+              <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
+                U betaalt een vaste prijs per maand en houdt het verschil.
+              </p>
+
+              <div
+                className="mt-6 inline-flex items-center gap-2 px-4 py-2 text-xs"
+                style={{
+                  background: "var(--pf-purple-dim)",
+                  border: "1px solid var(--pf-purple-border)",
+                  borderRadius: "var(--pf-radius-full)",
+                  color: "var(--pf-purple-light)",
+                  fontWeight: 600,
+                }}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Eerste klanten ontvangen blijvende korting — beperkt aantal praktijken per regio
+              </div>
+            </div>
+
+            <div className="mt-16 grid gap-6 lg:grid-cols-3">
+              {[
+                {
+                  name: "START",
+                  price: "€49",
+                  audience: "Voor kleine praktijken",
+                  savings: "Gemiddeld €150–€400 per maand teruggewonnen",
+                  features: ["Basis wachtlijst", "Automatische invulling", "Beperkt dashboard"],
+                  featured: false,
+                },
+                {
+                  name: "GROWTH",
+                  price: "€79",
+                  audience: "Voor groeiende praktijken",
+                  savings: "Gemiddeld €300–€800 per maand teruggewonnen",
+                  features: ["Volledige automatisering", "Dashboard inzichten", "Prioriteit in wachtrij"],
+                  featured: true,
+                },
+                {
+                  name: "PRO",
+                  price: "€119",
+                  audience: "Voor meerstoelpraktijken",
+                  savings: "Gemiddeld €500–€1.200+ per maand teruggewonnen",
+                  features: ["Multi-chair optimalisatie", "Geavanceerde rapportage", "Snellere invulling"],
+                  featured: false,
+                },
+              ].map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`pf-card p-7 ${plan.featured ? "pf-card-featured" : ""}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="pf-eyebrow" style={{ color: plan.featured ? "var(--pf-purple-light)" : "var(--pf-fg-3)" }}>
+                      {plan.name}
+                    </span>
+                    {plan.featured && (
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px]"
+                        style={{
+                          background: "var(--pf-purple)",
+                          color: "white",
+                          fontWeight: 600,
+                          letterSpacing: "0.05em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Meest gekozen
+                      </span>
+                    )}
+                  </div>
+                  <p className="pf-display mt-4" style={{ fontWeight: 800, fontSize: 48, color: "var(--pf-fg-1)" }}>
+                    {plan.price}
+                    <span style={{ fontSize: 16, fontWeight: 400, color: "var(--pf-fg-3)" }}>/maand</span>
+                  </p>
+                  <p className="mt-1 text-sm" style={{ color: "var(--pf-fg-2)" }}>{plan.audience}</p>
+                  <p
+                    className="mt-4 rounded-md px-3 py-2 text-xs"
+                    style={{
+                      background: "var(--pf-teal-dim)",
+                      border: "1px solid rgba(0,212,180,0.25)",
+                      color: "var(--pf-teal-light)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {plan.savings}
+                  </p>
+                  <ul className="mt-6 space-y-2.5 text-sm" style={{ color: "var(--pf-fg-2)" }}>
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2">
+                        <CheckCheck className="h-4 w-4" style={{ color: "var(--pf-teal)" }} strokeWidth={2} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="#contact"
+                    className={`mt-7 w-full ${plan.featured ? "pf-btn-primary" : "pf-btn-secondary"}`}
+                    style={{ display: "flex" }}
+                  >
+                    Start met terugwinnen
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ 7. FINAL CTA ═══════════════════════════════════════════ */}
         <section
           id="contact"
-          className="relative overflow-hidden bg-blue-600 py-20"
+          className="pf-section relative overflow-hidden"
+          style={{ background: "var(--pf-bg-deep)" }}
         >
-          <div
-            className="absolute inset-0 -z-10 opacity-20"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, white 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
-            }}
-            aria-hidden="true"
-          />
-          <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
+          <div className="pf-glow-purple absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 opacity-80" aria-hidden="true" />
+          <div className="pf-dot-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden="true" />
+          <div className="relative mx-auto max-w-3xl px-6 text-center">
+            <h2
+              className="pf-display"
+              style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
+            >
               Klaar om geen plek meer leeg te laten?
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
-              Plan een vrijblijvende demo van 15 minuten. We laten zien hoeveel
-              omzet uw praktijk maandelijks misloopt — en hoe PraktijkFlow dat
-              direct oplost.
+            <p className="mx-auto mt-5 max-w-xl" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
+              Plan een vrijblijvende demo van 15 minuten. We laten zien hoeveel omzet uw praktijk maandelijks misloopt — en hoe PraktijkFlow dat direct oplost.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link
-                href="mailto:demo@praktijkflow.nl?subject=Demo%20aanvraag"
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-8 py-4 text-base font-bold text-blue-700 shadow-lg ring-1 ring-white/60 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl sm:w-auto"
-              >
+              <Link href="mailto:demo@praktijkflow.nl?subject=Demo%20aanvraag" className="pf-btn-primary">
                 Plan een demo
-                <ArrowRight className="h-5 w-5 transition group-hover:translate-x-0.5" />
+                <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                href="mailto:contact@praktijkflow.nl"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/40 bg-transparent px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 sm:w-auto"
-              >
+              <Link href="mailto:contact@praktijkflow.nl" className="pf-btn-secondary">
                 Neem contact op
               </Link>
             </div>
-            <p className="mt-6 text-sm text-blue-100">
+            <p className="mt-6 text-sm" style={{ color: "var(--pf-fg-3)" }}>
               Of bel ons direct:{" "}
-              <a
-                href="tel:+31201234567"
-                className="font-semibold text-white underline-offset-4 hover:underline"
-              >
+              <a href="tel:+31201234567" style={{ color: "var(--pf-purple-light)", fontWeight: 600 }} className="underline-offset-4 hover:underline">
                 +31 20 123 4567
               </a>
             </p>
           </div>
         </section>
       </main>
-      <Footer />
-    </>
+
+      {/* ─── Inline dark footer ──────────────────────────────────────── */}
+      <footer className="border-t" style={{ borderColor: "var(--pf-border-subtle)", background: "var(--pf-bg-base)" }}>
+        <div className="mx-auto flex max-w-[1100px] flex-col items-center justify-between gap-4 px-6 py-10 sm:flex-row">
+          <div className="flex items-center gap-3">
+            <WordMark />
+            <span className="text-xs" style={{ color: "var(--pf-fg-3)" }}>
+              © {new Date().getFullYear()} PraktijkFlow
+            </span>
+          </div>
+          <nav className="flex items-center gap-6 text-xs" style={{ color: "var(--pf-fg-3)" }}>
+            <a href="#how" className="transition hover:text-white">Hoe het werkt</a>
+            <a href="#pricing" className="transition hover:text-white">Prijzen</a>
+            <Link href="/login" className="transition hover:text-white">Inloggen</Link>
+            <a href="mailto:contact@praktijkflow.nl" className="transition hover:text-white">Contact</a>
+          </nav>
+        </div>
+      </footer>
+    </div>
   );
 }
