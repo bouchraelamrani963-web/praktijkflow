@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { prisma, safeQuery } from "@/lib/db";
 import { OpenSlotsList } from "@/components/open-slots/OpenSlotsList";
 import { SlotPerformanceView } from "@/components/open-slots/SlotPerformanceView";
 
@@ -9,7 +9,23 @@ type PageSearchParams = Promise<{ [key: string]: string | string[] | undefined }
 
 const FAST_FILL_THRESHOLD_MIN = 5;
 
-async function loadPerformanceMetrics(practiceId: string) {
+type PerformanceMetrics = {
+  avgMinutesToFill: number | null;
+  slotsFilled: number;
+  conversionRate: number;
+  fastFills: number;
+  totalSlots: number;
+};
+
+const ZERO_METRICS: PerformanceMetrics = {
+  avgMinutesToFill: null,
+  slotsFilled: 0,
+  conversionRate: 0,
+  fastFills: 0,
+  totalSlots: 0,
+};
+
+async function loadPerformanceMetrics(practiceId: string): Promise<PerformanceMetrics> {
   const [totalSlots, claimedSlots] = await Promise.all([
     prisma.openSlot.count({ where: { practiceId } }),
     prisma.openSlot.findMany({
@@ -78,6 +94,8 @@ async function loadPerformanceMetrics(practiceId: string) {
   };
 }
 
+type PractitionerRow = { id: string; firstName: string; lastName: string };
+
 export default async function OpenSlotsPage({
   searchParams,
 }: {
@@ -91,17 +109,28 @@ export default async function OpenSlotsPage({
   const view = Array.isArray(sp.view) ? sp.view[0] : sp.view;
 
   if (view === "performance") {
-    const metrics = await loadPerformanceMetrics(user.practiceId);
+    // Performance view does multiple aggregate queries; if DB is missing,
+    // render the panel with zero metrics rather than crashing.
+    const metrics = await safeQuery(
+      "open-slots.performance",
+      () => loadPerformanceMetrics(user.practiceId!),
+      ZERO_METRICS,
+    );
     return <SlotPerformanceView metrics={metrics} />;
   }
 
-  const practitioners = await prisma.user.findMany({
-    where: {
-      memberships: { some: { practiceId: user.practiceId, isActive: true } },
-    },
-    select: { id: true, firstName: true, lastName: true },
-    orderBy: { lastName: "asc" },
-  });
+  const practitioners = await safeQuery<PractitionerRow[]>(
+    "open-slots.practitioners",
+    () =>
+      prisma.user.findMany({
+        where: {
+          memberships: { some: { practiceId: user.practiceId!, isActive: true } },
+        },
+        select: { id: true, firstName: true, lastName: true },
+        orderBy: { lastName: "asc" },
+      }),
+    [],
+  );
 
   return <OpenSlotsList practitioners={practitioners} />;
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { prisma, safeQuery } from "@/lib/db";
 import { patientCreateSchema, patientQuerySchema } from "@/lib/validations/patient";
 
 export async function GET(req: NextRequest) {
@@ -30,20 +30,37 @@ export async function GET(req: NextRequest) {
     }),
   };
 
-  const [total, items] = await Promise.all([
-    prisma.client.count({ where }),
-    prisma.client.findMany({
-      where,
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-  ]);
+  // Wrap the read so a missing/unreachable DB returns an empty list instead
+  // of a 500 — the /patients client page renders the empty state ("Geen
+  // patiënten gevonden") rather than the red error banner.
+  const result = await safeQuery(
+    "api.patients.list",
+    async () => {
+      const [total, items] = await Promise.all([
+        prisma.client.count({ where }),
+        prisma.client.findMany({
+          where,
+          orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+      ]);
+      return { total, items };
+    },
+    { total: 0, items: [] as Prisma.ClientGetPayload<{}>[] },
+  );
 
-  return NextResponse.json({ items, total, page, pageSize });
+  return NextResponse.json({
+    items: result.items ?? [],
+    total: result.total ?? 0,
+    page,
+    pageSize,
+  });
 }
 
 export async function POST(req: NextRequest) {
+  // Writes do NOT use safeQuery — silent fallback on a create would mislead
+  // the user. Real failure must surface as a 500 the toast layer can display.
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.practiceId) return NextResponse.json({ error: "No practice context" }, { status: 403 });

@@ -123,9 +123,9 @@ export function hasRole(user: SessionUser, roles: Role[]): boolean {
  * return zero rows, which the dashboard tolerates (empty state).
  */
 const FALLBACK_DEV_USER: SessionUser = {
-  uid: "dev-000",
+  uid: "demo-user",
   firebaseUid: "firebase-demo-uid-001",
-  email: "demo@praktijkflow.local",
+  email: "demo@praktijkflow.nl",
   firstName: "Demo",
   lastName: "Gebruiker",
   fullName: "Demo Gebruiker",

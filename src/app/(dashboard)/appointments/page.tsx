@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { prisma, safeQuery } from "@/lib/db";
 import { appointmentQuerySchema } from "@/lib/validations/appointment";
 import { AppointmentsList } from "@/components/appointments/AppointmentsList";
 
@@ -28,6 +28,18 @@ async function buildClaimedWhere(
 
 // Next.js 16: searchParams is a Promise that must be awaited.
 type PageSearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+// Row shape produced by the Prisma query below — extracted so the empty-data
+// fallback in the catch path keeps types aligned with the success path.
+type AppointmentRow = Prisma.AppointmentGetPayload<{
+  include: {
+    client:          { select: { id: true; firstName: true; lastName: true; riskLevel: true } };
+    practitioner:    { select: { id: true; firstName: true; lastName: true } };
+    appointmentType: { select: { id: true; name: true; color: true } };
+  };
+}>;
+
+type PractitionerRow = { id: string; firstName: string; lastName: string };
 
 export default async function AppointmentsPage({
   searchParams,
@@ -78,15 +90,28 @@ export default async function AppointmentsPage({
   const pageSize = filters.pageSize ?? 50;
 
   // When claimed=true, pre-fetch CLAIMED open slots to build the matching condition.
-  const claimedWhere = claimed ? await buildClaimedWhere(user.practiceId) : null;
+  // safeQuery: if DB is unreachable we treat it as "no claimed slots" rather than
+  // crashing — the user lands on the empty-state list, not an error page.
+  const claimedWhere = claimed
+    ? await safeQuery(
+        "appointments.buildClaimedWhere",
+        () => buildClaimedWhere(user.practiceId!),
+        null,
+      )
+    : null;
 
   // No claimed slots in DB → return empty list immediately.
   if (claimed && claimedWhere === null) {
-    const practitioners = await prisma.user.findMany({
-      where:   { memberships: { some: { practiceId: user.practiceId, isActive: true } } },
-      select:  { id: true, firstName: true, lastName: true },
-      orderBy: [{ firstName: "asc" }],
-    });
+    const practitioners = await safeQuery<PractitionerRow[]>(
+      "appointments.practitioners",
+      () =>
+        prisma.user.findMany({
+          where:   { memberships: { some: { practiceId: user.practiceId!, isActive: true } } },
+          select:  { id: true, firstName: true, lastName: true },
+          orderBy: [{ firstName: "asc" }],
+        }),
+      [],
+    );
     return (
       <AppointmentsList
         practitioners={practitioners}
@@ -95,7 +120,7 @@ export default async function AppointmentsPage({
     );
   }
 
-  let where: Prisma.AppointmentWhereInput = {
+  const where: Prisma.AppointmentWhereInput = {
     practiceId: user.practiceId,
     ...(status   && { status }),
     ...((dateFrom || dateTo) && {
@@ -107,28 +132,41 @@ export default async function AppointmentsPage({
     ...(claimedWhere ?? {}),
   };
 
-  const [total, rows, practitioners] = await Promise.all([
-    prisma.appointment.count({ where }),
-    prisma.appointment.findMany({
-      where,
-      orderBy: { startTime: "asc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      include: {
-        client:          { select: { id: true, firstName: true, lastName: true, riskLevel: true } },
-        practitioner:    { select: { id: true, firstName: true, lastName: true } },
-        appointmentType: { select: { id: true, name: true, color: true } },
-      },
-    }),
-    prisma.user.findMany({
-      where:   { memberships: { some: { practiceId: user.practiceId, isActive: true } } },
-      select:  { id: true, firstName: true, lastName: true },
-      orderBy: [{ firstName: "asc" }],
-    }),
-  ]);
+  // Wrap the three queries in one safeQuery so a single DB failure produces a
+  // coherent empty-state render rather than a half-broken page.
+  const data = await safeQuery<{
+    total: number;
+    rows: AppointmentRow[];
+    practitioners: PractitionerRow[];
+  }>(
+    "appointments.list",
+    async () => {
+      const [total, rows, practitioners] = await Promise.all([
+        prisma.appointment.count({ where }),
+        prisma.appointment.findMany({
+          where,
+          orderBy: { startTime: "asc" },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          include: {
+            client:          { select: { id: true, firstName: true, lastName: true, riskLevel: true } },
+            practitioner:    { select: { id: true, firstName: true, lastName: true } },
+            appointmentType: { select: { id: true, name: true, color: true } },
+          },
+        }),
+        prisma.user.findMany({
+          where:   { memberships: { some: { practiceId: user.practiceId!, isActive: true } } },
+          select:  { id: true, firstName: true, lastName: true },
+          orderBy: [{ firstName: "asc" }],
+        }),
+      ]);
+      return { total, rows, practitioners };
+    },
+    { total: 0, rows: [], practitioners: [] },
+  );
 
   // Serialize Prisma Date objects → ISO strings so they match the AppointmentRow interface.
-  const items = rows.map((a) => ({
+  const items = (data.rows ?? []).map((a) => ({
     id:                   a.id,
     startTime:            a.startTime.toISOString(),
     endTime:              a.endTime.toISOString(),
@@ -143,8 +181,8 @@ export default async function AppointmentsPage({
 
   return (
     <AppointmentsList
-      practitioners={practitioners}
-      initialData={{ items, total, page, pageSize }}
+      practitioners={data.practitioners ?? []}
+      initialData={{ items, total: data.total ?? 0, page, pageSize }}
     />
   );
 }

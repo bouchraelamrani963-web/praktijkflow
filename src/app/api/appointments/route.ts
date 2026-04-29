@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { prisma, safeQuery } from "@/lib/db";
 import {
   appointmentCreateSchema,
   appointmentQuerySchema,
@@ -40,10 +40,21 @@ export async function GET(req: NextRequest) {
   };
 
   if (claimed) {
-    const claimedSlots = await prisma.openSlot.findMany({
-      where: { practiceId: user.practiceId, status: "CLAIMED" },
-      select: { startTime: true, practitionerId: true, sourceAppointmentId: true },
-    });
+    // Empty result is the only graceful fallback when DB is unreachable —
+    // the caller (client-side filter UI) shows "no claimed appointments yet".
+    const claimedSlots = await safeQuery(
+      "api.appointments.claimedSlots",
+      () =>
+        prisma.openSlot.findMany({
+          where: { practiceId: user.practiceId!, status: "CLAIMED" },
+          select: { startTime: true, practitionerId: true, sourceAppointmentId: true },
+        }),
+      [] as Array<{
+        startTime: Date;
+        practitionerId: string;
+        sourceAppointmentId: string | null;
+      }>,
+    );
     if (claimedSlots.length === 0) {
       return NextResponse.json({ items: [], total: 0, page, pageSize });
     }
@@ -61,27 +72,50 @@ export async function GET(req: NextRequest) {
     };
   }
 
-  const [total, items] = await Promise.all([
-    prisma.appointment.count({ where }),
-    prisma.appointment.findMany({
-      where,
-      orderBy: { startTime: "asc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+  // Wrap the (count, list) pair so a single DB failure returns an empty page
+  // rather than a 500. The client UI handles total=0/items=[] as "no results".
+  const result = await safeQuery(
+    "api.appointments.list",
+    async () => {
+      const [total, items] = await Promise.all([
+        prisma.appointment.count({ where }),
+        prisma.appointment.findMany({
+          where,
+          orderBy: { startTime: "asc" },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          include: {
+            client: {
+              select: { id: true, firstName: true, lastName: true, riskLevel: true },
+            },
+            practitioner: { select: { id: true, firstName: true, lastName: true } },
+            appointmentType: { select: { id: true, name: true, color: true } },
+          },
+        }),
+      ]);
+      return { total, items };
+    },
+    { total: 0, items: [] as Array<Prisma.AppointmentGetPayload<{
       include: {
-        client: {
-          select: { id: true, firstName: true, lastName: true, riskLevel: true },
-        },
-        practitioner: { select: { id: true, firstName: true, lastName: true } },
-        appointmentType: { select: { id: true, name: true, color: true } },
-      },
-    }),
-  ]);
+        client:          { select: { id: true; firstName: true; lastName: true; riskLevel: true } };
+        practitioner:    { select: { id: true; firstName: true; lastName: true } };
+        appointmentType: { select: { id: true; name: true; color: true } };
+      };
+    }>> },
+  );
 
-  return NextResponse.json({ items, total, page, pageSize });
+  return NextResponse.json({
+    items: result.items ?? [],
+    total: result.total ?? 0,
+    page,
+    pageSize,
+  });
 }
 
 export async function POST(req: NextRequest) {
+  // Writes intentionally do NOT use safeQuery — we want a real error surface
+  // when a create fails. Silent fallback on a write would leave the user
+  // thinking the appointment was saved.
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.practiceId) return NextResponse.json({ error: "No practice context" }, { status: 403 });

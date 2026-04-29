@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { prisma, safeQuery } from "@/lib/db";
 import { waitlistCreateSchema, waitlistQuerySchema } from "@/lib/validations/waitlist";
 
 export async function GET(req: NextRequest) {
@@ -27,24 +27,49 @@ export async function GET(req: NextRequest) {
     ...(appointmentTypeId && { appointmentTypeId }),
   };
 
-  const [total, items] = await Promise.all([
-    prisma.waitlistEntry.count({ where }),
-    prisma.waitlistEntry.findMany({
-      where,
-      orderBy: { createdAt: "asc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      include: {
-        client: { select: { id: true, firstName: true, lastName: true, phone: true, email: true } },
-        appointmentType: { select: { id: true, name: true } },
-      },
-    }),
-  ]);
+  // Wrap the read so a missing/unreachable DB returns an empty list instead
+  // of a 500 — the /waitlist client page renders its empty state ("Geen
+  // patiënten op de wachtlijst…") rather than the red error banner.
+  const result = await safeQuery(
+    "api.waitlist.list",
+    async () => {
+      const [total, items] = await Promise.all([
+        prisma.waitlistEntry.count({ where }),
+        prisma.waitlistEntry.findMany({
+          where,
+          orderBy: { createdAt: "asc" },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          include: {
+            client: { select: { id: true, firstName: true, lastName: true, phone: true, email: true } },
+            appointmentType: { select: { id: true, name: true } },
+          },
+        }),
+      ]);
+      return { total, items };
+    },
+    {
+      total: 0,
+      items: [] as Prisma.WaitlistEntryGetPayload<{
+        include: {
+          client: { select: { id: true; firstName: true; lastName: true; phone: true; email: true } };
+          appointmentType: { select: { id: true; name: true } };
+        };
+      }>[],
+    },
+  );
 
-  return NextResponse.json({ items, total, page, pageSize });
+  return NextResponse.json({
+    items: result.items ?? [],
+    total: result.total ?? 0,
+    page,
+    pageSize,
+  });
 }
 
 export async function POST(req: NextRequest) {
+  // Writes do NOT use safeQuery — silent fallback on a create would mislead
+  // the user. Real failure must surface as a 500 the toast layer can display.
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.practiceId) return NextResponse.json({ error: "No practice context" }, { status: 403 });
