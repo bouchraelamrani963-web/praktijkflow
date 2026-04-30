@@ -149,7 +149,7 @@ export default function HomePage() {
           </Link>
           <nav className="hidden items-center gap-8 text-sm md:flex" style={{ color: "var(--pf-fg-2)" }}>
             <a href="#how" className="transition hover:text-white">Hoe het werkt</a>
-            <a href="#demo" className="transition hover:text-white">Demo</a>
+            <a href="#dashboard" className="transition hover:text-white">Dashboard</a>
             <a href="#pricing" className="transition hover:text-white">Prijzen</a>
             <Link href="/login" className="transition hover:text-white">Inloggen</Link>
           </nav>
@@ -230,8 +230,8 @@ export default function HomePage() {
                   Start 14 dagen gratis
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link href="#demo" className="pf-btn-secondary">
-                  Bekijk demo
+                <Link href="#dashboard" className="pf-btn-secondary">
+                  Bekijk dashboard
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -397,23 +397,22 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ═══ 4. DEMO — abstract dashboard preview ════════════════════
-            Replaces the prior third-party video embed (which used a generic
-            placeholder clip) with a self-contained dashboard mockup in the
-            same dark/glassmorphism style as the rest of the landing.
-            Narrative stays scoped to no-shows + waitlist + open slots +
-            revenue recovery. */}
-        <section id="demo" className="pf-section relative">
+        {/* ═══ 4. DASHBOARD — live preview ═════════════════════════════
+            A self-contained dashboard mockup in the same dark/glassmorphism
+            style as the rest of the landing. Narrative stays scoped to
+            no-shows + waitlist + open slots + revenue recovery. */}
+        <section id="dashboard" className="pf-section relative">
           <div className="mx-auto max-w-2xl px-6 text-center">
-            <p className="pf-eyebrow">Demo</p>
+            <p className="pf-eyebrow">Live dashboard</p>
             <h2
               className="pf-display mt-3"
               style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
             >
-              Zie het in actie
+              Bekijk het dashboard
             </h2>
             <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
-              Bekijk hoe NoShow Control een open plek omzet in teruggewonnen omzet.
+              Zie in één oogopslag hoeveel omzet je terugwint, welke open
+              plekken gevuld zijn en welke patiënten op de wachtlijst staan.
             </p>
           </div>
 
