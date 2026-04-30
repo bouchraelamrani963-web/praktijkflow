@@ -26,11 +26,6 @@ import {
  * components that the dashboard also uses.
  */
 
-// TODO: replace with the real NoShow Control demo embed (YouTube or Loom).
-const DEMO_VIDEO_EMBED_URL =
-  "https://www.youtube.com/embed/aqz-KE-bpKQ?rel=0&modestbranding=1";
-const DEMO_VIDEO_IS_PLACEHOLDER = true;
-
 const painPoints = [
   {
     icon: CalendarX,
@@ -282,188 +277,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ═══ 1.b LIVE PREVIEW — abstract dashboard mockup ═════════════
-            Smaller, centered version of the dashboard mockup that previously
-            sat in the hero's right column. Sits below the proof strip as the
-            "see what you get" moment for users who scrolled past the fold.
-            No patient records / X-ray / full-PMS imagery — narrative stays
-            scoped to no-shows + waitlist + open slots + revenue recovery. */}
-        <section className="relative pt-12 pb-24 sm:pt-16">
-          <div className="relative mx-auto max-w-[760px] px-6">
-            <p className="pf-eyebrow mb-4 text-center">Live preview · Dashboard</p>
-
-            <div className="relative">
-              {/* Soft halo behind the card — design-system glow tokens */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -inset-6 -z-10"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.28), transparent 65%), radial-gradient(ellipse at 80% 80%, rgba(0,212,180,0.18), transparent 65%)",
-                  filter: "blur(40px)",
-                }}
-              />
-
-              <div
-                className="relative overflow-hidden p-4 sm:p-5"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(124,58,237,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-                  border: "1px solid var(--pf-border-dim)",
-                  borderRadius: "var(--pf-radius-lg)",
-                  boxShadow: "var(--pf-shadow-2)",
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                }}
-              >
-                {/* Browser chrome — minimal, decorative */}
-                <div className="mb-4 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
-                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
-                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
-                  <span className="ml-2 truncate text-[10px]" style={{ color: "var(--pf-fg-3)" }}>
-                    noshowcontrol.nl/dashboard
-                  </span>
-                </div>
-
-                {/* KPI strip — three outcome metrics */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                  {[
-                    { value: "€800",  label: "Teruggewonnen omzet", accent: "var(--pf-teal-light)",   iconBg: "rgba(0,212,180,0.15)",    icon: Euro },
-                    { value: "4",     label: "Lege plekken gevuld", accent: "var(--pf-purple-light)", iconBg: "rgba(124,58,237,0.18)",   icon: CheckCheck },
-                    { value: "−32%",  label: "Minder no-shows",     accent: "#ffffff",                iconBg: "rgba(255,255,255,0.06)",  icon: TrendingDown },
-                  ].map((kpi) => (
-                    <div
-                      key={kpi.label}
-                      className="p-3"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: "var(--pf-radius-md)",
-                      }}
-                    >
-                      <span
-                        className="inline-flex h-6 w-6 items-center justify-center"
-                        style={{ background: kpi.iconBg, borderRadius: 6 }}
-                      >
-                        <kpi.icon className="h-3 w-3" style={{ color: kpi.accent }} strokeWidth={2} />
-                      </span>
-                      <p
-                        className="pf-display mt-2 leading-none"
-                        style={{ fontWeight: 700, fontSize: 22, color: kpi.accent }}
-                      >
-                        {kpi.value}
-                      </p>
-                      <p className="mt-1 text-[10px] leading-tight" style={{ color: "var(--pf-fg-3)" }}>
-                        {kpi.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Two side-by-side mini-panels: waitlist + open slots */}
-                <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-2.5">
-                  {/* Wachtlijst panel */}
-                  <div
-                    className="p-3"
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "var(--pf-radius-md)",
-                    }}
-                  >
-                    <p
-                      className="mb-2 text-[10px] uppercase tracking-wider"
-                      style={{ color: "var(--pf-fg-3)", fontWeight: 600 }}
-                    >
-                      Wachtlijst
-                    </p>
-                    {[
-                      { name: "Sophie de Vries", status: "Aangeboden", dot: "var(--pf-warning)" },
-                      { name: "Jan Bakker",      status: "Wachtend",   dot: "var(--pf-purple-light)" },
-                      { name: "+8 anderen",      status: null,         dot: null,                    muted: true },
-                    ].map((row) => (
-                      <div key={row.name} className="flex items-center justify-between py-1 text-[11px]">
-                        <span
-                          className="truncate"
-                          style={{
-                            color: row.muted ? "var(--pf-fg-3)" : "var(--pf-fg-2)",
-                            opacity: row.muted ? 0.7 : 1,
-                          }}
-                        >
-                          {row.name}
-                        </span>
-                        {row.status && (
-                          <span className="flex shrink-0 items-center gap-1" style={{ color: "var(--pf-fg-3)", fontSize: 10 }}>
-                            <span className="h-1.5 w-1.5 rounded-full" style={{ background: row.dot ?? "var(--pf-fg-3)" }} />
-                            {row.status}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Open plekken panel */}
-                  <div
-                    className="p-3"
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "var(--pf-radius-md)",
-                    }}
-                  >
-                    <p
-                      className="mb-2 text-[10px] uppercase tracking-wider"
-                      style={{ color: "var(--pf-fg-3)", fontWeight: 600 }}
-                    >
-                      Open plekken
-                    </p>
-                    {[
-                      { time: "Wo 14:30", subtitle: "Maria Jansen", badgeText: "Geclaimd",  badgeBg: "rgba(0,212,180,0.18)",   badgeBorder: "rgba(0,212,180,0.4)",   badgeColor: "var(--pf-teal-light)" },
-                      { time: "Vr 10:00", subtitle: "Beschikbaar",  badgeText: "2 matches", badgeBg: "rgba(124,58,237,0.18)",  badgeBorder: "rgba(124,58,237,0.4)",  badgeColor: "var(--pf-purple-light)" },
-                    ].map((slot) => (
-                      <div key={slot.time} className="flex items-center justify-between py-1.5 text-[11px]">
-                        <div className="min-w-0 truncate">
-                          <span style={{ color: "var(--pf-fg-2)", fontWeight: 600 }}>{slot.time}</span>
-                          <span className="ml-1.5" style={{ color: "var(--pf-fg-3)", fontSize: 10 }}>· {slot.subtitle}</span>
-                        </div>
-                        <span
-                          className="shrink-0 rounded-full px-1.5 py-0.5"
-                          style={{
-                            background: slot.badgeBg,
-                            border: `1px solid ${slot.badgeBorder}`,
-                            color: slot.badgeColor,
-                            fontSize: 9,
-                            fontWeight: 600,
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {slot.badgeText}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Activity ticker — single recent line, gives a "live" feel */}
-                <div
-                  className="mt-2.5 flex items-center gap-2 px-3 py-2"
-                  style={{
-                    background: "rgba(0,212,180,0.08)",
-                    border: "1px solid rgba(0,212,180,0.22)",
-                    borderRadius: "var(--pf-radius-md)",
-                  }}
-                >
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "var(--pf-teal)" }} />
-                  <span className="text-[11px]" style={{ color: "var(--pf-teal-light)", fontWeight: 500 }}>
-                    €95 omzet teruggewonnen — 3 min geleden
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ═══ 2. PROBLEM → SOLUTION ══════════════════════════════════ */}
         <section className="pf-section relative">
           <div className="mx-auto max-w-[1100px] px-6">
@@ -584,61 +397,186 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ═══ 4. DEMO VIDEO ══════════════════════════════════════════ */}
+        {/* ═══ 4. DEMO — abstract dashboard preview ════════════════════
+            Replaces the prior third-party video embed (which used a generic
+            placeholder clip) with a self-contained dashboard mockup in the
+            same dark/glassmorphism style as the rest of the landing.
+            Narrative stays scoped to no-shows + waitlist + open slots +
+            revenue recovery. */}
         <section id="demo" className="pf-section relative">
-          <div className="mx-auto max-w-5xl px-6">
-            <div className="mx-auto max-w-2xl text-center">
-              <p className="pf-eyebrow">Demo</p>
-              <h2
-                className="pf-display mt-3"
-                style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
-              >
-                Zie het in actie
-              </h2>
-              <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
-                Een echte annulering. Een echte SMS. Een echte claim — in minder dan een minuut.
-              </p>
-            </div>
-
-            <div
-              className="mt-12 overflow-hidden"
-              style={{
-                borderRadius: "var(--pf-radius-xl)",
-                border: "1px solid var(--pf-border-dim)",
-                boxShadow: "var(--pf-shadow-3)",
-              }}
+          <div className="mx-auto max-w-2xl px-6 text-center">
+            <p className="pf-eyebrow">Demo</p>
+            <h2
+              className="pf-display mt-3"
+              style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
             >
-              <div className="relative aspect-video w-full" style={{ background: "var(--pf-bg-deep)" }}>
-                <iframe
-                  src={DEMO_VIDEO_EMBED_URL}
-                  title="NoShow Control demo — Binnen 1 minuut opnieuw ingevuld"
-                  loading="lazy"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0 h-full w-full"
-                />
-                {DEMO_VIDEO_IS_PLACEHOLDER && (
+              Zie het in actie
+            </h2>
+            <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
+              Bekijk hoe NoShow Control een open plek omzet in teruggewonnen omzet.
+            </p>
+          </div>
+
+          <div className="relative mx-auto mt-12 max-w-[760px] px-6">
+            <div className="relative">
+              {/* Soft halo behind the card — design-system glow tokens */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-6 -z-10"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.28), transparent 65%), radial-gradient(ellipse at 80% 80%, rgba(0,212,180,0.18), transparent 65%)",
+                  filter: "blur(40px)",
+                }}
+              />
+
+              <div
+                className="relative overflow-hidden p-4 sm:p-5"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(124,58,237,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+                  border: "1px solid var(--pf-border-dim)",
+                  borderRadius: "var(--pf-radius-lg)",
+                  boxShadow: "var(--pf-shadow-3)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                }}
+              >
+                {/* Browser chrome — minimal, decorative */}
+                <div className="mb-4 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
+                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
+                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
+                  <span className="ml-2 truncate text-[10px]" style={{ color: "var(--pf-fg-3)" }}>
+                    noshowcontrol.nl/dashboard
+                  </span>
+                </div>
+
+                {/* KPI strip — three outcome metrics */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+                  {[
+                    { value: "€800",  label: "Teruggewonnen omzet", accent: "var(--pf-teal-light)",   iconBg: "rgba(0,212,180,0.15)",    icon: Euro },
+                    { value: "4",     label: "Lege plekken gevuld", accent: "var(--pf-purple-light)", iconBg: "rgba(124,58,237,0.18)",   icon: CheckCheck },
+                    { value: "−32%",  label: "Minder no-shows",     accent: "#ffffff",                iconBg: "rgba(255,255,255,0.06)",  icon: TrendingDown },
+                  ].map((kpi) => (
+                    <div
+                      key={kpi.label}
+                      className="p-3 text-left"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: "var(--pf-radius-md)",
+                      }}
+                    >
+                      <span
+                        className="inline-flex h-6 w-6 items-center justify-center"
+                        style={{ background: kpi.iconBg, borderRadius: 6 }}
+                      >
+                        <kpi.icon className="h-3 w-3" style={{ color: kpi.accent }} strokeWidth={2} />
+                      </span>
+                      <p
+                        className="pf-display mt-2 leading-none"
+                        style={{ fontWeight: 700, fontSize: 22, color: kpi.accent }}
+                      >
+                        {kpi.value}
+                      </p>
+                      <p className="mt-1 text-[10px] leading-tight" style={{ color: "var(--pf-fg-3)" }}>
+                        {kpi.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Two side-by-side mini-panels: waitlist + open slots */}
+                <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-2.5">
+                  {/* Wachtlijst panel */}
                   <div
-                    className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide text-white backdrop-blur"
+                    className="p-3 text-left"
                     style={{
-                      background: "rgba(0,0,0,0.6)",
-                      fontWeight: 600,
-                      letterSpacing: "0.1em",
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "var(--pf-radius-md)",
                     }}
                   >
-                    <PlayCircle className="h-3 w-3" />
-                    Voorbeeldvideo
+                    <p
+                      className="mb-2 text-[10px] uppercase tracking-wider"
+                      style={{ color: "var(--pf-fg-3)", fontWeight: 600 }}
+                    >
+                      Wachtlijst
+                    </p>
+                    {[
+                      { name: "Sophie de Vries", status: "Aangeboden", dot: "var(--pf-warning)" },
+                      { name: "Jan Bakker",      status: "Wachtend",   dot: "var(--pf-purple-light)" },
+                    ].map((row) => (
+                      <div key={row.name} className="flex items-center justify-between py-1 text-[11px]">
+                        <span className="truncate" style={{ color: "var(--pf-fg-2)" }}>
+                          {row.name}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1" style={{ color: "var(--pf-fg-3)", fontSize: 10 }}>
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ background: row.dot }} />
+                          {row.status}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                )}
+
+                  {/* Open plekken panel */}
+                  <div
+                    className="p-3 text-left"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "var(--pf-radius-md)",
+                    }}
+                  >
+                    <p
+                      className="mb-2 text-[10px] uppercase tracking-wider"
+                      style={{ color: "var(--pf-fg-3)", fontWeight: 600 }}
+                    >
+                      Open plekken
+                    </p>
+                    {[
+                      { time: "Wo 14:30", subtitle: "Maria Jansen", badgeText: "Geclaimd",  badgeBg: "rgba(0,212,180,0.18)",   badgeBorder: "rgba(0,212,180,0.4)",   badgeColor: "var(--pf-teal-light)" },
+                      { time: "Vr 10:00", subtitle: "Beschikbaar",  badgeText: "2 matches", badgeBg: "rgba(124,58,237,0.18)",  badgeBorder: "rgba(124,58,237,0.4)",  badgeColor: "var(--pf-purple-light)" },
+                    ].map((slot) => (
+                      <div key={slot.time} className="flex items-center justify-between py-1.5 text-[11px]">
+                        <div className="min-w-0 truncate">
+                          <span style={{ color: "var(--pf-fg-2)", fontWeight: 600 }}>{slot.time}</span>
+                          <span className="ml-1.5" style={{ color: "var(--pf-fg-3)", fontSize: 10 }}>· {slot.subtitle}</span>
+                        </div>
+                        <span
+                          className="shrink-0 rounded-full px-1.5 py-0.5"
+                          style={{
+                            background: slot.badgeBg,
+                            border: `1px solid ${slot.badgeBorder}`,
+                            color: slot.badgeColor,
+                            fontSize: 9,
+                            fontWeight: 600,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {slot.badgeText}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Activity ticker — single recent line, gives a "live" feel */}
+                <div
+                  className="mt-2.5 flex items-center gap-2 px-3 py-2"
+                  style={{
+                    background: "rgba(0,212,180,0.08)",
+                    border: "1px solid rgba(0,212,180,0.22)",
+                    borderRadius: "var(--pf-radius-md)",
+                  }}
+                >
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "var(--pf-teal)" }} />
+                  <span className="text-[11px]" style={{ color: "var(--pf-teal-light)", fontWeight: 500 }}>
+                    €95 omzet teruggewonnen — 3 min geleden
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="mt-6 text-center">
-              <p className="pf-display" style={{ fontWeight: 600, fontSize: 18, color: "var(--pf-fg-1)" }}>
-                Binnen 1 minuut opnieuw ingevuld
-              </p>
-              <p className="mt-1 text-sm" style={{ color: "var(--pf-fg-2)" }}>
-                Zie hoe een geannuleerde afspraak automatisch opnieuw wordt ingevuld.
-              </p>
             </div>
           </div>
         </section>
