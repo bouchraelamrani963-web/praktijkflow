@@ -125,7 +125,7 @@ export function hasRole(user: SessionUser, roles: Role[]): boolean {
 const FALLBACK_DEV_USER: SessionUser = {
   uid: "demo-user",
   firebaseUid: "firebase-demo-uid-001",
-  email: "demo@praktijkflow.nl",
+  email: "demo@noshowcontrol.nl",
   firstName: "Demo",
   lastName: "Gebruiker",
   fullName: "Demo Gebruiker",

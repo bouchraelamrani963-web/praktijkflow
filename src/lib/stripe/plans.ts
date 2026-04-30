@@ -1,12 +1,17 @@
 import type { PricingPlan } from "@/types";
 
 /**
- * PraktijkFlow 3-tier revenue-engine pricing.
+ * NoShow Control 3-tier revenue-engine pricing.
  *
  * Internal IDs are kept aligned with the existing Stripe webhook mapping
  * (`starter` / `pro` / `enterprise`) so billing integrations and historical
  * subscription records continue to resolve correctly. The marketing names
- * (Start / Growth / Pro) and prices are what the user sees.
+ * (Starter / Pro / Growth) and prices are what the user sees.
+ *
+ * Mapping after the 2026-04 rebrand:
+ *   - id: "starter"     → marketing name "Starter"  · €59  · klein
+ *   - id: "pro"         → marketing name "Pro"      · €79  · groeiend (highlighted)
+ *   - id: "enterprise"  → marketing name "Growth"   · €119 · meerstoels
  *
  * Every plan MUST include `revenueFrame` — the product is sold as money back,
  * not as software. The line renders immediately under the price.
@@ -14,10 +19,10 @@ import type { PricingPlan } from "@/types";
 export const plans: PricingPlan[] = [
   {
     id: "starter",
-    name: "Start",
+    name: "Starter",
     tagline: "Voor kleine praktijken",
     description: "Voor kleine praktijken",
-    price: 49,
+    price: 59,
     currency: "EUR",
     interval: "month",
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID ?? "",
@@ -31,7 +36,7 @@ export const plans: PricingPlan[] = [
   },
   {
     id: "pro", // internal id retained for Stripe webhook compatibility
-    name: "Growth",
+    name: "Pro",
     tagline: "Voor groeiende praktijken",
     description: "Voor groeiende praktijken",
     price: 79,
@@ -50,7 +55,7 @@ export const plans: PricingPlan[] = [
   },
   {
     id: "enterprise", // internal id retained for Stripe webhook compatibility
-    name: "Pro",
+    name: "Growth",
     tagline: "Voor meerstoelspraktijken",
     description: "Voor meerstoelspraktijken",
     price: 119,

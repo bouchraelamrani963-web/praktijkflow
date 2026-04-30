@@ -15,7 +15,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "PraktijkFlow — Automatisch lege afspraken ingevuld",
+  title: "NoShow Control — Automatisch lege afspraken ingevuld",
   description:
     "Geannuleerde afspraken worden direct aangeboden aan uw wachtlijst — zonder bellen of handmatig plannen.",
 };

@@ -184,7 +184,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <aside className="hidden w-64 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
         <div className="flex h-16 items-center border-b border-zinc-200 px-6 dark:border-zinc-800">
           <Link href="/" className="text-lg font-bold text-zinc-900 dark:text-white">
-            PraktijkFlow
+            NoShow Control
           </Link>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">

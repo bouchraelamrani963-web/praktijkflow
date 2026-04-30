@@ -16,19 +16,18 @@ import {
 } from "lucide-react";
 
 /**
- * Landing page restyled to the PraktijkFlow Design System (dark purple,
- * glassmorphism, Sora display + DM Sans body, purple CTAs). All copy is
- * preserved from the prior light-theme version — only the visual layer
- * changed. The dashboard pages do NOT inherit this theme; the .pf-dark
- * scope class on the wrapper isolates these styles to this page.
+ * Landing page styled with the dark-purple design system (glassmorphism,
+ * Sora display + DM Sans body, purple CTAs). All copy is preserved from
+ * the prior light-theme version — only the visual layer changed. The
+ * dashboard pages do NOT inherit this theme; the .pf-dark scope class on
+ * the wrapper isolates these styles to this page.
  *
- * Per the design system handoff: only src/app/page.tsx + globals.css are
- * touched. The legacy <Navbar /> and <Footer /> components are replaced
- * inline with dark-theme equivalents so we don't have to modify shared
- * layout components that the dashboard also uses.
+ * The legacy <Navbar /> and <Footer /> components are replaced inline with
+ * dark-theme equivalents so we don't have to modify shared layout
+ * components that the dashboard also uses.
  */
 
-// TODO: replace with the real PraktijkFlow demo embed (YouTube or Loom).
+// TODO: replace with the real NoShow Control demo embed (YouTube or Loom).
 const DEMO_VIDEO_EMBED_URL =
   "https://www.youtube.com/embed/aqz-KE-bpKQ?rel=0&modestbranding=1";
 const DEMO_VIDEO_IS_PLACEHOLDER = true;
@@ -59,7 +58,7 @@ const solutionPoints = [
     icon: Zap,
     title: "Automatische detectie",
     description:
-      "Zodra een afspraak wordt geannuleerd, herkent PraktijkFlow direct de vrijgekomen plek.",
+      "Zodra een afspraak wordt geannuleerd, herkent NoShow Control direct de vrijgekomen plek.",
   },
   {
     icon: Sparkles,
@@ -88,7 +87,7 @@ const steps = [
     icon: Clock3,
     title: "Plek komt vrij",
     description:
-      "PraktijkFlow registreert de open plek automatisch met de juiste tijd, duur en behandelaar.",
+      "NoShow Control registreert de open plek automatisch met de juiste tijd, duur en behandelaar.",
   },
   {
     number: "03",
@@ -133,12 +132,14 @@ const impactCards = [
   },
 ];
 
-// Word-mark per design system: "Praktijk" weight 700 white, "Flow" weight 300 dim.
+// Word-mark: "NoShow" weight 700 white, "Control" weight 300 dim.
+// Space between the two halves is part of the brand spelling ("NoShow Control"),
+// not concatenated like the prior "PraktijkFlow" word-mark.
 function WordMark() {
   return (
     <span className="select-none text-lg leading-none" style={{ fontFamily: "var(--pf-font-display)" }}>
-      <span style={{ fontWeight: 700, color: "var(--pf-fg-1)" }}>Praktijk</span>
-      <span style={{ fontWeight: 300, color: "var(--pf-fg-3)" }}>Flow</span>
+      <span style={{ fontWeight: 700, color: "var(--pf-fg-1)" }}>NoShow</span>
+      <span style={{ fontWeight: 300, color: "var(--pf-fg-3)" }}>{" Control"}</span>
     </span>
   );
 }
@@ -307,7 +308,7 @@ export default function HomePage() {
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--pf-warning)" }} />
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--pf-success)" }} />
                   <span className="ml-2 text-xs" style={{ color: "var(--pf-fg-3)" }}>
-                    praktijkflow.nl/dashboard
+                    noshowcontrol.nl/dashboard
                   </span>
                 </div>
                 <div
@@ -456,7 +457,7 @@ export default function HomePage() {
                     color: "var(--pf-fg-1)",
                   }}
                 >
-                  PraktijkFlow lost dit volledig automatisch op
+                  NoShow Control lost dit volledig automatisch op
                 </h3>
                 <p className="mt-4" style={{ color: "var(--pf-fg-2)" }}>
                   Geen telefoonrondes meer. Geen lege stoelen. Geen verloren omzet.
@@ -546,7 +547,7 @@ export default function HomePage() {
               <div className="relative aspect-video w-full" style={{ background: "var(--pf-bg-deep)" }}>
                 <iframe
                   src={DEMO_VIDEO_EMBED_URL}
-                  title="PraktijkFlow demo — Binnen 1 minuut opnieuw ingevuld"
+                  title="NoShow Control demo — Binnen 1 minuut opnieuw ingevuld"
                   loading="lazy"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
@@ -591,7 +592,7 @@ export default function HomePage() {
                 Concrete cijfers voor uw praktijk
               </h2>
               <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
-                Gemiddeld behaald door praktijken op PraktijkFlow in het eerste kwartaal.
+                Gemiddeld behaald door praktijken op NoShow Control in het eerste kwartaal.
               </p>
             </div>
             <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -637,7 +638,7 @@ export default function HomePage() {
                 className="pf-display mt-3"
                 style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
               >
-                PraktijkFlow wint verloren omzet uit annuleringen automatisch voor u terug
+                NoShow Control wint verloren omzet uit annuleringen automatisch voor u terug
               </h2>
               <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
                 U betaalt een vaste prijs per maand en houdt het verschil.
@@ -661,15 +662,15 @@ export default function HomePage() {
             <div className="mt-16 grid gap-6 lg:grid-cols-3">
               {[
                 {
-                  name: "START",
-                  price: "€49",
+                  name: "STARTER",
+                  price: "€59",
                   audience: "Voor kleine praktijken",
                   savings: "Gemiddeld €150–€400 per maand teruggewonnen",
                   features: ["Basis wachtlijst", "Automatische invulling", "Beperkt dashboard"],
                   featured: false,
                 },
                 {
-                  name: "GROWTH",
+                  name: "PRO",
                   price: "€79",
                   audience: "Voor groeiende praktijken",
                   savings: "Gemiddeld €300–€800 per maand teruggewonnen",
@@ -677,7 +678,7 @@ export default function HomePage() {
                   featured: true,
                 },
                 {
-                  name: "PRO",
+                  name: "GROWTH",
                   price: "€119",
                   audience: "Voor meerstoelpraktijken",
                   savings: "Gemiddeld €500–€1.200+ per maand teruggewonnen",
@@ -761,14 +762,14 @@ export default function HomePage() {
               Klaar om geen plek meer leeg te laten?
             </h2>
             <p className="mx-auto mt-5 max-w-xl" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
-              Plan een vrijblijvende demo van 15 minuten. We laten zien hoeveel omzet uw praktijk maandelijks misloopt — en hoe PraktijkFlow dat direct oplost.
+              Plan een vrijblijvende demo van 15 minuten. We laten zien hoeveel omzet uw praktijk maandelijks misloopt — en hoe NoShow Control dat direct oplost.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link href="mailto:demo@praktijkflow.nl?subject=Demo%20aanvraag" className="pf-btn-primary">
+              <Link href="mailto:demo@noshowcontrol.nl?subject=Demo%20aanvraag" className="pf-btn-primary">
                 Plan een demo
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="mailto:contact@praktijkflow.nl" className="pf-btn-secondary">
+              <Link href="mailto:contact@noshowcontrol.nl" className="pf-btn-secondary">
                 Neem contact op
               </Link>
             </div>
@@ -788,14 +789,14 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <WordMark />
             <span className="text-xs" style={{ color: "var(--pf-fg-3)" }}>
-              © {new Date().getFullYear()} PraktijkFlow
+              © {new Date().getFullYear()} NoShow Control
             </span>
           </div>
           <nav className="flex items-center gap-6 text-xs" style={{ color: "var(--pf-fg-3)" }}>
             <a href="#how" className="transition hover:text-white">Hoe het werkt</a>
             <a href="#pricing" className="transition hover:text-white">Prijzen</a>
             <Link href="/login" className="transition hover:text-white">Inloggen</Link>
-            <a href="mailto:contact@praktijkflow.nl" className="transition hover:text-white">Contact</a>
+            <a href="mailto:contact@noshowcontrol.nl" className="transition hover:text-white">Contact</a>
           </nav>
         </div>
       </footer>

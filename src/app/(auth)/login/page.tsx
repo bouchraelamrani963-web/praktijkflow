@@ -54,7 +54,7 @@ function LoginForm() {
     <div className="w-full max-w-md space-y-8">
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-          Inloggen bij PraktijkFlow
+          Inloggen bij NoShow Control
         </h1>
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
           Welkom terug! Vul uw gegevens in.

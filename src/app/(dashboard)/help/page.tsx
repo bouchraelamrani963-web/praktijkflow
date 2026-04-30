@@ -3,8 +3,8 @@ import { Calendar, Shield, Clock, Users, LayoutDashboard, HelpCircle, Zap } from
 const sections = [
   {
     icon: HelpCircle,
-    title: "Hoe werkt PraktijkFlow?",
-    content: `PraktijkFlow helpt uw praktijk om verloren omzet door annuleringen en no-shows automatisch terug te winnen.
+    title: "Hoe werkt NoShow Control?",
+    content: `NoShow Control helpt uw praktijk om verloren omzet door annuleringen en no-shows automatisch terug te winnen.
 
 Wanneer een afspraak uitvalt:
 
@@ -26,7 +26,7 @@ Wanneer een afspraak uitvalt:
   {
     icon: Shield,
     title: "No-shows voorkomen",
-    content: `PraktijkFlow helpt u no-shows te verminderen met automatische herinneringen.
+    content: `NoShow Control helpt u no-shows te verminderen met automatische herinneringen.
 
 • 48-uurs herinnering: patiënt ontvangt een SMS twee dagen voor de afspraak
 • 24-uurs herinnering: patiënt ontvangt een SMS één dag voor de afspraak
@@ -50,7 +50,7 @@ Configureer herinneringen via Instellingen → No-show herinneringen.`,
   {
     icon: Zap,
     title: "Hoe werkt automatisch opvullen?",
-    content: `PraktijkFlow vult geannuleerde plekken automatisch op zonder uw tussenkomst. De patiënt kiest zelf — niets wordt zonder bevestiging ingepland.
+    content: `NoShow Control vult geannuleerde plekken automatisch op zonder uw tussenkomst. De patiënt kiest zelf — niets wordt zonder bevestiging ingepland.
 
 Stap voor stap:
 
@@ -109,7 +109,7 @@ export default function HelpPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Hulp & uitleg</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Leer hoe u met PraktijkFlow maximaal omzet terugwint uit annuleringen en no-shows.
+          Leer hoe u met NoShow Control maximaal omzet terugwint uit annuleringen en no-shows.
         </p>
       </div>
 

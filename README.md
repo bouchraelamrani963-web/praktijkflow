@@ -1,6 +1,8 @@
-# PraktijkFlow
+# NoShow Control
 
 Practice management SaaS for Dutch healthcare practitioners. Handles appointments, patient records, risk scoring, waitlist matching, open-slot recovery, SMS/email reminders, invoicing, and subscription billing.
+
+> The repository folder, GitHub repo, Vercel project, and existing PostgreSQL database are intentionally still named `praktijkflow` after the 2026-04 product rename. Only user-facing branding has changed; renaming those infrastructure identifiers is tracked separately and out of scope for the rebrand sprint.
 
 ## Tech stack
 

@@ -14,7 +14,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { seedDemoData } from "../src/lib/demo-seed";
 
 async function main() {
-  console.log("🌱 Seeding PraktijkFlow demo data...\n");
+  console.log("🌱 Seeding NoShow Control demo data...\n");
 
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
   const prisma = new PrismaClient({ adapter });

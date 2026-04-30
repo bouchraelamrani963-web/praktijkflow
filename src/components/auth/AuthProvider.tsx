@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // We set a non-null mock User so layout guards (e.g. "if (!user) redirect")
     // don't kick the user back to /login while we fetch the profile.
     if (DEV_AUTH_BYPASS) {
-      setUser({ email: "demo@praktijkflow.local", uid: "demo-bypass" } as unknown as User);
+      setUser({ email: "demo@noshowcontrol.local", uid: "demo-bypass" } as unknown as User);
       fetchProfile().finally(() => setLoading(false));
       return;
     }

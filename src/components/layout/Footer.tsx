@@ -36,7 +36,7 @@ export function Footer() {
         </div>
         <div className="mt-8 border-t border-zinc-200 pt-8 dark:border-zinc-800">
           <p className="text-center text-sm text-zinc-500">
-            &copy; {new Date().getFullYear()} PraktijkFlow. Alle rechten voorbehouden.
+            &copy; {new Date().getFullYear()} NoShow Control. Alle rechten voorbehouden.
           </p>
         </div>
       </div>

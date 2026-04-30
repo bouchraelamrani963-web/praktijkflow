@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
 /* ─── Fonts ──────────────────────────────────────────────────────────────
-   Sora (display) + DM Sans (body) per the PraktijkFlow Design System.
+   Sora (display) + DM Sans (body) per the NoShow Control design system.
    Loaded once globally so any page can opt in via the .pf-dark scope or
-   the --font-display / --font-body custom properties. */
+   the --font-display / --font-body custom properties.
+   (The `pf-*` prefix is a legacy artefact from the prior PraktijkFlow
+   branding — kept to avoid a global CSS-class rename in this sprint.) */
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -13,7 +15,7 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* ─── PraktijkFlow Design System tokens ──────────────────────────────
+  /* ─── NoShow Control design system tokens ────────────────────────────
      Available everywhere as CSS vars but only *applied* inside the
      .pf-dark scope below — so the dashboard's existing zinc styling is
      untouched. */
@@ -101,7 +103,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PraktijkFlow Design System scope.
+   NoShow Control design system scope.
 
    Any element inside `.pf-dark` switches to the dark-purple SaaS theme.
    The dashboard does NOT add this class — it keeps the existing zinc/blue
