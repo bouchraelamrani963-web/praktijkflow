@@ -191,7 +191,9 @@ export default function HomePage() {
                   No-show recovery voor tandartspraktijken
                 </div>
 
-                {/* Headline — outcome first ("extra omzet"), automation as the qualifier */}
+                {/* Headline — concrete revenue range up front, automation as the
+                    qualifier. Gradient highlight on "€800" alone keeps the value
+                    word visually dominant without overpowering the line. */}
                 <h1
                   className="pf-display"
                   style={{
@@ -202,7 +204,7 @@ export default function HomePage() {
                     color: "var(--pf-fg-1)",
                   }}
                 >
-                  Van lege stoel naar{" "}
+                  Van €95 naar{" "}
                   <span
                     style={{
                       background: "var(--pf-grad-accent)",
@@ -211,14 +213,14 @@ export default function HomePage() {
                       backgroundClip: "text",
                     }}
                   >
-                    extra omzet
+                    €800
                   </span>
-                  {" "}— automatisch
+                  {" "}extra omzet per maand — automatisch
                 </h1>
 
                 <p className="mt-6" style={{ fontSize: 18, lineHeight: 1.6, color: "var(--pf-fg-2)" }}>
-                  NoShow Control vult open plekken, activeert je wachtlijst en
-                  laat direct zien hoeveel omzet je terugwint.
+                  De slimme no-show software voor tandartspraktijken die lege
+                  behandelstoelen automatisch opvult.
                 </p>
 
                 {/* CTAs — primary triggers the trial flow, secondary scrolls to "Hoe het werkt" */}
