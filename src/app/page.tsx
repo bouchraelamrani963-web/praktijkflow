@@ -158,8 +158,8 @@ export default function HomePage() {
             <a href="#pricing" className="transition hover:text-white">Prijzen</a>
             <Link href="/login" className="transition hover:text-white">Inloggen</Link>
           </nav>
-          <Link href="#contact" className="pf-btn-primary text-xs" style={{ padding: "10px 20px" }}>
-            Plan demo
+          <Link href="/pricing" className="pf-btn-primary text-xs" style={{ padding: "10px 20px" }}>
+            Start gratis
           </Link>
         </div>
       </header>
@@ -174,250 +174,78 @@ export default function HomePage() {
           <div className="pf-glow-teal absolute -right-40 bottom-0 h-[500px] w-[500px]" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-[1100px] px-6">
-            <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,500px)] lg:gap-16">
-              {/* ─── Text column ─── */}
-              <div className="text-center lg:text-left">
-                {/* Eyebrow — category positioning, narrows the audience explicitly */}
-                <div
-                  className="mb-7 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs"
-                  style={{
-                    background: "var(--pf-purple-dim)",
-                    border: "1px solid var(--pf-purple-border)",
-                    color: "var(--pf-purple-light)",
-                    fontWeight: 500,
-                  }}
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  No-show recovery voor tandartspraktijken
-                </div>
-
-                {/* Headline — concrete revenue range up front, automation as the
-                    qualifier. Gradient highlight on "€800" alone keeps the value
-                    word visually dominant without overpowering the line. */}
-                <h1
-                  className="pf-display"
-                  style={{
-                    fontWeight: 800,
-                    fontSize: "clamp(40px, 6.5vw, 72px)",
-                    lineHeight: 1.05,
-                    letterSpacing: "-0.03em",
-                    color: "var(--pf-fg-1)",
-                  }}
-                >
-                  Van €95 naar{" "}
-                  <span
-                    style={{
-                      background: "var(--pf-grad-accent)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    €800
-                  </span>
-                  {" "}extra omzet per maand — automatisch
-                </h1>
-
-                <p className="mt-6" style={{ fontSize: 18, lineHeight: 1.6, color: "var(--pf-fg-2)" }}>
-                  De slimme no-show software voor tandartspraktijken die lege
-                  behandelstoelen automatisch opvult.
-                </p>
-
-                {/* CTAs — primary triggers the trial flow, secondary scrolls to "Hoe het werkt" */}
-                <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:gap-3 lg:items-start lg:justify-start">
-                  <Link href="/pricing" className="pf-btn-primary">
-                    Start 14 dagen gratis
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link href="#how" className="pf-btn-secondary">
-                    <PlayCircle className="h-4 w-4" />
-                    Bekijk hoe het werkt
-                  </Link>
-                </div>
-
-                {/* Single trust line — one short sentence, supports the trial CTA */}
-                <p className="mt-5 text-xs" style={{ color: "var(--pf-fg-3)" }}>
-                  Geen creditcard nodig · Maandelijks opzegbaar · AVG-conform
-                </p>
+            {/* Centered single-column hero — matches the design example.
+                The abstract dashboard mockup that previously sat to the right
+                has moved into its own "Live preview" section directly below
+                the proof strip, so the headline gets the full visual weight. */}
+            <div className="mx-auto max-w-3xl text-center">
+              {/* Eyebrow badge — narrows audience, sets product category */}
+              <div
+                className="mb-7 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs"
+                style={{
+                  background: "var(--pf-purple-dim)",
+                  border: "1px solid var(--pf-purple-border)",
+                  color: "var(--pf-purple-light)",
+                  fontWeight: 500,
+                }}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                No-show recovery voor tandartspraktijken
               </div>
 
-              {/* ─── Hero visual: abstract SaaS dashboard mockup ───────────
-                  Replaces the prior Unsplash dental-clinic photo. The product
-                  is sold by *showing the outcome* (recovered revenue, filled
-                  slots, active waitlist) rather than by depicting the clinic.
-                  No patient records / X-ray / full-PMS imagery — narrative
-                  stays scoped to no-shows + waitlist + open slots + revenue. */}
-              <div className="relative mx-auto w-full max-w-[520px] lg:mx-0">
-                {/* Soft halo behind the card — uses the design system glow tokens */}
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -inset-6 -z-10"
+              {/* Headline — gradient on "€800" keeps the value word dominant
+                  without overpowering the rest of the line. */}
+              <h1
+                className="pf-display"
+                style={{
+                  fontWeight: 800,
+                  fontSize: "clamp(40px, 6.5vw, 72px)",
+                  lineHeight: 1.05,
+                  letterSpacing: "-0.03em",
+                  color: "var(--pf-fg-1)",
+                }}
+              >
+                Van lege stoel naar{" "}
+                <span
                   style={{
-                    background:
-                      "radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.28), transparent 65%), radial-gradient(ellipse at 80% 80%, rgba(0,212,180,0.18), transparent 65%)",
-                    filter: "blur(40px)",
-                  }}
-                />
-
-                <div
-                  className="relative overflow-hidden p-4 sm:p-5"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(124,58,237,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-                    border: "1px solid var(--pf-border-dim)",
-                    borderRadius: "var(--pf-radius-lg)",
-                    boxShadow: "var(--pf-shadow-2)",
-                    backdropFilter: "blur(20px)",
-                    WebkitBackdropFilter: "blur(20px)",
+                    background: "var(--pf-grad-accent)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
                   }}
                 >
-                  {/* Browser chrome — minimal, decorative, signals "this is the dashboard" */}
-                  <div className="mb-4 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
-                    <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
-                    <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
-                    <span className="ml-2 truncate text-[10px]" style={{ color: "var(--pf-fg-3)" }}>
-                      noshowcontrol.nl/dashboard
-                    </span>
-                  </div>
+                  €800
+                </span>
+                {" "}extra omzet per maand
+              </h1>
 
-                  {/* KPI strip — three outcome metrics that retire the elevator pitch */}
-                  <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                    {[
-                      { value: "€800",  label: "Teruggewonnen omzet", accent: "var(--pf-teal-light)",   iconBg: "rgba(0,212,180,0.15)",    icon: Euro },
-                      { value: "4",     label: "Lege plekken gevuld", accent: "var(--pf-purple-light)", iconBg: "rgba(124,58,237,0.18)",   icon: CheckCheck },
-                      { value: "−32%",  label: "Minder no-shows",     accent: "#ffffff",                iconBg: "rgba(255,255,255,0.06)",  icon: TrendingDown },
-                    ].map((kpi) => (
-                      <div
-                        key={kpi.label}
-                        className="p-3"
-                        style={{
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: "var(--pf-radius-md)",
-                        }}
-                      >
-                        <span
-                          className="inline-flex h-6 w-6 items-center justify-center"
-                          style={{ background: kpi.iconBg, borderRadius: 6 }}
-                        >
-                          <kpi.icon className="h-3 w-3" style={{ color: kpi.accent }} strokeWidth={2} />
-                        </span>
-                        <p
-                          className="pf-display mt-2 leading-none"
-                          style={{ fontWeight: 700, fontSize: 22, color: kpi.accent }}
-                        >
-                          {kpi.value}
-                        </p>
-                        <p className="mt-1 text-[10px] leading-tight" style={{ color: "var(--pf-fg-3)" }}>
-                          {kpi.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+              {/* Subheadline — narrower than headline so the line breaks land
+                  naturally and the eye flows back to the CTAs. */}
+              <p
+                className="mx-auto mt-6 max-w-2xl"
+                style={{ fontSize: 18, lineHeight: 1.6, color: "var(--pf-fg-2)" }}
+              >
+                NoShow Control vult open plekken, activeert je wachtlijst en
+                laat direct zien hoeveel omzet je terugwint.
+              </p>
 
-                  {/* Two side-by-side mini-panels: waitlist + open slots — the
-                      two operational surfaces that do the recovery work. */}
-                  <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-2.5">
-                    {/* Wachtlijst panel */}
-                    <div
-                      className="p-3"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: "var(--pf-radius-md)",
-                      }}
-                    >
-                      <p
-                        className="mb-2 text-[10px] uppercase tracking-wider"
-                        style={{ color: "var(--pf-fg-3)", fontWeight: 600 }}
-                      >
-                        Wachtlijst
-                      </p>
-                      {[
-                        { name: "Sophie de Vries", status: "Aangeboden", dot: "var(--pf-warning)" },
-                        { name: "Jan Bakker",      status: "Wachtend",   dot: "var(--pf-purple-light)" },
-                        { name: "+8 anderen",      status: null,         dot: null,                    muted: true },
-                      ].map((row) => (
-                        <div key={row.name} className="flex items-center justify-between py-1 text-[11px]">
-                          <span
-                            className="truncate"
-                            style={{
-                              color: row.muted ? "var(--pf-fg-3)" : "var(--pf-fg-2)",
-                              opacity: row.muted ? 0.7 : 1,
-                            }}
-                          >
-                            {row.name}
-                          </span>
-                          {row.status && (
-                            <span className="flex shrink-0 items-center gap-1" style={{ color: "var(--pf-fg-3)", fontSize: 10 }}>
-                              <span className="h-1.5 w-1.5 rounded-full" style={{ background: row.dot ?? "var(--pf-fg-3)" }} />
-                              {row.status}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Open plekken panel */}
-                    <div
-                      className="p-3"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: "var(--pf-radius-md)",
-                      }}
-                    >
-                      <p
-                        className="mb-2 text-[10px] uppercase tracking-wider"
-                        style={{ color: "var(--pf-fg-3)", fontWeight: 600 }}
-                      >
-                        Open plekken
-                      </p>
-                      {[
-                        { time: "Wo 14:30", subtitle: "Maria Jansen", badgeText: "Geclaimd",  badgeBg: "rgba(0,212,180,0.18)",   badgeBorder: "rgba(0,212,180,0.4)",   badgeColor: "var(--pf-teal-light)" },
-                        { time: "Vr 10:00", subtitle: "Beschikbaar",  badgeText: "2 matches", badgeBg: "rgba(124,58,237,0.18)",  badgeBorder: "rgba(124,58,237,0.4)",  badgeColor: "var(--pf-purple-light)" },
-                      ].map((slot) => (
-                        <div key={slot.time} className="flex items-center justify-between py-1.5 text-[11px]">
-                          <div className="min-w-0 truncate">
-                            <span style={{ color: "var(--pf-fg-2)", fontWeight: 600 }}>{slot.time}</span>
-                            <span className="ml-1.5" style={{ color: "var(--pf-fg-3)", fontSize: 10 }}>· {slot.subtitle}</span>
-                          </div>
-                          <span
-                            className="shrink-0 rounded-full px-1.5 py-0.5"
-                            style={{
-                              background: slot.badgeBg,
-                              border: `1px solid ${slot.badgeBorder}`,
-                              color: slot.badgeColor,
-                              fontSize: 9,
-                              fontWeight: 600,
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {slot.badgeText}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Activity ticker — single recent line, gives a "live" feel
-                      without claiming features beyond no-show recovery. */}
-                  <div
-                    className="mt-2.5 flex items-center gap-2 px-3 py-2"
-                    style={{
-                      background: "rgba(0,212,180,0.08)",
-                      border: "1px solid rgba(0,212,180,0.22)",
-                      borderRadius: "var(--pf-radius-md)",
-                    }}
-                  >
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "var(--pf-teal)" }} />
-                    <span className="text-[11px]" style={{ color: "var(--pf-teal-light)", fontWeight: 500 }}>
-                      €95 omzet teruggewonnen — 3 min geleden
-                    </span>
-                  </div>
-                </div>
+              {/* CTA row — always centered, primary triggers the 14-day trial */}
+              <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-3">
+                <Link href="/pricing" className="pf-btn-primary">
+                  Start 14 dagen gratis
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="#demo" className="pf-btn-secondary">
+                  Bekijk demo
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
+
+              {/* ROI trust line — single sentence positioning the trial as
+                  zero-risk: the math justifies itself with one extra slot. */}
+              <p className="mt-6 text-sm" style={{ color: "var(--pf-fg-3)" }}>
+                Verdient zichzelf terug met 1 extra gevulde afspraak per maand.
+              </p>
             </div>
           </div>
 
@@ -450,6 +278,188 @@ export default function HomePage() {
                   </div>
                 ))}
               </dl>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ 1.b LIVE PREVIEW — abstract dashboard mockup ═════════════
+            Smaller, centered version of the dashboard mockup that previously
+            sat in the hero's right column. Sits below the proof strip as the
+            "see what you get" moment for users who scrolled past the fold.
+            No patient records / X-ray / full-PMS imagery — narrative stays
+            scoped to no-shows + waitlist + open slots + revenue recovery. */}
+        <section className="relative pt-12 pb-24 sm:pt-16">
+          <div className="relative mx-auto max-w-[760px] px-6">
+            <p className="pf-eyebrow mb-4 text-center">Live preview · Dashboard</p>
+
+            <div className="relative">
+              {/* Soft halo behind the card — design-system glow tokens */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-6 -z-10"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.28), transparent 65%), radial-gradient(ellipse at 80% 80%, rgba(0,212,180,0.18), transparent 65%)",
+                  filter: "blur(40px)",
+                }}
+              />
+
+              <div
+                className="relative overflow-hidden p-4 sm:p-5"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(124,58,237,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+                  border: "1px solid var(--pf-border-dim)",
+                  borderRadius: "var(--pf-radius-lg)",
+                  boxShadow: "var(--pf-shadow-2)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                }}
+              >
+                {/* Browser chrome — minimal, decorative */}
+                <div className="mb-4 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
+                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
+                  <span className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }} />
+                  <span className="ml-2 truncate text-[10px]" style={{ color: "var(--pf-fg-3)" }}>
+                    noshowcontrol.nl/dashboard
+                  </span>
+                </div>
+
+                {/* KPI strip — three outcome metrics */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+                  {[
+                    { value: "€800",  label: "Teruggewonnen omzet", accent: "var(--pf-teal-light)",   iconBg: "rgba(0,212,180,0.15)",    icon: Euro },
+                    { value: "4",     label: "Lege plekken gevuld", accent: "var(--pf-purple-light)", iconBg: "rgba(124,58,237,0.18)",   icon: CheckCheck },
+                    { value: "−32%",  label: "Minder no-shows",     accent: "#ffffff",                iconBg: "rgba(255,255,255,0.06)",  icon: TrendingDown },
+                  ].map((kpi) => (
+                    <div
+                      key={kpi.label}
+                      className="p-3"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: "var(--pf-radius-md)",
+                      }}
+                    >
+                      <span
+                        className="inline-flex h-6 w-6 items-center justify-center"
+                        style={{ background: kpi.iconBg, borderRadius: 6 }}
+                      >
+                        <kpi.icon className="h-3 w-3" style={{ color: kpi.accent }} strokeWidth={2} />
+                      </span>
+                      <p
+                        className="pf-display mt-2 leading-none"
+                        style={{ fontWeight: 700, fontSize: 22, color: kpi.accent }}
+                      >
+                        {kpi.value}
+                      </p>
+                      <p className="mt-1 text-[10px] leading-tight" style={{ color: "var(--pf-fg-3)" }}>
+                        {kpi.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Two side-by-side mini-panels: waitlist + open slots */}
+                <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-2.5">
+                  {/* Wachtlijst panel */}
+                  <div
+                    className="p-3"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "var(--pf-radius-md)",
+                    }}
+                  >
+                    <p
+                      className="mb-2 text-[10px] uppercase tracking-wider"
+                      style={{ color: "var(--pf-fg-3)", fontWeight: 600 }}
+                    >
+                      Wachtlijst
+                    </p>
+                    {[
+                      { name: "Sophie de Vries", status: "Aangeboden", dot: "var(--pf-warning)" },
+                      { name: "Jan Bakker",      status: "Wachtend",   dot: "var(--pf-purple-light)" },
+                      { name: "+8 anderen",      status: null,         dot: null,                    muted: true },
+                    ].map((row) => (
+                      <div key={row.name} className="flex items-center justify-between py-1 text-[11px]">
+                        <span
+                          className="truncate"
+                          style={{
+                            color: row.muted ? "var(--pf-fg-3)" : "var(--pf-fg-2)",
+                            opacity: row.muted ? 0.7 : 1,
+                          }}
+                        >
+                          {row.name}
+                        </span>
+                        {row.status && (
+                          <span className="flex shrink-0 items-center gap-1" style={{ color: "var(--pf-fg-3)", fontSize: 10 }}>
+                            <span className="h-1.5 w-1.5 rounded-full" style={{ background: row.dot ?? "var(--pf-fg-3)" }} />
+                            {row.status}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Open plekken panel */}
+                  <div
+                    className="p-3"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "var(--pf-radius-md)",
+                    }}
+                  >
+                    <p
+                      className="mb-2 text-[10px] uppercase tracking-wider"
+                      style={{ color: "var(--pf-fg-3)", fontWeight: 600 }}
+                    >
+                      Open plekken
+                    </p>
+                    {[
+                      { time: "Wo 14:30", subtitle: "Maria Jansen", badgeText: "Geclaimd",  badgeBg: "rgba(0,212,180,0.18)",   badgeBorder: "rgba(0,212,180,0.4)",   badgeColor: "var(--pf-teal-light)" },
+                      { time: "Vr 10:00", subtitle: "Beschikbaar",  badgeText: "2 matches", badgeBg: "rgba(124,58,237,0.18)",  badgeBorder: "rgba(124,58,237,0.4)",  badgeColor: "var(--pf-purple-light)" },
+                    ].map((slot) => (
+                      <div key={slot.time} className="flex items-center justify-between py-1.5 text-[11px]">
+                        <div className="min-w-0 truncate">
+                          <span style={{ color: "var(--pf-fg-2)", fontWeight: 600 }}>{slot.time}</span>
+                          <span className="ml-1.5" style={{ color: "var(--pf-fg-3)", fontSize: 10 }}>· {slot.subtitle}</span>
+                        </div>
+                        <span
+                          className="shrink-0 rounded-full px-1.5 py-0.5"
+                          style={{
+                            background: slot.badgeBg,
+                            border: `1px solid ${slot.badgeBorder}`,
+                            color: slot.badgeColor,
+                            fontSize: 9,
+                            fontWeight: 600,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {slot.badgeText}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Activity ticker — single recent line, gives a "live" feel */}
+                <div
+                  className="mt-2.5 flex items-center gap-2 px-3 py-2"
+                  style={{
+                    background: "rgba(0,212,180,0.08)",
+                    border: "1px solid rgba(0,212,180,0.22)",
+                    borderRadius: "var(--pf-radius-md)",
+                  }}
+                >
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "var(--pf-teal)" }} />
+                  <span className="text-[11px]" style={{ color: "var(--pf-teal-light)", fontWeight: 500 }}>
+                    €95 omzet teruggewonnen — 3 min geleden
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -816,11 +826,13 @@ export default function HomePage() {
               Klaar om geen plek meer leeg te laten?
             </h2>
             <p className="mx-auto mt-5 max-w-xl" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
-              Plan een vrijblijvende demo van 15 minuten. We laten zien hoeveel omzet uw praktijk maandelijks misloopt — en hoe NoShow Control dat direct oplost.
+              Probeer NoShow Control 14 dagen gratis. We laten direct zien
+              hoeveel omzet uw praktijk maandelijks misloopt — en hoe het
+              systeem dat automatisch terugwint.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link href="mailto:demo@noshowcontrol.nl?subject=Demo%20aanvraag" className="pf-btn-primary">
-                Plan een demo
+              <Link href="/pricing" className="pf-btn-primary">
+                Start 14 dagen gratis
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="mailto:contact@noshowcontrol.nl" className="pf-btn-secondary">
