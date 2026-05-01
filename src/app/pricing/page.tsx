@@ -1,46 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { useAuth } from "@/lib/hooks/useAuth";
 import { plans } from "@/lib/stripe/plans";
 import { Check, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import { useState } from "react";
 
+/**
+ * Pricing page. The Stripe checkout flow + subscription model are out of
+ * scope right now (per current sprint scope: no billing). Plan-card CTAs
+ * therefore route directly into the app at /dashboard. The Stripe
+ * infrastructure (/api/stripe/*, lib/stripe/config) remains in the
+ * codebase untouched for when the billing sprint lands.
+ */
 export default function PricingPage() {
-  const { user } = useAuth();
-  const router = useRouter();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-
-  async function handleSubscribe(stripePriceId: string, planId: string) {
-    if (!user) {
-      router.push("/register");
-      return;
-    }
-
-    setLoadingPlan(planId);
-    try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: stripePriceId }),
-      });
-
-      const { url } = await res.json();
-      if (url) {
-        window.location.href = url;
-      } else {
-        toast.error("Betaalsessie aanmaken mislukt");
-      }
-    } catch {
-      toast.error("Er is iets misgegaan");
-    } finally {
-      setLoadingPlan(null);
-    }
-  }
-
   return (
     <>
       <Navbar />
@@ -128,19 +101,16 @@ export default function PricingPage() {
                   ))}
                 </ul>
 
-                <button
-                  onClick={() => handleSubscribe(plan.stripePriceId, plan.id)}
-                  disabled={loadingPlan === plan.id}
-                  className={`mt-8 w-full rounded-lg px-4 py-3 text-sm font-semibold transition-colors ${
+                <Link
+                  href="/dashboard"
+                  className={`mt-8 block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-colors ${
                     plan.highlighted
                       ? "bg-blue-600 text-white hover:bg-blue-700"
                       : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  } disabled:opacity-50`}
+                  }`}
                 >
-                  {loadingPlan === plan.id
-                    ? "Doorsturen..."
-                    : "Start met terugwinnen"}
-                </button>
+                  Start gratis
+                </Link>
               </div>
             ))}
           </div>

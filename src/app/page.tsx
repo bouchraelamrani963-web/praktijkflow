@@ -149,11 +149,11 @@ export default function HomePage() {
           </Link>
           <nav className="hidden items-center gap-8 text-sm md:flex" style={{ color: "var(--pf-fg-2)" }}>
             <a href="#how" className="transition hover:text-white">Hoe het werkt</a>
-            <a href="#dashboard" className="transition hover:text-white">Dashboard</a>
+            <a href="#voorbeeld" className="transition hover:text-white">Voorbeeld</a>
             <a href="#pricing" className="transition hover:text-white">Prijzen</a>
             <Link href="/login" className="transition hover:text-white">Inloggen</Link>
           </nav>
-          <Link href="/pricing" className="pf-btn-primary text-xs" style={{ padding: "10px 20px" }}>
+          <Link href="/dashboard" className="pf-btn-primary text-xs" style={{ padding: "10px 20px" }}>
             Start gratis
           </Link>
         </div>
@@ -224,14 +224,15 @@ export default function HomePage() {
                 laat direct zien hoeveel omzet je terugwint.
               </p>
 
-              {/* CTA row — always centered, primary triggers the 14-day trial */}
+              {/* CTA row — always centered. Primary jumps straight into the
+                  app; secondary scrolls to the in-page preview mockup. */}
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-3">
-                <Link href="/pricing" className="pf-btn-primary">
+                <Link href="/dashboard" className="pf-btn-primary">
                   Start 14 dagen gratis
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link href="#dashboard" className="pf-btn-secondary">
-                  Bekijk dashboard
+                <Link href="#voorbeeld" className="pf-btn-secondary">
+                  Bekijk voorbeeld
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -397,22 +398,32 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ═══ 4. DASHBOARD — live preview ═════════════════════════════
+        {/* ═══ 4. VOORBEELD — preview mockup ═══════════════════════════
             A self-contained dashboard mockup in the same dark/glassmorphism
-            style as the rest of the landing. Narrative stays scoped to
-            no-shows + waitlist + open slots + revenue recovery. */}
-        <section id="dashboard" className="pf-section relative">
+            style as the rest of the landing. Explicitly framed as a
+            *voorbeeld* (preview) so visitors don't mistake it for the real
+            authenticated app. Narrative stays scoped to no-shows + waitlist
+            + open slots + revenue recovery. */}
+        <section id="voorbeeld" className="pf-section relative">
           <div className="mx-auto max-w-2xl px-6 text-center">
-            <p className="pf-eyebrow">Live dashboard</p>
+            <p className="pf-eyebrow">Voorbeeld dashboard</p>
             <h2
               className="pf-display mt-3"
               style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", lineHeight: 1.1, color: "var(--pf-fg-1)" }}
             >
-              Bekijk het dashboard
+              Zo ziet omzetherstel eruit
             </h2>
             <p className="mt-5" style={{ fontSize: 18, color: "var(--pf-fg-2)" }}>
-              Zie in één oogopslag hoeveel omzet je terugwint, welke open
-              plekken gevuld zijn en welke patiënten op de wachtlijst staan.
+              Een voorbeeld van hoe NoShow Control lege plekken,
+              wachtlijstmatches en teruggewonnen omzet zichtbaar maakt.
+            </p>
+            {/* Disambiguator — makes it unambiguous that the mockup below is
+                illustrative, not the user's actual data. */}
+            <p
+              className="mt-3 text-xs"
+              style={{ color: "var(--pf-fg-3)", fontStyle: "italic" }}
+            >
+              Voorbeeldweergave — echte cijfers verschijnen na activatie.
             </p>
           </div>
 
