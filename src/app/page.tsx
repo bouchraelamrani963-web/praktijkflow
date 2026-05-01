@@ -209,7 +209,7 @@ export default function HomePage() {
                     backgroundClip: "text",
                   }}
                 >
-                  €800
+                  €800+
                 </span>
                 {" "}extra omzet per maand
               </h1>
@@ -220,8 +220,8 @@ export default function HomePage() {
                 className="mx-auto mt-6 max-w-2xl"
                 style={{ fontSize: 18, lineHeight: 1.6, color: "var(--pf-fg-2)" }}
               >
-                NoShow Control vult open plekken, activeert je wachtlijst en
-                laat direct zien hoeveel omzet je terugwint.
+                Gemiddeld €500–€2.000 per maand teruggewonnen, afhankelijk
+                van praktijkgrootte en no-show percentage.
               </p>
 
               {/* CTA row — always centered. Primary jumps straight into the
@@ -238,9 +238,11 @@ export default function HomePage() {
               </div>
 
               {/* ROI trust line — single sentence positioning the trial as
-                  zero-risk: the math justifies itself with one extra slot. */}
+                  zero-risk. Stronger framing than the prior "1 per maand"
+                  version: weekly cadence makes the payback feel close. */}
               <p className="mt-6 text-sm" style={{ color: "var(--pf-fg-3)" }}>
-                Verdient zichzelf terug met 1 extra gevulde afspraak per maand.
+                Verdient zichzelf vaak al terug met 1–2 extra gevulde
+                afspraken per week.
               </p>
             </div>
           </div>
@@ -250,7 +252,7 @@ export default function HomePage() {
             <div className="mx-auto max-w-[1100px] px-6">
               <dl className="flex flex-col items-center justify-center gap-8 py-10 sm:flex-row sm:gap-16">
                 {[
-                  { value: "€300–€800", label: "per maand teruggewonnen" },
+                  { value: "€500–€2.000", label: "per maand teruggewonnen" },
                   { value: "1 dag",      label: "tot u live bent" },
                   { value: "100%",       label: "automatisch, geen handmatig werk" },
                 ].map((item) => (
@@ -685,7 +687,7 @@ export default function HomePage() {
                   name: "PRO",
                   price: "€79",
                   audience: "Voor groeiende praktijken",
-                  savings: "Gemiddeld €300–€800 per maand teruggewonnen",
+                  savings: "Gemiddeld €500–€2.000 per maand teruggewonnen",
                   features: ["Volledige automatisering", "Dashboard inzichten", "Prioriteit in wachtrij"],
                   featured: true,
                 },

@@ -43,7 +43,7 @@ export const plans: PricingPlan[] = [
     currency: "EUR",
     interval: "month",
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ?? "",
-    revenueFrame: "Gemiddeld €300–€800 per maand teruggewonnen",
+    revenueFrame: "Gemiddeld €500–€2.000 per maand teruggewonnen",
     revenueSubNote: "De meeste praktijken verdienen dit plan binnen 1 week terug",
     revenueDisclaimer: "Afhankelijk van praktijkgrootte en no-show percentage",
     features: [
