@@ -102,7 +102,7 @@ export default function PricingPage() {
                 </ul>
 
                 <Link
-                  href="/dashboard"
+                  href={`/register?plan=${encodeURIComponent(plan.id)}`}
                   className={`mt-8 block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-colors ${
                     plan.highlighted
                       ? "bg-blue-600 text-white hover:bg-blue-700"

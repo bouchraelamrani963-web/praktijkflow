@@ -789,12 +789,6 @@ export default function HomePage() {
                 Neem contact op
               </Link>
             </div>
-            <p className="mt-6 text-sm" style={{ color: "var(--pf-fg-3)" }}>
-              Of bel ons direct:{" "}
-              <a href="tel:+31201234567" style={{ color: "var(--pf-purple-light)", fontWeight: 600 }} className="underline-offset-4 hover:underline">
-                +31 20 123 4567
-              </a>
-            </p>
           </div>
         </section>
       </main>
