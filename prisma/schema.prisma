@@ -93,18 +93,22 @@ model Practice {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members              PracticeMember[]
-  clients              Client[]
-  appointments         Appointment[]
-  appointmentTypes     AppointmentType[]
-  invoices             Invoice[]
-  waitlistEntries      WaitlistEntry[]
-  availabilitySlots    AvailabilitySlot[]
-  messageTemplates     MessageTemplate[]
-  messageLogs          MessageLog[]
-  patientActionTokens  PatientActionToken[]
-  actionLogs           ActionLog[]
-  openSlots            OpenSlot[]
+  members             PracticeMember[]
+  clients             Client[]
+  appointments        Appointment[]
+  appointmentTypes    AppointmentType[]
+  invoices            Invoice[]
+  waitlistEntries     WaitlistEntry[]
+  availabilitySlots   AvailabilitySlot[]
+  messageTemplates    MessageTemplate[]
+  messageLogs         MessageLog[]
+  patientActionTokens PatientActionToken[]
+  actionLogs          ActionLog[]
+  openSlots           OpenSlot[]
+  // Back-relation for 1:0..1 link with Subscription (Phase 2 — Subscription
+  // is created lazily when Stripe checkout completes; absence means "no
+  // active subscription yet"). Required by Prisma to declare the relation.
+  subscription        Subscription?
 
   @@map("practices")
 }
@@ -180,7 +184,7 @@ model Client {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  practice            Practice              @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  practice            Practice             @relation(fields: [practiceId], references: [id], onDelete: Cascade)
   appointments        Appointment[]
   invoices            Invoice[]
   waitlistEntries     WaitlistEntry[]
@@ -241,9 +245,9 @@ model Appointment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  practice        Practice         @relation(fields: [practiceId], references: [id], onDelete: Cascade)
-  client          Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  practitioner    User             @relation("practitioner", fields: [practitionerId], references: [id], onDelete: Cascade)
+  practice            Practice             @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  client              Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  practitioner        User                 @relation("practitioner", fields: [practitionerId], references: [id], onDelete: Cascade)
   appointmentType     AppointmentType?     @relation(fields: [appointmentTypeId], references: [id], onDelete: SetNull)
   messageLogs         MessageLog[]
   patientActionTokens PatientActionToken[]
@@ -380,10 +384,10 @@ model MessageLog {
   practiceId    String  @db.Uuid
   appointmentId String? @db.Uuid
   clientId      String  @db.Uuid
-  channel       String  // "sms" | "email"
-  to            String  // phone number or email address
+  channel       String // "sms" | "email"
+  to            String // phone number or email address
   body          String  @db.Text
-  status        String  // "sent" | "skipped" | "failed" | "mock"
+  status        String // "sent" | "skipped" | "failed" | "mock"
   errorMessage  String?
   externalSid   String? // Twilio SID or other provider reference
   reminderType  String? // "48h" | "24h"
@@ -408,7 +412,7 @@ model PatientActionToken {
   appointmentId String?   @db.Uuid
   clientId      String    @db.Uuid
   tokenHash     String    @unique // SHA-256 hex of the raw token
-  action        String    // "confirm_appointment" | "cancel_appointment" | "claim_open_slot"
+  action        String // "confirm_appointment" | "cancel_appointment" | "claim_open_slot"
   expiresAt     DateTime
   usedAt        DateTime?
 
@@ -442,20 +446,20 @@ model OpenSlot {
   // change after the slot is CLAIMED, even if the downstream appointment is
   // edited, cancelled, or deleted. If status === CLAIMED, all five fields
   // MUST be populated (enforced at the claim transaction layer).
-  claimedAppointmentId    String?   @unique @db.Uuid
-  claimedAt               DateTime?
-  claimedClientName       String?   // snapshot — "Firstname Lastname" at time of claim
-  claimedAppointmentType  String?   // snapshot — AppointmentType.name at time of claim
-  recoveredRevenueCents   Int?      // snapshot — revenueEstimateCents at time of claim
+  claimedAppointmentId   String?   @unique @db.Uuid
+  claimedAt              DateTime?
+  claimedClientName      String? // snapshot — "Firstname Lastname" at time of claim
+  claimedAppointmentType String? // snapshot — AppointmentType.name at time of claim
+  recoveredRevenueCents  Int? // snapshot — revenueEstimateCents at time of claim
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  practice          Practice         @relation(fields: [practiceId], references: [id], onDelete: Cascade)
-  sourceAppointment Appointment?     @relation("SlotSource", fields: [sourceAppointmentId], references: [id], onDelete: SetNull)
-  claimedAppointment Appointment?    @relation("SlotClaim", fields: [claimedAppointmentId], references: [id], onDelete: SetNull)
-  practitioner      User             @relation(fields: [practitionerId], references: [id])
-  appointmentType   AppointmentType? @relation(fields: [appointmentTypeId], references: [id], onDelete: SetNull)
+  practice           Practice         @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  sourceAppointment  Appointment?     @relation("SlotSource", fields: [sourceAppointmentId], references: [id], onDelete: SetNull)
+  claimedAppointment Appointment?     @relation("SlotClaim", fields: [claimedAppointmentId], references: [id], onDelete: SetNull)
+  practitioner       User             @relation(fields: [practitionerId], references: [id])
+  appointmentType    AppointmentType? @relation(fields: [appointmentTypeId], references: [id], onDelete: SetNull)
 
   @@index([practiceId, status])
   @@index([practiceId, startTime])
@@ -471,8 +475,8 @@ model ActionLog {
   appointmentId String? @db.Uuid
   clientId      String? @db.Uuid
   tokenId       String? @db.Uuid
-  action        String  // action attempted
-  outcome       String  // "success" | "expired" | "already_used" | "invalid" | "failed"
+  action        String // action attempted
+  outcome       String // "success" | "expired" | "already_used" | "invalid" | "failed"
   ipAddress     String?
   userAgent     String?
   details       String? @db.Text
@@ -484,4 +488,60 @@ model ActionLog {
   @@index([practiceId])
   @@index([tokenId])
   @@map("action_logs")
+}
+
+// ─── Billing — Subscription (Phase 2) ──────────────────────────────────────
+// Source-of-truth for billing state. One row per practice. Created when
+// Stripe checkout completes (Phase 3); absence == no active subscription.
+//
+// Plan IDs deliberately match the existing Stripe webhook string returns
+// (starter / pro / enterprise) so we don't have to rewire the webhook
+// switch in Phase 3.
+//
+// Status mirrors Stripe's subscription.status values (uppercased) so we
+// can store webhook payloads verbatim without translation.
+
+enum PlanType {
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  UNPAID
+}
+
+model Subscription {
+  id         String @id @default(uuid()) @db.Uuid
+  practiceId String @unique @db.Uuid
+
+  plan   PlanType
+  status SubscriptionStatus
+
+  // Stripe linkage. Nullable until Phase 3 wires Stripe checkout — the
+  // model can be populated by hand or by future migrations without those.
+  stripeCustomerId     String?
+  stripeSubscriptionId String? @unique
+  stripePriceId        String?
+
+  // Period + trial timing
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  trialEndsAt        DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  canceledAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  practice Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+
+  @@index([stripeCustomerId])
+  @@map("subscriptions")
 }
