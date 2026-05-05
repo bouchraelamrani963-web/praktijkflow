@@ -32,19 +32,25 @@ function LoginForm() {
       toast.success("Welkom terug!");
       router.push(redirect);
     } catch (err) {
-      // Distinguish "Firebase missing" from real auth failures so the user
-      // sees a helpful message instead of the generic "wrong password" toast.
-      const code = (err as { code?: string } | null)?.code;
+      // Distinguish failure modes so the user sees an actionable message
+      // instead of a generic "wrong password" toast.
+      const code = (err as { code?: string } | null)?.code ?? "";
       if (code === FIREBASE_NOT_CONFIGURED) {
         toast.success("Demo-modus — u bent ingelogd");
         router.push(redirect);
         return;
       }
-      toast.error(
-        err instanceof Error && err.message
-          ? err.message
-          : "Ongeldig e-mailadres of wachtwoord",
-      );
+      if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
+        toast.error("Ongeldig e-mailadres of wachtwoord.");
+      } else if (code === "auth/invalid-email") {
+        toast.error("Ongeldig e-mailadres.");
+      } else if (code === "auth/too-many-requests") {
+        toast.error("Te veel pogingen. Probeer het later opnieuw.");
+      } else if (code === "auth/network-request-failed") {
+        toast.error("Geen netwerkverbinding. Probeer het opnieuw.");
+      } else {
+        toast.error(err instanceof Error && err.message ? err.message : "Inloggen mislukt.");
+      }
     } finally {
       setLoading(false);
     }

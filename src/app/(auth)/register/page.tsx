@@ -4,29 +4,36 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { FIREBASE_NOT_CONFIGURED } from "@/lib/firebase/auth";
 import toast from "react-hot-toast";
 
 /**
  * Register page accepts an optional `?plan=` query param so the pricing
  * page CTAs can carry the chosen plan through registration. The plan is
  * preserved in the post-register redirect URL so a future Stripe checkout
- * step (Phase 2+) can pick it up. For now there's no checkout step yet:
- * we simply land on /dashboard.
+ * step (Phase 3+) can pick it up.
  *
- * Valid plan ids are intentionally NOT validated here — the pricing UI is
- * the source of truth, and an unknown value just rides along as a no-op.
+ * REAL registration (vs. demo bypass):
+ *   - Requires Firebase env vars (NEXT_PUBLIC_FIREBASE_* + FIREBASE_*) to
+ *     be set on Vercel. Without them, the form renders a clear "demo-modus"
+ *     notice and the submit button is disabled, so users don't see the
+ *     misleading toast the prior version produced.
+ *   - On submit, signUp() creates a Firebase user → /api/auth/register
+ *     creates the Prisma User + Practice + OWNER membership in one
+ *     transaction → mints session cookie. Multi-tenancy is bootstrapped
+ *     here, not lazily.
  */
 function RegisterForm() {
   const [name, setName] = useState("");
+  const [practiceName, setPracticeName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, devMode } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
 
-  // Pretty-print plan label for the heading subtext only.
   const planLabel =
     plan === "starter" ? "Starter" :
     plan === "pro"     ? "Pro" :
@@ -35,22 +42,47 @@ function RegisterForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (devMode) {
+      // Should never reach this — submit is disabled — but defend in depth.
+      toast.error("Registratie is op deze omgeving niet beschikbaar.");
+      return;
+    }
     if (password.length < 8) {
-      toast.error("Wachtwoord moet minimaal 8 tekens zijn");
+      toast.error("Wachtwoord moet minimaal 8 tekens zijn.");
+      return;
+    }
+    if (!practiceName.trim()) {
+      toast.error("Vul een praktijknaam in.");
       return;
     }
     setLoading(true);
     try {
-      await signUp(email, password, name);
+      await signUp(email, password, name, practiceName.trim());
       toast.success("Account aangemaakt!");
-      // Phase 1: no Stripe checkout yet — go straight to dashboard.
-      // Plan param is preserved on the URL so Phase 2 can pick it up.
       const dest = plan
         ? `/dashboard?plan=${encodeURIComponent(plan)}`
         : "/dashboard";
       router.push(dest);
-    } catch {
-      toast.error("Kan account niet aanmaken. E-mailadres is mogelijk al in gebruik.");
+    } catch (err) {
+      // Distinguish between common failure modes so the user knows what
+      // to do next, rather than the prior misleading "email mogelijk al
+      // in gebruik" blanket message.
+      const code = (err as { code?: string } | null)?.code ?? "";
+      const message = err instanceof Error ? err.message : "";
+
+      if (code === FIREBASE_NOT_CONFIGURED) {
+        toast.error("Registratie is op deze omgeving niet beschikbaar (auth nog niet geconfigureerd).");
+      } else if (code === "auth/email-already-in-use") {
+        toast.error("Dit e-mailadres is al in gebruik. Probeer in te loggen.");
+      } else if (code === "auth/invalid-email") {
+        toast.error("Ongeldig e-mailadres.");
+      } else if (code === "auth/weak-password") {
+        toast.error("Wachtwoord is te zwak. Kies een sterker wachtwoord.");
+      } else if (message) {
+        toast.error(message);
+      } else {
+        toast.error("Account aanmaken mislukt. Probeer het later opnieuw.");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,6 +101,18 @@ function RegisterForm() {
         </p>
       </div>
 
+      {devMode && (
+        <div
+          role="status"
+          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200"
+        >
+          <strong className="font-semibold">Registratie niet beschikbaar.</strong>
+          {" "}Op deze omgeving is Firebase-auth nog niet geconfigureerd.
+          Ga via &laquo;Inloggen&raquo; door naar het demo-dashboard, of neem
+          contact op met de beheerder om auth te activeren.
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -77,12 +121,34 @@ function RegisterForm() {
           <input
             id="name"
             type="text"
-            required
+            required={!devMode}
+            disabled={devMode}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
             placeholder="Jan Jansen"
+            autoComplete="name"
           />
+        </div>
+
+        <div>
+          <label htmlFor="practiceName" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Praktijknaam
+          </label>
+          <input
+            id="practiceName"
+            type="text"
+            required={!devMode}
+            disabled={devMode}
+            value={practiceName}
+            onChange={(e) => setPracticeName(e.target.value)}
+            className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            placeholder="Tandartspraktijk Centrum"
+            autoComplete="organization"
+          />
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            U kunt dit later aanpassen onder Instellingen.
+          </p>
         </div>
 
         <div>
@@ -92,11 +158,13 @@ function RegisterForm() {
           <input
             id="email"
             type="email"
-            required
+            required={!devMode}
+            disabled={devMode}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
             placeholder="you@example.com"
+            autoComplete="email"
           />
         </div>
 
@@ -107,18 +175,20 @@ function RegisterForm() {
           <input
             id="password"
             type="password"
-            required
+            required={!devMode}
+            disabled={devMode}
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
             placeholder="••••••••"
+            autoComplete="new-password"
           />
         </div>
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || devMode}
           className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Account aanmaken..." : "Account aanmaken"}

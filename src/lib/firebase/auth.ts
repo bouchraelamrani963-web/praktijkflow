@@ -29,9 +29,17 @@ class FirebaseNotConfiguredError extends Error {
 }
 
 /**
- * Register a new user: create in Firebase, then create Prisma user + session via server.
+ * Register a new user: create in Firebase, then create Prisma User + Practice
+ * + PracticeMember via /api/auth/register. The server route does the tenant
+ * bootstrap atomically — without it the user would have no practiceId and
+ * the multi-tenant dashboard would 403 on every query.
  */
-export async function signUp(email: string, password: string, displayName: string): Promise<User> {
+export async function signUp(
+  email: string,
+  password: string,
+  displayName: string,
+  practiceName: string,
+): Promise<User> {
   if (skipFirebase()) {
     throw new FirebaseNotConfiguredError();
   }
@@ -46,11 +54,14 @@ export async function signUp(email: string, password: string, displayName: strin
   const res = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken, firstName, lastName }),
+    body: JSON.stringify({ idToken, firstName, lastName, practiceName }),
   });
 
   if (!res.ok) {
-    throw new Error("Registratie mislukt");
+    // Surface the server's actual reason if available — much more useful
+    // than the generic "Registratie mislukt" the prior version produced.
+    const body = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
+    throw new Error(body?.message ?? body?.error ?? "Registratie mislukt");
   }
 
   return user;

@@ -37,7 +37,7 @@ interface AuthContextType {
   loading: boolean;
   devMode: boolean;
   signIn: (email: string, password: string) => Promise<User>;
-  signUp: (email: string, password: string, displayName: string) => Promise<User>;
+  signUp: (email: string, password: string, displayName: string, practiceName: string) => Promise<User>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
