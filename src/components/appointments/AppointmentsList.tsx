@@ -35,6 +35,12 @@ interface AppointmentRow {
   };
   practitioner: { id: string; firstName: string; lastName: string };
   appointmentType: { id: string; name: string; color: string } | null;
+  /** Total treatments attached. >1 means we render a '+N' affordance next
+   *  to the legacy single-type label. Optional because legacy callers /
+   *  server prefetches that haven't been updated yet still work. */
+  treatmentCount?: number;
+  /** API alternative name — /api/appointments returns Prisma's _count shape. */
+  _count?: { treatments: number };
 }
 
 interface PractitionerOption {
@@ -397,9 +403,31 @@ function Inner({
                         {a.practitioner.firstName} {a.practitioner.lastName}
                       </td>
                       <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                        {a.appointmentType
-                          ? (TYPE_LABELS[a.appointmentType.name] ?? a.appointmentType.name)
-                          : "—"}
+                        {a.appointmentType ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className="truncate">
+                              {TYPE_LABELS[a.appointmentType.name] ?? a.appointmentType.name}
+                            </span>
+                            {/* '+N' affordance when this appointment carries
+                                more than one treatment code. The first code
+                                is shown via legacy appointmentType (kept in
+                                sync with treatments[0] by the create/update
+                                routes); the badge surfaces the rest exist. */}
+                            {(() => {
+                              const total = a.treatmentCount ?? a._count?.treatments ?? 0;
+                              return total > 1 ? (
+                                <span
+                                  className="shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                  title={`${total} behandelcodes — open de afspraak voor details`}
+                                >
+                                  +{total - 1}
+                                </span>
+                              ) : null;
+                            })()}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <Badge

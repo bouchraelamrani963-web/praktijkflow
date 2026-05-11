@@ -32,6 +32,9 @@ export async function GET(
       client: true,
       practitioner: { select: { id: true, firstName: true, lastName: true, email: true } },
       appointmentType: true,
+      // Multi-code support — return the joined snapshot rows ordered by
+      // the dentist's chosen sequence so the UI doesn't have to re-sort.
+      treatments: { orderBy: { sortOrder: "asc" } },
     },
   });
 
@@ -84,9 +87,54 @@ export async function PATCH(
     });
     if (!practitioner) return NextResponse.json({ error: "Practitioner not in practice" }, { status: 404 });
   }
+  // ─── Resolve treatments (if the request explicitly sends them) ─────────
+  // `treatments: undefined` (key absent) leaves the existing set untouched.
+  // `treatments: []` REPLACES with an empty set — caller intends to clear.
+  let resolvedTreatments: {
+    appointmentTypeId: string;
+    quantity: number;
+    sortOrder: number;
+    code: string;
+    name: string;
+    tariffCents: number;
+    durationMinutes: number;
+  }[] | null = null;
+
+  if (data.treatments !== undefined) {
+    if (data.treatments.length === 0) {
+      resolvedTreatments = [];
+    } else {
+      const ids = Array.from(new Set(data.treatments.map((t) => t.appointmentTypeId)));
+      const typeRows = await prisma.appointmentType.findMany({
+        where: { id: { in: ids }, practiceId: user.practiceId! },
+        select: { id: true, name: true, price: true, durationMinutes: true },
+      });
+      if (typeRows.length !== ids.length) {
+        return NextResponse.json(
+          { error: "One or more appointment types not found in this practice" },
+          { status: 404 },
+        );
+      }
+      const typeById = new Map(typeRows.map((t) => [t.id, t]));
+      resolvedTreatments = data.treatments.map((t, idx) => {
+        const row = typeById.get(t.appointmentTypeId)!;
+        return {
+          appointmentTypeId: t.appointmentTypeId,
+          quantity: t.quantity,
+          sortOrder: t.sortOrder ?? idx,
+          code: extractCode(row.name),
+          name: row.name,
+          tariffCents: row.price,
+          durationMinutes: row.durationMinutes,
+        };
+      });
+    }
+  }
+
+  // Resolve legacy single-type fallback (only when `treatments` was not sent).
   let typeDuration: number | null = null;
   let typePrice: number | null = null;
-  if (data.appointmentTypeId) {
+  if (resolvedTreatments === null && data.appointmentTypeId) {
     const type = await prisma.appointmentType.findFirst({
       where: { id: data.appointmentTypeId, practiceId: user.practiceId! },
       select: { durationMinutes: true, price: true },
@@ -96,40 +144,89 @@ export async function PATCH(
     typePrice = type.price;
   }
 
-  // Recompute times if startTime or duration changed
+  // Recompute times if startTime, duration, type or treatments changed.
   const startTime = data.startTime ? new Date(data.startTime) : existing.startTime;
   let endTime = existing.endTime;
+  const treatmentsChanged = resolvedTreatments !== null;
+  const treatmentDurationSum =
+    resolvedTreatments && resolvedTreatments.length > 0
+      ? resolvedTreatments.reduce((s, t) => s + t.durationMinutes * t.quantity, 0)
+      : null;
+
   if (data.endTime) {
     endTime = new Date(data.endTime);
-  } else if (data.startTime || data.durationMinutes || data.appointmentTypeId) {
+  } else if (data.startTime || data.durationMinutes || data.appointmentTypeId || treatmentsChanged) {
     const dur =
       data.durationMinutes ??
+      treatmentDurationSum ??
       typeDuration ??
       Math.round((existing.endTime.getTime() - existing.startTime.getTime()) / 60_000);
-    endTime = new Date(startTime.getTime() + dur * 60_000);
+    endTime = new Date(startTime.getTime() + Math.min(480, Math.max(5, dur)) * 60_000);
   }
 
+  // Server-authoritative revenue when treatments changed; else fall through
+  // to the legacy resolution path.
+  const revenueFromTreatments =
+    resolvedTreatments && resolvedTreatments.length > 0
+      ? resolvedTreatments.reduce((s, t) => s + t.tariffCents * t.quantity, 0)
+      : null;
+
   const revenueEstimateCents =
-    data.revenueEstimateCents ?? typePrice ?? existing.revenueEstimateCents;
+    revenueFromTreatments ??
+    data.revenueEstimateCents ??
+    typePrice ??
+    existing.revenueEstimateCents;
 
   const clientId = data.clientId ?? existing.clientId;
   const statusForRisk = data.status ?? existing.status;
   const risk = await calculateRiskForClient(clientId, startTime, statusForRisk, id);
 
-  const updated = await prisma.appointment.update({
-    where: { id },
-    data: {
-      ...(data.clientId && { clientId: data.clientId }),
-      ...(data.practitionerId && { practitionerId: data.practitionerId }),
-      ...(data.appointmentTypeId !== undefined && { appointmentTypeId: data.appointmentTypeId }),
-      ...(data.status && { status: data.status }),
-      ...(data.notes !== undefined && { notes: data.notes }),
-      startTime,
-      endTime,
-      revenueEstimateCents,
-      riskScore: risk.riskScore,
-      riskLevel: risk.riskLevel,
-    },
+  // Legacy single-id field kept in sync with first treatment (when present).
+  const legacyTypeIdUpdate =
+    resolvedTreatments !== null
+      ? { appointmentTypeId: resolvedTreatments[0]?.appointmentTypeId ?? null }
+      : data.appointmentTypeId !== undefined
+        ? { appointmentTypeId: data.appointmentTypeId }
+        : {};
+
+  // ─── Update appointment + replace treatments atomically ────────────────
+  const updated = await prisma.$transaction(async (tx) => {
+    const u = await tx.appointment.update({
+      where: { id },
+      data: {
+        ...(data.clientId && { clientId: data.clientId }),
+        ...(data.practitionerId && { practitionerId: data.practitionerId }),
+        ...legacyTypeIdUpdate,
+        ...(data.status && { status: data.status }),
+        ...(data.notes !== undefined && { notes: data.notes }),
+        startTime,
+        endTime,
+        revenueEstimateCents,
+        riskScore: risk.riskScore,
+        riskLevel: risk.riskLevel,
+      },
+    });
+
+    // Replace-set semantics: only when caller sent a treatments key.
+    if (resolvedTreatments !== null) {
+      await tx.appointmentTreatment.deleteMany({ where: { appointmentId: id } });
+      if (resolvedTreatments.length > 0) {
+        await tx.appointmentTreatment.createMany({
+          data: resolvedTreatments.map((t) => ({
+            appointmentId: id,
+            appointmentTypeId: t.appointmentTypeId,
+            code: t.code,
+            name: t.name,
+            tariffCents: t.tariffCents,
+            durationMinutes: t.durationMinutes,
+            quantity: t.quantity,
+            sortOrder: t.sortOrder,
+          })),
+        });
+      }
+    }
+
+    return u;
   });
 
   // Auto-create open slot if status changed to CANCELLED
@@ -138,6 +235,16 @@ export async function PATCH(
   }
 
   return NextResponse.json({ appointment: updated, riskFactors: risk.factors });
+}
+
+/**
+ * Extract the leading code from a catalog name like "C001 — Consult ten
+ * behoeve". Falls back to the first 16 chars when no en-dash is present
+ * (covers legacy demo names like "Intake").
+ */
+function extractCode(name: string): string {
+  const m = name.match(/^([A-Z]\d{2,4}[A-Z]?)\s*[—–-]/);
+  return m ? m[1] : name.slice(0, 16);
 }
 
 export async function DELETE(

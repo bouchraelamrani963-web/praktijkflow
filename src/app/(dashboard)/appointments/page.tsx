@@ -36,6 +36,7 @@ type AppointmentRow = Prisma.AppointmentGetPayload<{
     client:          { select: { id: true; firstName: true; lastName: true; riskLevel: true } };
     practitioner:    { select: { id: true; firstName: true; lastName: true } };
     appointmentType: { select: { id: true; name: true; color: true } };
+    _count:          { select: { treatments: true } };
   };
 }>;
 
@@ -152,6 +153,9 @@ export default async function AppointmentsPage({
             client:          { select: { id: true, firstName: true, lastName: true, riskLevel: true } },
             practitioner:    { select: { id: true, firstName: true, lastName: true } },
             appointmentType: { select: { id: true, name: true, color: true } },
+            // Multi-code count — list cell renders '+N' badge when > 1.
+            // Cheaper than reading every treatment row for a list view.
+            _count:          { select: { treatments: true } },
           },
         }),
         prisma.user.findMany({
@@ -177,6 +181,7 @@ export default async function AppointmentsPage({
     client:               a.client,
     practitioner:         a.practitioner,
     appointmentType:      a.appointmentType ?? null,
+    treatmentCount:       a._count?.treatments ?? 0,
   }));
 
   return (

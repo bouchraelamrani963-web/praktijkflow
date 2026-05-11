@@ -52,6 +52,11 @@ export default async function AppointmentDetailPage({
       client: true,
       practitioner: { select: { id: true, firstName: true, lastName: true, email: true } },
       appointmentType: true,
+      // Multi-code list — empty for legacy appointments. Snapshot fields
+      // (code/name/tariffCents) are read directly from each row, so a
+      // historical appointment renders correctly even after the catalog
+      // was renamed/repriced.
+      treatments: { orderBy: { sortOrder: "asc" } },
     },
   });
 
@@ -216,7 +221,51 @@ export default async function AppointmentDetailPage({
               <Clock className="h-4 w-4 text-zinc-400" />
               <span className="text-zinc-700 dark:text-zinc-300">{dur} minuten</span>
             </div>
-            {appt.appointmentType && (
+            {/* Multi-code list when present (new appointments), single-type
+                fallback for legacy rows that pre-date the treatments table. */}
+            {appt.treatments.length > 0 ? (
+              <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                <dt className="mb-2 text-xs uppercase text-zinc-500">
+                  Behandelcodes — Tarieven 2025
+                </dt>
+                <dd>
+                  <ul className="space-y-1.5">
+                    {appt.treatments.map((t) => (
+                      <li
+                        key={t.id}
+                        className="flex flex-wrap items-center gap-2 text-sm"
+                      >
+                        <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                          {t.code}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">
+                          {t.name.replace(/^[A-Z]\d{2,4}[A-Z]?\s*[—–-]\s*/, "")}
+                        </span>
+                        {t.quantity > 1 && (
+                          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs tabular-nums text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                            ×{t.quantity}
+                          </span>
+                        )}
+                        <span className="w-20 text-right font-mono text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
+                          €{((Number.isFinite(t.tariffCents) ? t.tariffCents : 0) / 100).toFixed(2)}
+                        </span>
+                        <span className="w-20 text-right font-mono text-sm font-medium tabular-nums text-zinc-900 dark:text-white">
+                          €{((Number.isFinite(t.tariffCents * t.quantity) ? t.tariffCents * t.quantity : 0) / 100).toFixed(2)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2 flex items-center justify-between border-t border-zinc-200 pt-2 text-sm dark:border-zinc-800">
+                    <span className="text-xs text-zinc-500">
+                      {appt.treatments.reduce((s, t) => s + t.quantity, 0)} regel{appt.treatments.length === 1 ? "" : "s"} · totaal
+                    </span>
+                    <span className="font-mono font-semibold tabular-nums text-zinc-900 dark:text-white">
+                      €{(appt.treatments.reduce((s, t) => s + t.tariffCents * t.quantity, 0) / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </dd>
+              </div>
+            ) : appt.appointmentType ? (
               <div>
                 <dt className="text-xs uppercase text-zinc-500">Type</dt>
                 <dd className="mt-1 flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
@@ -227,7 +276,7 @@ export default async function AppointmentDetailPage({
                   {TYPE_LABELS[appt.appointmentType.name] ?? appt.appointmentType.name}
                 </dd>
               </div>
-            )}
+            ) : null}
             {/*
               Revenue rule: only appointments that actually happened (or are
               still on track to happen) contribute to revenue. CANCELLED and

@@ -90,6 +90,10 @@ export async function GET(req: NextRequest) {
             },
             practitioner: { select: { id: true, firstName: true, lastName: true } },
             appointmentType: { select: { id: true, name: true, color: true } },
+            // Count-only — list rows just need to render '+N more codes'
+            // when an appointment carries multiple treatments; the actual
+            // rows are loaded on the detail page.
+            _count: { select: { treatments: true } },
           },
         }),
       ]);
@@ -100,6 +104,7 @@ export async function GET(req: NextRequest) {
         client:          { select: { id: true; firstName: true; lastName: true; riskLevel: true } };
         practitioner:    { select: { id: true; firstName: true; lastName: true } };
         appointmentType: { select: { id: true; name: true; color: true } };
+        _count:          { select: { treatments: true } };
       };
     }>> },
   );
@@ -136,8 +141,8 @@ export async function POST(req: NextRequest) {
   }
   const data = parsed.data;
 
-  // Verify all referenced entities belong to the tenant
-  const [client, practitioner, type] = await Promise.all([
+  // Verify the patient + practitioner belong to the tenant.
+  const [client, practitioner] = await Promise.all([
     prisma.client.findFirst({
       where: { id: data.clientId, practiceId: user.practiceId },
       select: { id: true },
@@ -146,42 +151,124 @@ export async function POST(req: NextRequest) {
       where: { userId: data.practitionerId, practiceId: user.practiceId, isActive: true },
       select: { userId: true },
     }),
-    data.appointmentTypeId
-      ? prisma.appointmentType.findFirst({
-          where: { id: data.appointmentTypeId, practiceId: user.practiceId },
-          select: { id: true, durationMinutes: true, price: true },
-        })
-      : Promise.resolve(null),
   ]);
 
   if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
   if (!practitioner) return NextResponse.json({ error: "Practitioner not in practice" }, { status: 404 });
-  if (data.appointmentTypeId && !type) {
-    return NextResponse.json({ error: "Appointment type not found" }, { status: 404 });
+
+  // ─── Resolve treatments + legacy single appointmentType ────────────────
+  // Three input shapes are supported (preference order):
+  //   A. New caller supplies `treatments[]` — server snapshots each row,
+  //      computes revenue+duration as the sum, ignores legacy fields.
+  //   B. Legacy caller supplies just `appointmentTypeId` — wrap as a
+  //      single-row treatments array so the join table stays consistent.
+  //   C. Caller supplies neither — bare appointment with manual revenue.
+  const treatmentSpec = data.treatments && data.treatments.length > 0
+    ? data.treatments
+    : (data.appointmentTypeId
+      ? [{ appointmentTypeId: data.appointmentTypeId, quantity: 1, sortOrder: 0 }]
+      : []);
+
+  // Resolve every referenced AppointmentType in one query — reject the
+  // whole request on tenant-mismatch (partial saves of treatments are unsafe).
+  let typeRows: { id: string; name: string; price: number; durationMinutes: number }[] = [];
+  if (treatmentSpec.length > 0) {
+    const ids = Array.from(new Set(treatmentSpec.map((t) => t.appointmentTypeId)));
+    typeRows = await prisma.appointmentType.findMany({
+      where: { id: { in: ids }, practiceId: user.practiceId },
+      select: { id: true, name: true, price: true, durationMinutes: true },
+    });
+    if (typeRows.length !== ids.length) {
+      return NextResponse.json(
+        { error: "One or more appointment types not found in this practice" },
+        { status: 404 },
+      );
+    }
   }
+  const typeById = new Map(typeRows.map((t) => [t.id, t]));
+
+  // Server-authoritative revenue: when treatments are present, recompute
+  // from the catalog snapshot — never trust client. Fall back to client-
+  // supplied value (or 0) only when no treatments were attached.
+  const revenueEstimateCents = treatmentSpec.length > 0
+    ? treatmentSpec.reduce((sum, t) => {
+        const row = typeById.get(t.appointmentTypeId)!;
+        return sum + row.price * t.quantity;
+      }, 0)
+    : (data.revenueEstimateCents ?? 0);
 
   const startTime = new Date(data.startTime);
-  const durationMinutes = data.durationMinutes ?? type?.durationMinutes ?? 60;
-  const endTime = data.endTime ? new Date(data.endTime) : new Date(startTime.getTime() + durationMinutes * 60_000);
-  const revenueEstimateCents = data.revenueEstimateCents ?? type?.price ?? 0;
+  let durationMinutes = data.durationMinutes;
+  if (durationMinutes === undefined && treatmentSpec.length > 0) {
+    const sum = treatmentSpec.reduce((acc, t) => {
+      const row = typeById.get(t.appointmentTypeId)!;
+      return acc + row.durationMinutes * t.quantity;
+    }, 0);
+    durationMinutes = Math.min(480, Math.max(5, sum || 60));
+  }
+  durationMinutes = durationMinutes ?? 60;
+  const endTime = data.endTime
+    ? new Date(data.endTime)
+    : new Date(startTime.getTime() + durationMinutes * 60_000);
 
   const risk = await calculateRiskForClient(data.clientId, startTime, data.status);
 
-  const appt = await prisma.appointment.create({
-    data: {
-      practiceId: user.practiceId,
-      clientId: data.clientId,
-      practitionerId: data.practitionerId,
-      appointmentTypeId: data.appointmentTypeId ?? null,
-      status: data.status,
-      startTime,
-      endTime,
-      notes: data.notes,
-      revenueEstimateCents,
-      riskScore: risk.riskScore,
-      riskLevel: risk.riskLevel,
-    },
+  // Legacy single-id field — first treatment for backward-compat with
+  // readers (lists, calendar colour helpers, older webhooks) that still
+  // read appointmentTypeId directly. Null when no treatments at all.
+  const legacyTypeId = treatmentSpec[0]?.appointmentTypeId ?? null;
+
+  // ─── Atomic create: appointment + treatment rows ────────────────────────
+  const appt = await prisma.$transaction(async (tx) => {
+    const created = await tx.appointment.create({
+      data: {
+        practiceId: user.practiceId!,
+        clientId: data.clientId,
+        practitionerId: data.practitionerId,
+        appointmentTypeId: legacyTypeId,
+        status: data.status,
+        startTime,
+        endTime,
+        notes: data.notes,
+        revenueEstimateCents,
+        riskScore: risk.riskScore,
+        riskLevel: risk.riskLevel,
+      },
+    });
+
+    if (treatmentSpec.length > 0) {
+      await tx.appointmentTreatment.createMany({
+        data: treatmentSpec.map((t, idx) => {
+          const row = typeById.get(t.appointmentTypeId)!;
+          return {
+            appointmentId: created.id,
+            appointmentTypeId: t.appointmentTypeId,
+            // SNAPSHOT — preserves history if the catalog row is later
+            // renamed/repriced. Code is parsed from the leading "<CODE> — …"
+            // segment of the catalog name; falls back to truncated name.
+            code: extractCode(row.name),
+            name: row.name,
+            tariffCents: row.price,
+            durationMinutes: row.durationMinutes,
+            quantity: t.quantity,
+            sortOrder: t.sortOrder ?? idx,
+          };
+        }),
+      });
+    }
+
+    return created;
   });
 
   return NextResponse.json({ appointment: appt, riskFactors: risk.factors }, { status: 201 });
+}
+
+/**
+ * Extract the leading code from a catalog name like "C001 — Consult ten
+ * behoeve". Falls back to the first 16 chars when no en-dash is present
+ * (covers legacy demo names like "Intake").
+ */
+function extractCode(name: string): string {
+  const m = name.match(/^([A-Z]\d{2,4}[A-Z]?)\s*[—–-]/);
+  return m ? m[1] : name.slice(0, 16);
 }

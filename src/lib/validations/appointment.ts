@@ -22,6 +22,19 @@ const optionalIsoDate = z
 
 const uuid = z.string().uuid();
 
+/**
+ * Multi-code support — one appointment can carry N treatment codes.
+ * Each entry references a catalog row by id; quantity defaults to 1
+ * (per-5-min codes like M03 will use higher quantities). The server
+ * resolves each id against the practice's catalog at handle-time and
+ * snapshots code/name/tariff/duration into AppointmentTreatment rows.
+ */
+const treatmentEntry = z.object({
+  appointmentTypeId: uuid,
+  quantity: z.number().int().min(1).max(50).default(1),
+  sortOrder: z.number().int().min(0).max(1000).optional(),
+});
+
 export const appointmentCreateSchema = z
   .object({
     clientId: uuid,
@@ -37,11 +50,24 @@ export const appointmentCreateSchema = z
       .optional()
       .or(z.literal("").transform(() => undefined)),
     revenueEstimateCents: z.number().int().min(0).max(10_000_00).optional(),
+    // New: zero or more treatment codes. When non-empty, the server
+    // recomputes revenueEstimateCents server-side from these rows
+    // (sum of tariff * quantity) — the client-supplied
+    // revenueEstimateCents above is treated as a fallback for callers
+    // that don't yet send treatments.
+    treatments: z.array(treatmentEntry).max(50).optional(),
   })
-  .refine((d) => d.endTime || d.durationMinutes || d.appointmentTypeId, {
-    message: "Provide endTime, durationMinutes, or appointmentTypeId",
-    path: ["durationMinutes"],
-  });
+  .refine(
+    (d) =>
+      d.endTime ||
+      d.durationMinutes ||
+      d.appointmentTypeId ||
+      (d.treatments && d.treatments.length > 0),
+    {
+      message: "Provide endTime, durationMinutes, appointmentTypeId, or treatments",
+      path: ["durationMinutes"],
+    },
+  );
 
 export const appointmentUpdateSchema = z.object({
   clientId: uuid.optional(),
@@ -57,6 +83,10 @@ export const appointmentUpdateSchema = z.object({
     .optional()
     .or(z.literal("").transform(() => undefined)),
   revenueEstimateCents: z.number().int().min(0).max(10_000_00).optional(),
+  // When `treatments` is present (even as an empty array), the server
+  // REPLACES the existing treatment set on the appointment. Use undefined
+  // (omit the key) to leave treatments untouched.
+  treatments: z.array(treatmentEntry).max(50).optional(),
 });
 
 export const appointmentStatusSchema = z.object({

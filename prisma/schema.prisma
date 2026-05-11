@@ -215,6 +215,10 @@ model AppointmentType {
   appointments    Appointment[]
   openSlots       OpenSlot[]
   waitlistEntries WaitlistEntry[]
+  // Back-relation for the multi-code join table. onDelete is Restrict on the
+  // join side — a catalog row that has ever been used on an appointment
+  // can't be hard-deleted (use isActive=false to hide it instead).
+  treatmentLinks  AppointmentTreatment[]
 
   @@index([practiceId])
   @@map("appointment_types")
@@ -255,12 +259,52 @@ model Appointment {
   openSlot            OpenSlot?            @relation("SlotSource")
   // Slot FILLED by this appointment (this appointment was created from claiming an open slot)
   claimedForOpenSlot  OpenSlot?            @relation("SlotClaim")
+  // Multi-code support — one appointment can have N treatments (e.g. C002 +
+  // X10 + M03). When this list is non-empty, revenueEstimateCents above is
+  // the SUM of treatment subtotals; the legacy single appointmentTypeId
+  // remains for backward compatibility with older rows that pre-date this
+  // model and is otherwise treated as a duplicate of treatments[0].
+  treatments          AppointmentTreatment[]
 
   @@index([practiceId, startTime])
   @@index([practiceId, status])
   @@index([practitionerId, startTime])
   @@index([clientId])
   @@map("appointments")
+}
+
+// ─── AppointmentTreatment — N-to-1 join with snapshot fields ──────────────
+// One row per dental code attached to an appointment. The catalog FK
+// (appointmentTypeId) keeps a live link to the master row so we can show
+// updated colors/categories, but code/name/tariffCents/durationMinutes are
+// SNAPSHOTTED at attach-time so historical revenue doesn't shift if the
+// catalog gets re-tariffed next year. Same pattern as OpenSlot's claim
+// snapshot fields.
+model AppointmentTreatment {
+  id                String @id @default(uuid()) @db.Uuid
+  appointmentId     String @db.Uuid
+  appointmentTypeId String @db.Uuid
+
+  // Snapshot of the catalog row at the moment of attachment.
+  code            String
+  name            String
+  tariffCents     Int
+  durationMinutes Int
+
+  // How many times this code applies (e.g. M03 "per 5 minuten" × 6 = 30 min).
+  quantity        Int @default(1)
+  // Render order — lets the UI keep the dentist's original sequence.
+  sortOrder       Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointment     Appointment     @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  appointmentType AppointmentType @relation(fields: [appointmentTypeId], references: [id], onDelete: Restrict)
+
+  @@index([appointmentId])
+  @@index([appointmentTypeId])
+  @@map("appointment_treatments")
 }
 
 // ─── Invoice ───────────────────────────────────────────────────────────────
