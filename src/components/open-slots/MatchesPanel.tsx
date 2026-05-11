@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Phone, Mail, AlertTriangle, CheckCircle2, MessageSquare } from "lucide-react";
+import { Send, Phone, Mail, AlertTriangle, CheckCircle2, MessageSquare, Copy, FlaskConical } from "lucide-react";
 import toast from "react-hot-toast";
 
 /**
@@ -26,7 +26,13 @@ export interface MatchedEntry {
 interface Props {
   slotId: string;
   initialMatches: MatchedEntry[];
+  /** Twilio SDK env vars are present (real send possible). */
   smsConfigured: boolean;
+  /** SMS_TEST_MODE=true on the server (mock send + claim URL surfaced). */
+  smsTestMode: boolean;
+  /** Convenience flag: smsConfigured || smsTestMode. Drives the submit
+   *  button enable state. */
+  smsAllowed: boolean;
   slotAvailable: boolean;
 }
 
@@ -35,6 +41,9 @@ interface OfferResult {
   clientName: string;
   status: "sent" | "failed" | "no_phone" | "not_eligible";
   reason?: string;
+  /** Only present when SMS_TEST_MODE=true. Operator clicks this to walk
+   *  the claim flow as if they were the patient. */
+  claimUrl?: string;
 }
 
 /**
@@ -52,7 +61,11 @@ interface OfferResult {
 export function MatchesPanel({
   slotId,
   initialMatches,
-  smsConfigured,
+  // smsConfigured is part of the contract for completeness but the panel
+  // gates everything off the unified `smsAllowed` (= configured || test mode).
+  // Kept in the Props interface so callers stay explicit about what they pass.
+  smsTestMode,
+  smsAllowed,
   slotAvailable,
 }: Props) {
   const router = useRouter();
@@ -90,7 +103,7 @@ export function MatchesPanel({
       toast.error("Selecteer minstens één patiënt.");
       return;
     }
-    if (!smsConfigured) {
+    if (!smsAllowed) {
       toast.error("SMS is niet geconfigureerd op de server.");
       return;
     }
@@ -174,8 +187,13 @@ export function MatchesPanel({
 
   return (
     <div className="space-y-4">
-      {/* Twilio-not-configured banner — sticky honest gating */}
-      {!smsConfigured && (
+      {/* Honest send-state banner — three states, mutually exclusive:
+          (1) neither test mode nor real Twilio → amber, button disabled
+          (2) test mode on (regardless of Twilio) → blue, no real SMS, claim
+              URLs surfaced inline so the operator can walk the flow
+          (3) Twilio configured + test mode off → no banner (default real send)
+      */}
+      {!smsAllowed ? (
         <div
           role="status"
           className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
@@ -185,10 +203,25 @@ export function MatchesPanel({
             <strong className="font-semibold">SMS niet geconfigureerd.</strong>{" "}
             Stel <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code> en{" "}
             <code>TWILIO_PHONE_NUMBER</code> in op de server om aanbiedingen te
-            kunnen versturen. Knop is uitgeschakeld zolang dit ontbreekt.
+            kunnen versturen — of zet <code>SMS_TEST_MODE=true</code> voor een
+            testronde zonder echte SMS. Knop is uitgeschakeld zolang dit ontbreekt.
           </div>
         </div>
-      )}
+      ) : smsTestMode ? (
+        <div
+          role="status"
+          className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200"
+        >
+          <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-300" />
+          <div>
+            <strong className="font-semibold">SMS-testmodus actief.</strong>{" "}
+            Er worden <em>geen</em> echte SMS-berichten verstuurd. Na &quot;Stuur
+            aanbod&quot; verschijnt per patiënt een claim-link die u zelf kunt
+            openen om de claim-flow te doorlopen. Zet <code>SMS_TEST_MODE=false</code>{" "}
+            zodra u echte berichten wilt versturen.
+          </div>
+        </div>
+      ) : null}
 
       {/* Header with select-all + bulk action */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
@@ -198,7 +231,7 @@ export function MatchesPanel({
             id="match-select-all"
             checked={selectedCount > 0 && selected.size === matches.filter((m) => m.clientPhone).length}
             onChange={toggleAll}
-            disabled={!slotAvailable || matches.every((m) => !m.clientPhone)}
+            disabled={!slotAvailable || !smsAllowed || matches.every((m) => !m.clientPhone)}
             className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
           <label htmlFor="match-select-all" className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -210,7 +243,7 @@ export function MatchesPanel({
         <button
           type="button"
           onClick={handleOffer}
-          disabled={!slotAvailable || !smsConfigured || sending || selectedCount === 0}
+          disabled={!slotAvailable || !smsAllowed || sending || selectedCount === 0}
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           <Send className="h-4 w-4" />
@@ -244,7 +277,7 @@ export function MatchesPanel({
                         aria-label={`Selecteer ${m.clientName}`}
                         checked={selected.has(m.id)}
                         onChange={() => toggle(m.id)}
-                        disabled={!slotAvailable || noPhone || sending}
+                        disabled={!slotAvailable || !smsAllowed || noPhone || sending}
                         className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                       />
                     </td>
@@ -296,10 +329,48 @@ export function MatchesPanel({
                     <td className="px-4 py-3 text-xs">
                       {r ? (
                         r.status === "sent" ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                            <CheckCircle2 className="h-3 w-3" />
-                            Verzonden
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                              <CheckCircle2 className="h-3 w-3" />
+                              {r.claimUrl ? "Mock verzonden" : "Verzonden"}
+                            </span>
+                            {/* Test-mode only: surface the claim URL so the
+                                operator can walk the patient flow themselves.
+                                In real mode the patient receives this via SMS
+                                and we deliberately never echo it back here
+                                (avoids leaking tokens into screenshots/logs). */}
+                            {r.claimUrl && (
+                              <div className="flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-1 dark:border-blue-800 dark:bg-blue-900/20">
+                                <FlaskConical className="h-3 w-3 shrink-0 text-blue-600 dark:text-blue-300" />
+                                <a
+                                  href={r.claimUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="truncate font-mono text-[11px] text-blue-700 hover:underline dark:text-blue-300"
+                                  title={r.claimUrl}
+                                  style={{ maxWidth: "16rem" }}
+                                >
+                                  {r.claimUrl.replace(/^https?:\/\//, "")}
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      await navigator.clipboard.writeText(r.claimUrl!);
+                                      toast.success("Claim-link gekopieerd");
+                                    } catch {
+                                      toast.error("Kopiëren mislukt");
+                                    }
+                                  }}
+                                  className="ml-auto inline-flex items-center rounded p-0.5 text-blue-600 hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                                  aria-label="Kopieer claim-link"
+                                  title="Kopieer claim-link"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         ) : r.status === "no_phone" ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                             Geen telefoon

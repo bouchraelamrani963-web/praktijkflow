@@ -4,7 +4,7 @@ import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { findMatchesForSlot } from "@/lib/waitlist/matching";
-import { isTwilioConfigured } from "@/lib/twilio";
+import { isTwilioConfigured, isSmsTestMode } from "@/lib/twilio";
 import { MatchesPanel } from "@/components/open-slots/MatchesPanel";
 
 /**
@@ -65,7 +65,13 @@ export default async function OpenSlotMatchesPage({
       ? await findMatchesForSlot(slot.id, user.practiceId)
       : [];
 
+  // Three states: real (Twilio configured, no test mode), test (test mode
+  // on — bypasses Twilio gate), disabled (neither). The panel uses
+  // `smsAllowed` to enable the submit button and `smsTestMode` to toggle
+  // the banner copy + claim-URL display.
   const smsConfigured = isTwilioConfigured();
+  const smsTestMode = isSmsTestMode();
+  const smsAllowed = smsConfigured || smsTestMode;
 
   return (
     <div className="max-w-4xl">
@@ -145,6 +151,8 @@ export default async function OpenSlotMatchesPage({
         slotId={slot.id}
         initialMatches={matches}
         smsConfigured={smsConfigured}
+        smsTestMode={smsTestMode}
+        smsAllowed={smsAllowed}
         slotAvailable={slot.status === "AVAILABLE"}
       />
     </div>

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { createActionToken } from "@/lib/tokens/service";
-import { sendSms, isTwilioConfigured } from "@/lib/twilio";
+import { sendSms, isTwilioConfigured, isSmsTestMode, isSmsAllowed } from "@/lib/twilio";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,6 +41,9 @@ interface OfferResult {
   status: "sent" | "failed" | "no_phone" | "not_eligible";
   reason?: string;
   smsSid?: string;
+  /** In SMS_TEST_MODE only: the claim URL the patient would have received,
+   *  surfaced so the operator can manually click through to test the flow. */
+  claimUrl?: string;
 }
 
 export async function POST(
@@ -54,22 +57,24 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.practiceId) return NextResponse.json({ error: "No practice context" }, { status: 403 });
 
-  // ─── Honest Twilio gate ─────────────────────────────────────────────────
-  // Refuse the call before any tokens or DB writes happen if SMS isn't
-  // configured. The UI surfaces this back to the practice owner as a
-  // disabled-button state — see MatchesPanel. The decision lives here
-  // (not on the client) because env vars aren't browser-readable.
-  if (!isTwilioConfigured()) {
+  // ─── Honest send gate ───────────────────────────────────────────────────
+  // Allowed when EITHER (a) Twilio is fully configured for real sending OR
+  // (b) SMS_TEST_MODE=true is set on the server (no real SMS, claim URLs
+  // returned to the operator for manual click-through). The decision lives
+  // here (not on the client) because env vars aren't browser-readable.
+  if (!isSmsAllowed()) {
     return NextResponse.json(
       {
         error: "SMS niet geconfigureerd",
         message:
-          "Stel TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN en TWILIO_PHONE_NUMBER in op de server om aanbiedingen te kunnen versturen.",
+          "Stel TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN en TWILIO_PHONE_NUMBER in op de server om aanbiedingen te kunnen versturen — of zet SMS_TEST_MODE=true voor een testronde zonder echte SMS.",
         smsConfigured: false,
+        smsTestMode: false,
       },
       { status: 503 },
     );
   }
+  const testMode = isSmsTestMode();
 
   let body: unknown;
   try {
@@ -178,17 +183,24 @@ export async function POST(
 
       const smsResult = await sendSms(entry.client.phone, smsBody);
 
-      // Twilio mock-mode here is defensive: we already gated above on
-      // isTwilioConfigured(), but if `sendSms` somehow returns mock=true we
-      // log it honestly as failed rather than claiming success.
-      const logStatus = smsResult.mock
-        ? "failed"
-        : smsResult.success
-          ? "sent"
-          : "failed";
-      const errorMsg = smsResult.mock
-        ? "Twilio gate slipped through — refusing to claim success"
-        : (smsResult.error ?? null);
+      // Test mode → mock=true is the EXPECTED success path. Real mode →
+      // mock=true would be an unexpected leak from sendSms() (e.g. Twilio
+      // env vanished mid-request) — we refuse to claim success in that
+      // case because the patient never got a message.
+      const isHealthyMock = testMode && smsResult.mock;
+      const logStatus =
+        isHealthyMock
+          ? "mock"
+          : smsResult.mock
+            ? "failed"
+            : smsResult.success
+              ? "sent"
+              : "failed";
+      const errorMsg = isHealthyMock
+        ? null
+        : smsResult.mock
+          ? "Twilio gate slipped through — refusing to claim success"
+          : (smsResult.error ?? null);
 
       await prisma.messageLog.create({
         data: {
@@ -204,8 +216,13 @@ export async function POST(
         },
       });
 
-      if (logStatus === "sent") {
-        // Only flip waitlist status to OFFERED on actual send success.
+      // Both 'sent' (real) and 'mock' (test mode) count as a successful
+      // dispatch from the operator's perspective — flip waitlist → OFFERED
+      // so the rest of the recovery flow proceeds. Test-mode tokens are
+      // real PatientActionTokens that work end-to-end via the claim URL.
+      const dispatched = logStatus === "sent" || logStatus === "mock";
+
+      if (dispatched) {
         await prisma.waitlistEntry.update({
           where: { id: entry.id },
           data: { status: "OFFERED" },
@@ -214,8 +231,14 @@ export async function POST(
         results.push({
           waitlistEntryId: entry.id,
           clientName,
-          status: "sent",
+          status: "sent", // unified status field for the UI
           smsSid: smsResult.sid,
+          // Surface the claim URL ONLY in test mode so the operator can
+          // walk the flow themselves. In real mode the patient receives
+          // the URL via SMS — we never echo it back to the dashboard
+          // there (avoids accidentally leaking the token in screenshots
+          // or shared sessions).
+          ...(testMode ? { claimUrl: `${base}${actionUrl}` } : {}),
         });
       } else {
         results.push({
@@ -245,6 +268,7 @@ export async function POST(
     failed,
     total: results.length,
     results,
-    smsConfigured: true,
+    smsConfigured: isTwilioConfigured(),
+    smsTestMode: testMode,
   });
 }
