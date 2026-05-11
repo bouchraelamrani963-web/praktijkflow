@@ -225,22 +225,86 @@ export default function DashboardPage() {
   // money story in under 2 minutes. Keeps ONLY the first four cards.
   const visibleKpiCards = data.demoMode ? kpiCards.slice(0, 4) : kpiCards;
 
+  // ─── Brand-new practice empty-state ────────────────────────────────────
+  // For a freshly-registered practice with no patients yet, the entire KPI
+  // grid is just zeros — and the revenue narrative ("Kosten NoShow Control",
+  // "Gemiste omzet", "Netto winst na herstel") is misleading because the
+  // user hasn't started using the product yet. Render a focused onboarding
+  // card instead. As soon as the first patient is added, the regular
+  // dashboard takes over.
+  const isEmptyPractice =
+    !data.demoMode &&
+    k.totalClients === 0 &&
+    k.appointmentsToday === 0 &&
+    (data.recentCancellations?.length ?? 0) === 0 &&
+    (data.recentOpenSlots?.length ?? 0) === 0;
+
+  if (isEmptyPractice) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            Welkom, {data.userName ?? profile?.firstName ?? "collega"}
+          </h1>
+          <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            Uw praktijk is klaar voor gebruik. Begin met de drie stappen hieronder.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <ol className="space-y-5">
+            {[
+              {
+                step: 1,
+                title: "Voeg uw eerste patiënt toe",
+                body: "Patiënten zijn de basis: zonder hen kunnen er geen afspraken of wachtlijst-vermeldingen worden aangemaakt.",
+                cta: { href: "/patients/new", label: "Nieuwe patiënt" },
+                icon: Users,
+              },
+              {
+                step: 2,
+                title: "Plan uw eerste afspraak",
+                body: "Maak een afspraak voor de zojuist toegevoegde patiënt. Zodra deze wordt geannuleerd, wordt de plek automatisch aangeboden aan de wachtlijst.",
+                cta: { href: "/appointments/new", label: "Nieuwe afspraak" },
+                icon: Calendar,
+              },
+              {
+                step: 3,
+                title: "Stel herinneringen in",
+                body: "Activeer 48-uurs en 24-uurs SMS-herinneringen om no-shows te verminderen voordat ze gebeuren.",
+                cta: { href: "/instellingen", label: "Naar instellingen" },
+                icon: Sparkles,
+              },
+            ].map((s) => (
+              <li key={s.step} className="flex items-start gap-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                  {s.step}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    {s.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    {s.body}
+                  </p>
+                  <Link
+                    href={s.cta.href}
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                  >
+                    {s.cta.label}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Demo-mode banner — frames the whole dashboard as a live recovery
-          scenario. Keeps the user anchored in the "money just came back"
-          narrative from second 1. */}
-      <div
-        role="status"
-        className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
-      >
-        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300" />
-        <span>
-          <span className="font-semibold">Demo:</span> u ziet een praktijk waarin
-          zojuist een annulering automatisch is opgevuld.
-        </span>
-      </div>
-
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
           Welkom terug, {data.userName ?? profile?.firstName ?? "collega"}
