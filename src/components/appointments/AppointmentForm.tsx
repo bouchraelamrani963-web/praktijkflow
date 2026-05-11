@@ -66,6 +66,19 @@ const inputCls =
   "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white";
 const labelCls = "block text-sm font-medium text-zinc-700 dark:text-zinc-300";
 
+/**
+ * Format a Date as `YYYY-MM-DDTHH:mm` in **local** timezone — the format
+ * `<input type="datetime-local">` expects for its value/min/max attributes.
+ * Using toISOString() here would give UTC and shift the visible time.
+ */
+function localDateTime(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  );
+}
+
 export function AppointmentForm({
   initial,
   mode,
@@ -186,6 +199,10 @@ export function AppointmentForm({
 
         <div>
           <label className={labelCls} htmlFor="startTime">Starttijd *</label>
+          {/* min/max bound the year-spinner so users can't accidentally land
+              on year 0009 or 9999. Lower bound = today (no past appointments
+              from the form), upper = today + 5y (covers the realistic horizon
+              for a dental schedule). The values are local-time formatted. */}
           <input
             id="startTime"
             type="datetime-local"
@@ -193,6 +210,8 @@ export function AppointmentForm({
             className={inputCls}
             value={v.startTime}
             onChange={(e) => set("startTime", e.target.value)}
+            min={(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return localDateTime(d); })()}
+            max={(() => { const d = new Date(); d.setFullYear(d.getFullYear() + 5); return localDateTime(d); })()}
           />
         </div>
 

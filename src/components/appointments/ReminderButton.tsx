@@ -10,14 +10,29 @@ interface Props {
   type: "48h" | "24h";
   alreadySent: boolean;
   hasPhone: boolean;
+  /**
+   * Whether Twilio env vars are present on the server. Threaded down from
+   * the appointment-detail server component (which calls
+   * `isTwilioConfigured()`). When false, render a disabled informational
+   * pill instead of an action button — clicking would only succeed in
+   * "mock" mode and falsely flip the appointment's reminderSent flag.
+   */
+  smsConfigured: boolean;
 }
 
-export function ReminderButton({ appointmentId, type, alreadySent, hasPhone }: Props) {
+export function ReminderButton({
+  appointmentId,
+  type,
+  alreadySent,
+  hasPhone,
+  smsConfigured,
+}: Props) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
 
   const label = type === "48h" ? "48u herinnering" : "24u herinnering";
 
+  // Already-sent state takes priority — it represents real history.
   if (alreadySent) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
@@ -39,6 +54,21 @@ export function ReminderButton({ appointmentId, type, alreadySent, hasPhone }: P
     );
   }
 
+  // Twilio not configured on the server — disable the button and explain.
+  // Clicking would otherwise hit the mock-mode path which logs to server
+  // stdout but flips reminderSent=true, falsely indicating a real send.
+  if (!smsConfigured) {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+        title="Stel TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN en TWILIO_PHONE_NUMBER in op de server om SMS te activeren."
+      >
+        <MessageSquare className="h-3.5 w-3.5" />
+        {label} — SMS niet geconfigureerd
+      </span>
+    );
+  }
+
   async function handleSend() {
     setSending(true);
     try {
@@ -54,8 +84,12 @@ export function ReminderButton({ appointmentId, type, alreadySent, hasPhone }: P
       }
 
       const status = data.reminder?.status;
-      if (status === "sent" || status === "mock") {
-        toast.success(`${label} ${status === "mock" ? "verzonden (mock)" : "verzonden"}`);
+      if (status === "sent") {
+        toast.success(`${label} verzonden`);
+      } else if (status === "mock") {
+        // Defensive: should not reach here when smsConfigured is true, but
+        // surface the truth honestly if it ever does.
+        toast(`${label} (mock — SMS niet geconfigureerd)`, { icon: "ℹ️" });
       } else if (status === "skipped") {
         toast(data.reminder?.reason ?? "Overgeslagen", { icon: "⏭️" });
       } else {

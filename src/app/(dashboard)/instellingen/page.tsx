@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Save, Sun, Moon, Monitor, Sparkles } from "lucide-react";
+import { Save, Sun, Moon, Monitor, Sparkles, ListPlus } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface PracticeData {
@@ -213,6 +213,13 @@ export default function InstellingenPage() {
             </div>
           </div>
 
+          {/* Standard treatment-type catalog restore. Idempotent — only
+              adds the default Dutch dental codes that aren't already
+              present in this practice. Useful for older accounts that
+              were created before /api/auth/register seeded them, or after
+              an accidental delete. */}
+          <RestoreTreatmentTypesPanel />
+
           {/* Demo / sample data — moved here from the prior dashboard
               top-banner. Lives in settings because (a) it's an admin action,
               not part of normal daily flow, and (b) production users never
@@ -366,6 +373,111 @@ function DemoDataPanel() {
           {state.alreadySeeded
             ? "Voorbeelddata is al aanwezig — geen wijzigingen."
             : `Voorbeelddata geladen: ${state.clients} patiënten · ${state.appointments} afspraken.`}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Restore standard treatment-type catalog.
+ *
+ * Calls POST /api/admin/restore-treatment-types — endpoint is idempotent
+ * (skips names already present, only adds missing ones), so the operator
+ * can click this safely without worrying about duplicates of types they
+ * already use.
+ */
+type RestoreUiState =
+  | { kind: "idle" }
+  | { kind: "running" }
+  | { kind: "done"; added: number; skipped: number; message: string }
+  | { kind: "error"; message: string };
+
+function RestoreTreatmentTypesPanel() {
+  const router = useRouter();
+  const [state, setState] = useState<RestoreUiState>({ kind: "idle" });
+  const running = state.kind === "running";
+
+  async function handleRestore() {
+    setState({ kind: "running" });
+    try {
+      const res = await fetch("/api/admin/restore-treatment-types", { method: "POST" });
+      const data: {
+        success?: boolean;
+        added?: number;
+        skipped?: number;
+        message?: string;
+        error?: string;
+      } = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.success === false) {
+        const message = data.message ?? data.error ?? "Herstellen mislukt";
+        setState({ kind: "error", message });
+        toast.error(message);
+        return;
+      }
+
+      const added = data.added ?? 0;
+      const skipped = data.skipped ?? 0;
+      setState({
+        kind: "done",
+        added,
+        skipped,
+        message: data.message ?? `${added} toegevoegd, ${skipped} overgeslagen.`,
+      });
+      if (added === 0) {
+        toast.success("Alle standaard behandeltypes zijn al aanwezig.");
+      } else {
+        toast.success(`${added} behandeltype${added === 1 ? "" : "s"} toegevoegd.`);
+      }
+      router.refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Herstellen mislukt";
+      setState({ kind: "error", message });
+      toast.error(message);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-start gap-3">
+        <ListPlus className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" aria-hidden="true" />
+        <div className="flex-1">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+            Standaard behandeltypes
+          </h2>
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+            Voegt de standaard Nederlandse tandheelkundige behandelingen toe
+            (C-, M-, A-, X-, V-, E-, T-, R-, P- en F-codes). Bestaande types
+            met dezelfde naam worden overgeslagen — uw eigen aanpassingen
+            blijven behouden.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleRestore}
+          disabled={running}
+          aria-busy={running}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        >
+          {running && (
+            <span
+              aria-hidden="true"
+              className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-zinc-700 dark:border-zinc-600 dark:border-t-zinc-200"
+            />
+          )}
+          {running ? "Bezig…" : "Herstel standaard types"}
+        </button>
+      </div>
+
+      {state.kind === "done" && (
+        <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+          {state.message}
+        </p>
+      )}
+      {state.kind === "error" && (
+        <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300">
+          <strong>Mislukt:</strong> {state.message}
         </p>
       )}
     </div>

@@ -98,7 +98,19 @@ export function PatientForm({ initial, mode, patientId }: Props) {
           </div>
           <div>
             <label className={labelCls} htmlFor="dateOfBirth">Geboortedatum</label>
-            <input id="dateOfBirth" type="date" className={inputCls} value={values.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} />
+            {/* min/max bound the year-spinner so users can't accidentally land on
+                e.g. year 0009 by typing a single digit (which is HTML5 default
+                behaviour without bounds). today is recomputed each render so
+                the upper bound stays accurate. */}
+            <input
+              id="dateOfBirth"
+              type="date"
+              className={inputCls}
+              value={values.dateOfBirth}
+              onChange={(e) => set("dateOfBirth", e.target.value)}
+              min="1900-01-01"
+              max={new Date().toISOString().slice(0, 10)}
+            />
           </div>
           <div>
             <label className={labelCls} htmlFor="bsn">BSN</label>

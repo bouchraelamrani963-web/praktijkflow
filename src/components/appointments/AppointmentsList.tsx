@@ -248,11 +248,15 @@ function Inner({
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <label className="block text-xs font-medium uppercase text-zinc-500">Van</label>
+          {/* Year-spinner bounds — without these, typing a single digit lands
+              on year 0009 and the resulting filter range is nonsense. */}
           <input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
             aria-label="Filter vanaf datum"
+            min="2000-01-01"
+            max="2099-12-31"
             className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
           />
         </div>
@@ -263,6 +267,8 @@ function Inner({
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
             aria-label="Filter tot datum"
+            min="2000-01-01"
+            max="2099-12-31"
             className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
           />
         </div>

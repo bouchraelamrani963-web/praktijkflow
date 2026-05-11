@@ -8,6 +8,7 @@ import { ReminderButton } from "@/components/appointments/ReminderButton";
 import { AddToWaitlistButton } from "@/components/appointments/AddToWaitlistButton";
 import { RecoveryTimeline } from "@/components/appointments/RecoveryTimeline";
 import { RISK_LABELS, TYPE_LABELS } from "@/lib/labels";
+import { isTwilioConfigured } from "@/lib/twilio";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -262,17 +263,23 @@ export default async function AppointmentDetailPage({
               <span className="text-xs tabular-nums text-zinc-500">Score: {appt.riskScore}/100</span>
             </div>
             <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+              {/* smsConfigured is read on the SERVER (env vars are not
+                  exposed to the browser) and threaded down so the button
+                  can render an honest "SMS niet geconfigureerd" pill
+                  instead of falsely flipping reminderSent in mock mode. */}
               <ReminderButton
                 appointmentId={appt.id}
                 type="48h"
                 alreadySent={appt.reminder48hSent}
                 hasPhone={Boolean(appt.client.phone)}
+                smsConfigured={isTwilioConfigured()}
               />
               <ReminderButton
                 appointmentId={appt.id}
                 type="24h"
                 alreadySent={appt.reminder24hSent}
                 hasPhone={Boolean(appt.client.phone)}
+                smsConfigured={isTwilioConfigured()}
               />
             </div>
           </dl>

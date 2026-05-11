@@ -114,11 +114,23 @@ export function OpenSlotForm({ practitioners, types }: Props) {
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Starttijd *
         </label>
+        {/* min/max: same bounds as the appointment form so the year-spinner
+            never lands on year 0009 from a stray digit-press. */}
         <input
           type="datetime-local"
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
           required
+          min={(() => {
+            const d = new Date(); d.setHours(0, 0, 0, 0);
+            const pad = (n: number) => String(n).padStart(2, "0");
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          })()}
+          max={(() => {
+            const d = new Date(); d.setFullYear(d.getFullYear() + 5);
+            const pad = (n: number) => String(n).padStart(2, "0");
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          })()}
           className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
         />
       </div>

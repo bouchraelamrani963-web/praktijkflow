@@ -25,11 +25,19 @@ const optionalPhone = z
   .optional()
   .or(z.literal("").transform(() => undefined));
 
+// Server-side guard: even if the form's <input type="date"> min/max is
+// bypassed (devtools, direct API call), reject implausible birth dates.
+// Bounds: year 1900 floor, today ceiling (no future birthdays).
+const MIN_BIRTH_DATE = new Date("1900-01-01T00:00:00Z");
 const optionalDate = z
   .string()
   .trim()
   .refine((v) => !v || !Number.isNaN(Date.parse(v)), { message: "Invalid date" })
   .transform((v) => (v ? new Date(v) : undefined))
+  .refine(
+    (d) => d === undefined || (d >= MIN_BIRTH_DATE && d <= new Date()),
+    { message: "Birth date must be between 1900-01-01 and today" },
+  )
   .optional();
 
 const optionalBsn = z
