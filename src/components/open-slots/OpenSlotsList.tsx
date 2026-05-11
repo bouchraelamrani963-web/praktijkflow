@@ -353,10 +353,12 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                         onClick={(e) => e.stopPropagation()}
                       >
                         {s.status === "AVAILABLE" ? (
+                          // Was: deep-link to /waitlist filter (a dead-end
+                          // for the recovery flow — no offer ever fired).
+                          // Now: open the matches+offer panel that calls the
+                          // real /api/open-slots/[id]/matches + /offer.
                           <Link
-                            href={`/waitlist?status=WAITING${
-                              s.appointmentType ? `&appointmentTypeId=${s.appointmentType.id}` : ""
-                            }`}
+                            href={`/open-slots/${s.id}/matches`}
                             className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40"
                           >
                             <Send className="h-3 w-3" />

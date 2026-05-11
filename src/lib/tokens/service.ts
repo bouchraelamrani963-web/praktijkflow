@@ -385,3 +385,90 @@ class SlotRaceLostError extends Error {
     this.name = "SlotRaceLostError";
   }
 }
+
+// ─── Decline (patient says "Nee, bedankt" on a claim offer) ─────────────────
+// Separate from executeToken() because the semantics differ:
+//   - executeToken() = patient affirmatively claims the slot
+//   - declineToken() = patient passes; their waitlist entry returns to
+//     WAITING (so they remain eligible for future offers) and the slot
+//     stays AVAILABLE for the other offered patients (or a re-offer).
+//
+// Idempotent on the usedAt flag, so re-clicking the same link gives a stable
+// "already used" response instead of a confusing error.
+
+export async function declineClaimToken(
+  rawToken: string,
+  meta?: { ipAddress?: string; userAgent?: string },
+): Promise<ExecuteResult> {
+  const token = await lookupToken(rawToken);
+
+  if (!token) {
+    return { outcome: "invalid", message: "Deze link is ongeldig of is al gebruikt." };
+  }
+
+  // Only the claim_open_slot action is declinable. Confirm/cancel of regular
+  // reminder appointments doesn't use this path.
+  if (token.action !== "claim_open_slot") {
+    return { outcome: "failed", message: "Deze link ondersteunt geen afwijzen-actie." };
+  }
+
+  const t = token;
+
+  async function audit(outcome: string, details?: string) {
+    await prisma.actionLog.create({
+      data: {
+        practiceId: t.practiceId,
+        appointmentId: t.appointmentId,
+        clientId: t.clientId,
+        tokenId: t.id,
+        action: t.action,
+        outcome,
+        ipAddress: meta?.ipAddress ?? null,
+        userAgent: meta?.userAgent?.slice(0, 500) ?? null,
+        details: details ?? null,
+      },
+    });
+  }
+
+  if (token.usedAt) {
+    await audit("already_used");
+    return { outcome: "already_used", message: "Deze link is al gebruikt." };
+  }
+  if (token.expiresAt < new Date()) {
+    await audit("expired");
+    return { outcome: "expired", message: "Deze link is verlopen." };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Mark token used so further clicks return "already used".
+      await tx.patientActionToken.update({
+        where: { id: token.id },
+        data: { usedAt: new Date() },
+      });
+
+      // Return this client's OFFERED waitlist entries to WAITING so future
+      // slots can still be matched to them. Other offered patients' entries
+      // are untouched — they still have their tokens active.
+      await tx.waitlistEntry.updateMany({
+        where: {
+          clientId: token.clientId,
+          practiceId: token.practiceId,
+          status: "OFFERED",
+        },
+        data: { status: "WAITING" },
+      });
+    });
+
+    await audit("declined", "Patient declined the offer");
+    return {
+      outcome: "success",
+      message: "Bedankt voor uw bericht. We bewaren uw plek op de wachtlijst voor een volgende keer.",
+      appointmentId: token.appointmentId ?? undefined,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    await audit("failed", msg);
+    return { outcome: "failed", message: "Er is iets misgegaan. Neem contact op met de praktijk." };
+  }
+}

@@ -46,6 +46,29 @@ export function ActionExecutor({ token, action, practiceName, clientName, appoin
     }
   }
 
+  /**
+   * "Nee, bedankt" path — only meaningful for claim_open_slot. Marks the
+   * token used and returns this client's waitlist entry to WAITING so they
+   * stay eligible for future slots. The slot itself stays AVAILABLE for
+   * the other offered patients (or a re-offer by the practice).
+   */
+  async function handleDecline() {
+    setOutcome("loading");
+    try {
+      const res = await fetch("/api/tokens/decline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
+      setOutcome(data.outcome ?? "failed");
+      setMessage(data.message ?? "");
+    } catch {
+      setOutcome("failed");
+      setMessage("Kan geen verbinding maken. Probeer het opnieuw.");
+    }
+  }
+
   // ─── SUCCESS ─────────────────────────────────────────────────────────────
   if (outcome === "success") {
     const title = isClaim ? "De afspraak is voor u gereserveerd" : message;
@@ -146,20 +169,35 @@ export function ActionExecutor({ token, action, practiceName, clientName, appoin
         </p>
       )}
 
-      <button
-        onClick={handleExecute}
-        disabled={outcome === "loading"}
-        className="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-      >
-        {outcome === "loading" ? (
-          "Verwerken…"
-        ) : (
-          <>
-            <ButtonIcon className="h-4 w-4" />
-            {labels.verb}
-          </>
+      <div className="mt-6 flex flex-col items-stretch gap-2 sm:flex-row sm:justify-center">
+        <button
+          onClick={handleExecute}
+          disabled={outcome === "loading"}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {outcome === "loading" ? (
+            "Verwerken…"
+          ) : (
+            <>
+              <ButtonIcon className="h-4 w-4" />
+              {isClaim ? "Ja, ik wil deze plek" : labels.verb}
+            </>
+          )}
+        </button>
+
+        {/* Decline path — only shown for claim offers. Keeps the patient on
+            the waitlist for future slots and frees the current slot for the
+            other offered patients. */}
+        {isClaim && (
+          <button
+            onClick={handleDecline}
+            disabled={outcome === "loading"}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+          >
+            Nee, bedankt
+          </button>
         )}
-      </button>
+      </div>
     </div>
   );
 }
