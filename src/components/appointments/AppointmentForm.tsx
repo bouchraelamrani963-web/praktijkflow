@@ -181,7 +181,14 @@ export function AppointmentForm({
         </div>
 
         <div>
-          <label className={labelCls} htmlFor="appointmentTypeId">Type behandeling</label>
+          <label className={labelCls} htmlFor="appointmentTypeId">
+            Type behandeling
+            {/* Source-of-tariff disclosure — practices need to know whether
+                the prices populating below are official or hand-edited. */}
+            <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+              Tarieven 2025
+            </span>
+          </label>
           <select
             id="appointmentTypeId"
             className={inputCls}

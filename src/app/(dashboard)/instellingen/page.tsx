@@ -444,13 +444,13 @@ function RestoreTreatmentTypesPanel() {
         <ListPlus className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" aria-hidden="true" />
         <div className="flex-1">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-            Standaard behandeltypes
+            Standaard behandelcodes 2025 laden
           </h2>
           <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-            Voegt de standaard Nederlandse tandheelkundige behandelingen toe
-            (C-, M-, A-, X-, V-, E-, T-, R-, P- en F-codes). Bestaande types
-            met dezelfde naam worden overgeslagen — uw eigen aanpassingen
-            blijven behouden.
+            Importeert de officiële KNMT-codes uit het Tarievenboekje 2025
+            (C, X, M, A, B, V, E, R, G, H, P, T, J, U, Y en F). Tarieven
+            zijn de NZa-maximumtarieven 2025. Bestaande codes met dezelfde
+            naam worden overgeslagen — uw eigen aanpassingen blijven behouden.
           </p>
         </div>
         <button
@@ -466,7 +466,7 @@ function RestoreTreatmentTypesPanel() {
               className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-zinc-700 dark:border-zinc-600 dark:border-t-zinc-200"
             />
           )}
-          {running ? "Bezig…" : "Herstel standaard types"}
+          {running ? "Bezig…" : "Standaard behandelcodes 2025 laden"}
         </button>
       </div>
 

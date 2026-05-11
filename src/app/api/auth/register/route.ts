@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { adminAuth } from "@/lib/firebase/admin";
 import { prisma } from "@/lib/db";
-import { DEFAULT_TREATMENT_TYPES } from "@/lib/dental/default-treatment-types";
+import { ensureDefaultAppointmentTypes } from "@/lib/dental/ensure-default-types";
 
 /**
  * Server side of the registration flow.
@@ -95,21 +95,12 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // 4. Bootstrap the default Dutch dental treatment-type catalog so the
-      //    appointment "Type behandeling" dropdown is never empty for a
-      //    fresh practice. Practices can edit/extend later under
-      //    Instellingen → Behandeltypes; the same list is restorable via
-      //    POST /api/admin/restore-treatment-types.
-      await tx.appointmentType.createMany({
-        data: DEFAULT_TREATMENT_TYPES.map((t) => ({
-          practiceId: practice.id,
-          name: t.name,
-          durationMinutes: t.durationMinutes,
-          color: t.color,
-          price: t.price,
-          isActive: true,
-        })),
-      });
+      // 4. Bootstrap the KNMT 2025 dental treatment-code catalog so the
+      //    appointment "Type behandeling" dropdown is populated from day
+      //    one with the official Dutch tariffs. Practices can edit/extend
+      //    later under Instellingen → Behandeltypes; the same list is
+      //    restorable via POST /api/admin/restore-treatment-types.
+      await ensureDefaultAppointmentTypes(tx, practice.id);
     });
 
     // ─── Mint HttpOnly session cookie ─────────────────────────────────────
