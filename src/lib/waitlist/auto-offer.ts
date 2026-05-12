@@ -44,9 +44,9 @@ export async function autoOfferSlot(
     details: [],
   };
 
-  // ─── SAFETY CHECK: slot must still be AVAILABLE ────────────────────────
+  // ─── SAFETY CHECK: slot must still be offerable ────────────────────────
   const slot = await prisma.openSlot.findFirst({
-    where: { id: slotId, practiceId, status: "AVAILABLE" },
+    where: { id: slotId, practiceId, status: { in: ["AVAILABLE", "OFFERED"] } },
     include: {
       practice: { select: { name: true } },
     },
@@ -103,9 +103,9 @@ export async function autoOfferSlot(
   const cooldownCutoff = new Date(Date.now() - COOLDOWN_HOURS * 60 * 60 * 1000);
 
   for (const candidate of topCandidates) {
-    // ─── SAFETY CHECK: slot still AVAILABLE between iterations ──────────
+    // ─── SAFETY CHECK: slot still offerable between iterations ──────────
     const stillAvailable = await prisma.openSlot.findFirst({
-      where: { id: slotId, practiceId, status: "AVAILABLE" },
+      where: { id: slotId, practiceId, status: { in: ["AVAILABLE", "OFFERED"] } },
       select: { id: true },
     });
 
@@ -230,6 +230,20 @@ export async function autoOfferSlot(
         },
       }).catch(() => {}); // don't let log failure throw
     }
+  }
+
+  // Update slot status to OFFERED if at least one offer was dispatched
+  if (result.offersSent > 0) {
+    await prisma.openSlot.update({
+      where: { id: slotId },
+      data: {
+        status: "OFFERED",
+        offeredCount: { increment: result.offersSent },
+        offeredAt: new Date(),
+      },
+    }).catch((err) => {
+      console.error(`[AUTO-OFFER] Failed to update slot ${slotId} status:`, err);
+    });
   }
 
   console.log(

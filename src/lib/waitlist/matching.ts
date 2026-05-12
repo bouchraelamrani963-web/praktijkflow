@@ -42,7 +42,7 @@ export async function findMatchesForSlot(
   practiceId: string,
 ): Promise<MatchedEntry[]> {
   const slot = await prisma.openSlot.findFirst({
-    where: { id: slotId, practiceId, status: "AVAILABLE" },
+    where: { id: slotId, practiceId, status: { in: ["AVAILABLE", "OFFERED"] } },
     select: {
       id: true,
       appointmentTypeId: true,

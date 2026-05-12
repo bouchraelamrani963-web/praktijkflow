@@ -57,7 +57,7 @@ export function isSmsAllowed(): boolean {
  * dedicated, easy-to-copy line. Matches both absolute (`https://host/action/<tok>`)
  * and path-only (`/action/<tok>`) forms.
  */
-function extractActionUrl(body: string): string | null {
+export function extractActionUrl(body: string): string | null {
   // Absolute URL first — wins when both forms appear.
   const absolute = body.match(/https?:\/\/[^\s]+\/action\/[A-Za-z0-9._-]+/);
   if (absolute) return absolute[0];

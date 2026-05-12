@@ -4,8 +4,15 @@ import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { findMatchesForSlot } from "@/lib/waitlist/matching";
-import { isTwilioConfigured, isSmsTestMode } from "@/lib/twilio";
+import { isTwilioConfigured, isSmsTestMode, extractActionUrl } from "@/lib/twilio";
 import { MatchesPanel } from "@/components/open-slots/MatchesPanel";
+
+interface PersistedOffer {
+  waitlistEntryId: string;
+  clientName: string;
+  status: "sent";
+  claimUrl?: string;
+}
 
 /**
  * "Vind patiënten" landing — the missing piece between the AVAILABLE slot
@@ -58,10 +65,11 @@ export default async function OpenSlotMatchesPage({
   if (!slot) notFound();
 
   // Pre-run matches on the server so the page renders with data
-  // immediately. Empty when the slot isn't AVAILABLE (e.g. already
-  // CLAIMED) — the panel will render its empty state.
+  // immediately. Empty when the slot is CLAIMED/EXPIRED — the panel
+  // will render its empty state. OFFERED slots still show matches
+  // so the operator can re-offer or view existing offers.
   const matches =
-    slot.status === "AVAILABLE"
+    slot.status === "AVAILABLE" || slot.status === "OFFERED"
       ? await findMatchesForSlot(slot.id, user.practiceId)
       : [];
 
@@ -72,6 +80,50 @@ export default async function OpenSlotMatchesPage({
   const smsConfigured = isTwilioConfigured();
   const smsTestMode = isSmsTestMode();
   const smsAllowed = smsConfigured || smsTestMode;
+
+  // ─── Persisted offers ─────────────────────────────────────────────────
+  // When the slot is OFFERED, load MessageLog records so the matches panel
+  // can show per-patient offer status (and claim links in test mode) even
+  // after navigation/refresh. In real mode we never surface claim URLs.
+  let persistedOffers: PersistedOffer[] = [];
+  if (slot.status === "OFFERED" && slot.sourceAppointmentId) {
+    const logs = await prisma.messageLog.findMany({
+      where: {
+        practiceId: user.practiceId,
+        appointmentId: slot.sourceAppointmentId,
+        channel: "sms",
+        status: { in: ["sent", "mock"] },
+      },
+      include: {
+        client: { select: { id: true, firstName: true, lastName: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Deduplicate by clientId — keep only the most recent log per client
+    const seen = new Set<string>();
+    for (const log of logs) {
+      if (!log.client || seen.has(log.clientId)) continue;
+      seen.add(log.clientId);
+
+      // Find the waitlist entry for this client to get its ID
+      const entry = matches.find((m) => m.clientId === log.client!.id);
+
+      const offer: PersistedOffer = {
+        waitlistEntryId: entry?.id ?? log.clientId,
+        clientName: `${log.client.firstName} ${log.client.lastName}`,
+        status: "sent",
+      };
+
+      // Only surface claim URL in test mode
+      if (smsTestMode && log.body) {
+        const url = extractActionUrl(log.body);
+        if (url) offer.claimUrl = url;
+      }
+
+      persistedOffers.push(offer);
+    }
+  }
 
   return (
     <div className="max-w-4xl">
@@ -138,7 +190,7 @@ export default async function OpenSlotMatchesPage({
           )}
         </div>
 
-        {slot.status !== "AVAILABLE" && (
+        {slot.status !== "AVAILABLE" && slot.status !== "OFFERED" && (
           <p className="mt-4 rounded-md bg-zinc-100 px-3 py-2 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
             Deze plek is niet meer beschikbaar (status:{" "}
             <span className="font-semibold">{slot.status}</span>). U kunt geen
@@ -153,7 +205,8 @@ export default async function OpenSlotMatchesPage({
         smsConfigured={smsConfigured}
         smsTestMode={smsTestMode}
         smsAllowed={smsAllowed}
-        slotAvailable={slot.status === "AVAILABLE"}
+        slotAvailable={slot.status === "AVAILABLE" || slot.status === "OFFERED"}
+        persistedOffers={persistedOffers}
       />
     </div>
   );

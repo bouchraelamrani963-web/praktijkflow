@@ -6,7 +6,7 @@ const isoDate = z
 
 const uuid = z.string().uuid();
 
-export const OpenSlotStatusSchema = z.enum(["AVAILABLE", "CLAIMED", "EXPIRED"]);
+export const OpenSlotStatusSchema = z.enum(["AVAILABLE", "OFFERED", "CLAIMED", "EXPIRED"]);
 
 // Manual mutations (admin PATCH) may only transition between AVAILABLE and
 // EXPIRED. CLAIMED must ONLY come from the atomic claim transaction, which

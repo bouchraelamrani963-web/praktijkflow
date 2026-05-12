@@ -218,7 +218,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
     return { outcome: "failed", message: "Deze plek is al ingevuld." };
   }
 
-  if (slotPre.status !== "AVAILABLE") {
+  if (slotPre.status !== "AVAILABLE" && slotPre.status !== "OFFERED") {
     console.log(
       `[CLAIM FAILED] Slot ${slotPre.id} already ${slotPre.status} — client ${token.clientId} lost race`,
     );
@@ -285,7 +285,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
       // in the same write that flips status. If another tx claimed it first,
       // updated.count === 0 and we throw to roll back the appointment.
       const updated = await tx.openSlot.updateMany({
-        where: { id: slotPre.id, status: "AVAILABLE" },
+        where: { id: slotPre.id, status: { in: ["AVAILABLE", "OFFERED"] } },
         data: {
           status: "CLAIMED",
           claimedAppointmentId: newAppt.id,

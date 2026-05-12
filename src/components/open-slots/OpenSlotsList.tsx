@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, AlertTriangle, Send } from "lucide-react";
 
-type SlotStatus = "AVAILABLE" | "CLAIMED" | "EXPIRED";
+type SlotStatus = "AVAILABLE" | "OFFERED" | "CLAIMED" | "EXPIRED";
 
 interface SlotRow {
   id: string;
@@ -20,6 +20,8 @@ interface SlotRow {
   cancelledAt: string | null;
   cancelledBy: { id: string; firstName: string; lastName: string } | null;
   cancelledByLabel: string | null;
+  offeredCount: number;
+  offeredAt: string | null;
   claimedAt: string | null;
   // `id` may be null — the claimed-client name is an immutable snapshot, not
   // a live FK, so the upstream Client may be unresolvable.
@@ -45,12 +47,14 @@ interface ApiResponse {
 
 const statusColors: Record<SlotStatus, string> = {
   AVAILABLE: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  OFFERED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
   CLAIMED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
   EXPIRED: "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
 };
 
 const statusLabels: Record<SlotStatus, string> = {
   AVAILABLE: "Vrijgekomen",
+  OFFERED: "Aangeboden",
   CLAIMED: "Opnieuw ingevuld",
   EXPIRED: "Niet hersteld",
 };
@@ -179,6 +183,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
           >
             <option value="">Alle</option>
             <option value="AVAILABLE">Vrijgekomen</option>
+            <option value="OFFERED">Aangeboden</option>
             <option value="CLAIMED">Opnieuw ingevuld</option>
             <option value="EXPIRED">Niet hersteld</option>
           </select>
@@ -321,6 +326,10 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                               {s.fillMinutes !== null ? `${s.fillMinutes} min` : "—"}
                             </span>
                           </div>
+                        ) : s.status === "OFFERED" ? (
+                          <span className="text-xs text-blue-600 dark:text-blue-400">
+                            Aanbod verzonden aan {s.offeredCount} patiënt{s.offeredCount === 1 ? "" : "en"}
+                          </span>
                         ) : s.status === "AVAILABLE" ? (
                           <span className="text-xs italic text-amber-600 dark:text-amber-400">
                             Nog niet ingevuld
@@ -352,17 +361,13 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                         className="px-4 py-3 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {s.status === "AVAILABLE" ? (
-                          // Was: deep-link to /waitlist filter (a dead-end
-                          // for the recovery flow — no offer ever fired).
-                          // Now: open the matches+offer panel that calls the
-                          // real /api/open-slots/[id]/matches + /offer.
+                        {s.status === "AVAILABLE" || s.status === "OFFERED" ? (
                           <Link
                             href={`/open-slots/${s.id}/matches`}
                             className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40"
                           >
                             <Send className="h-3 w-3" />
-                            Vind patiënten
+                            {s.status === "OFFERED" ? "Bekijk aanbiedingen" : "Vind patiënten"}
                           </Link>
                         ) : s.status === "CLAIMED" && s.claimedAppointmentId ? (
                           <div className="flex flex-col items-end gap-1">

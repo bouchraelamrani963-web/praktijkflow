@@ -23,6 +23,13 @@ export interface MatchedEntry {
   reasons: string[];
 }
 
+interface PersistedOffer {
+  waitlistEntryId: string;
+  clientName: string;
+  status: "sent";
+  claimUrl?: string;
+}
+
 interface Props {
   slotId: string;
   initialMatches: MatchedEntry[];
@@ -34,6 +41,8 @@ interface Props {
    *  button enable state. */
   smsAllowed: boolean;
   slotAvailable: boolean;
+  /** Previously sent offers loaded from MessageLog — survives refresh. */
+  persistedOffers?: PersistedOffer[];
 }
 
 interface OfferResult {
@@ -67,11 +76,15 @@ export function MatchesPanel({
   smsTestMode,
   smsAllowed,
   slotAvailable,
+  persistedOffers,
 }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState(false);
-  const [results, setResults] = useState<OfferResult[] | null>(null);
+  const [results, setResults] = useState<OfferResult[] | null>(
+    // Seed from persisted offers so claim links show on first render
+    persistedOffers && persistedOffers.length > 0 ? persistedOffers : null,
+  );
 
   const matches = initialMatches;
 

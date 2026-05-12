@@ -97,7 +97,7 @@ export async function POST(
 
   // ─── Verify slot ─────────────────────────────────────────────────────────
   const slot = await prisma.openSlot.findFirst({
-    where: { id: slotId, practiceId: user.practiceId, status: "AVAILABLE" },
+    where: { id: slotId, practiceId: user.practiceId, status: { in: ["AVAILABLE", "OFFERED"] } },
     include: {
       practitioner: { select: { firstName: true, lastName: true } },
       practice: { select: { name: true } },
@@ -261,6 +261,18 @@ export async function POST(
 
   const sent = results.filter((r) => r.status === "sent").length;
   const failed = results.length - sent;
+
+  // ─── Update OpenSlot status to OFFERED when at least one dispatch succeeded ──
+  if (sent > 0) {
+    await prisma.openSlot.update({
+      where: { id: slotId },
+      data: {
+        status: "OFFERED",
+        offeredCount: { increment: sent },
+        offeredAt: slot.offeredAt ?? new Date(),
+      },
+    });
+  }
 
   return NextResponse.json({
     slotId,

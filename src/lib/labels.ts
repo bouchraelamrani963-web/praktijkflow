@@ -54,7 +54,7 @@ export const STATUS_LABELS: Record<string, string> = {
   COMPLETED: "Afgerond",
   NO_SHOW: "Niet verschenen",
 
-  // OpenSlotStatus (EXPIRED already covered above)
+  // OpenSlotStatus (EXPIRED and OFFERED already covered above)
   AVAILABLE: "Vrijgekomen",
   CLAIMED: "Opnieuw ingevuld",
 };

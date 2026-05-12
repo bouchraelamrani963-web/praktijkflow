@@ -72,6 +72,7 @@ enum CommunicationPreference {
 
 enum OpenSlotStatus {
   AVAILABLE
+  OFFERED
   CLAIMED
   EXPIRED
 }
@@ -484,6 +485,10 @@ model OpenSlot {
   durationMinutes     Int
   status              OpenSlotStatus @default(AVAILABLE)
   notes               String?        @db.Text
+
+  // ─── Offer tracking ────────────────────────────────────────────────────
+  offeredCount Int       @default(0) // how many patients were offered this slot
+  offeredAt    DateTime? // timestamp of the first offer batch
 
   // ─── Claim audit (IMMUTABLE SNAPSHOT — populated atomically on CLAIM) ──
   // These fields are the SOURCE OF TRUTH for recovered revenue. They never
