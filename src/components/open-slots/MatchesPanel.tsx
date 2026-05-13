@@ -174,8 +174,10 @@ export function MatchesPanel({
     return m;
   }, [results]);
 
+  const hasPersistedOffers = (persistedOffers?.length ?? 0) > 0;
+
   // ─── Empty / no-matches state ───────────────────────────────────────────
-  if (!slotAvailable && matches.length === 0) {
+  if (!slotAvailable && matches.length === 0 && !hasPersistedOffers) {
     return (
       <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -185,7 +187,7 @@ export function MatchesPanel({
     );
   }
 
-  if (matches.length === 0) {
+  if (matches.length === 0 && !hasPersistedOffers) {
     return (
       <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
         <p className="text-sm font-medium text-zinc-900 dark:text-white">
@@ -236,8 +238,68 @@ export function MatchesPanel({
         </div>
       ) : null}
 
-      {/* Header with select-all + bulk action */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+      {/* ─── Persisted offers section ─────────────────────────────────────── */}
+      {hasPersistedOffers && (
+        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-800/50">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+              Aanbod verzonden
+            </h3>
+            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+              {persistedOffers!.length} patiënt{persistedOffers!.length === 1 ? "" : "en"} uitgenodigd
+            </p>
+          </div>
+          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            {persistedOffers!.map((o) => (
+              <div key={o.waitlistEntryId} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {o.claimUrl ? "Mock verzonden" : "Aangeboden"}
+                  </span>
+                  <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                    {o.clientName}
+                  </span>
+                </div>
+                {o.claimUrl && (
+                  <div className="flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-1 dark:border-blue-800 dark:bg-blue-900/20">
+                    <FlaskConical className="h-3 w-3 shrink-0 text-blue-600 dark:text-blue-300" />
+                    <a
+                      href={o.claimUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate font-mono text-[11px] text-blue-700 hover:underline dark:text-blue-300"
+                      title={o.claimUrl}
+                      style={{ maxWidth: "16rem" }}
+                    >
+                      Open claim-link
+                    </a>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(o.claimUrl!);
+                          toast.success("Claim-link gekopieerd");
+                        } catch {
+                          toast.error("Kopiëren mislukt");
+                        }
+                      }}
+                      className="ml-1 inline-flex items-center rounded p-0.5 text-blue-600 hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                      aria-label="Kopieer claim-link"
+                      title="Kopieer link"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Header with select-all + bulk action — only when there are new matches */}
+      {matches.length > 0 && <><div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center gap-3">
           <input
             type="checkbox"
@@ -266,6 +328,7 @@ export function MatchesPanel({
 
       {/* Matches table */}
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
             <thead className="bg-zinc-50 dark:bg-zinc-800/50">
@@ -413,6 +476,7 @@ export function MatchesPanel({
           </table>
         </div>
       </div>
+      </>}
     </div>
   );
 }

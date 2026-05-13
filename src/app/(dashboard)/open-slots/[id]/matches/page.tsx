@@ -100,14 +100,26 @@ export default async function OpenSlotMatchesPage({
       orderBy: { createdAt: "desc" },
     });
 
+    // Load OFFERED waitlist entries for this practice so we can resolve
+    // waitlistEntryId for each log (matches only contains WAITING entries
+    // which have already been flipped to OFFERED after sending).
+    const offeredEntries = await prisma.waitlistEntry.findMany({
+      where: {
+        practiceId: user.practiceId,
+        status: "OFFERED",
+        clientId: { in: logs.map((l) => l.clientId) },
+      },
+      select: { id: true, clientId: true },
+    });
+    const entryByClientId = new Map(offeredEntries.map((e) => [e.clientId, e]));
+
     // Deduplicate by clientId — keep only the most recent log per client
     const seen = new Set<string>();
     for (const log of logs) {
       if (!log.client || seen.has(log.clientId)) continue;
       seen.add(log.clientId);
 
-      // Find the waitlist entry for this client to get its ID
-      const entry = matches.find((m) => m.clientId === log.client!.id);
+      const entry = entryByClientId.get(log.clientId);
 
       const offer: PersistedOffer = {
         waitlistEntryId: entry?.id ?? log.clientId,
