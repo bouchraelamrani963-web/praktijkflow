@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { sendSms } from "@/lib/twilio";
 import { createActionToken } from "@/lib/tokens/service";
 import { resolveTemplate, type TemplateContext } from "./templates";
+import { getPublicAppUrl } from "@/lib/url";
 
 export interface ReminderResult {
   appointmentId: string;
@@ -73,7 +74,7 @@ export async function sendReminder(
   }
 
   // Create confirm and cancel tokens
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = getPublicAppUrl();
 
   const [confirmToken, cancelToken] = await Promise.all([
     createActionToken({

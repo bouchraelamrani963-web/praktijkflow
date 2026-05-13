@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { findMatchesForSlot } from "./matching";
 import { createActionToken } from "@/lib/tokens/service";
 import { sendSms } from "@/lib/twilio";
+import { getPublicAppUrl } from "@/lib/url";
 
 const MAX_OFFERS = 3;
 const CLAIM_EXPIRY_HOURS = 2;
@@ -164,7 +165,7 @@ export async function autoOfferSlot(
 
       // Send SMS
       const actionUrl = `/action/${token.rawToken}`;
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      const appUrl = getPublicAppUrl();
       let smsStatus = "no_phone";
 
       if (candidate.clientPhone) {

@@ -3,6 +3,7 @@
  * Uses the REST API directly (no SDK dependency).
  * Falls back to console logging when credentials are missing.
  */
+import { getPublicAppUrl, extractActionPath } from "@/lib/url";
 
 export interface SmsResult {
   success: boolean;
@@ -53,20 +54,14 @@ export function isSmsAllowed(): boolean {
 }
 
 /**
- * Extracts any action-token URL from an SMS body so we can log it on a
- * dedicated, easy-to-copy line. Matches both absolute (`https://host/action/<tok>`)
- * and path-only (`/action/<tok>`) forms.
+ * Extracts an action-token URL from an SMS body and rebuilds it with the
+ * current public base URL. This ensures that even if the persisted SMS body
+ * contains localhost, the returned URL points to the correct production host.
  */
 export function extractActionUrl(body: string): string | null {
-  // Absolute URL first — wins when both forms appear.
-  const absolute = body.match(/https?:\/\/[^\s]+\/action\/[A-Za-z0-9._-]+/);
-  if (absolute) return absolute[0];
-
-  const relative = body.match(/\/action\/[A-Za-z0-9._-]+/);
-  if (!relative) return null;
-
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  return `${base.replace(/\/+$/, "")}${relative[0]}`;
+  const path = extractActionPath(body);
+  if (!path) return null;
+  return `${getPublicAppUrl()}${path}`;
 }
 
 export async function sendSms(to: string, body: string): Promise<SmsResult> {

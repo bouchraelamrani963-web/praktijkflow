@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { createActionToken } from "@/lib/tokens/service";
 import { sendSms, isTwilioConfigured, isSmsTestMode, isSmsAllowed } from "@/lib/twilio";
+import { getPublicAppUrl } from "@/lib/url";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -176,7 +177,7 @@ export async function POST(
       });
 
       const actionUrl = `/action/${token.rawToken}`;
-      const base = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+      const base = getPublicAppUrl();
       const smsBody =
         `Beste ${entry.client.firstName}, er is een plek vrijgekomen bij ${slot.practice.name} ` +
         `op ${fmt}. Claim uw afspraak via: ${base}${actionUrl}`;
