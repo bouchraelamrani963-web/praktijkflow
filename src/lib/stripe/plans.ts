@@ -26,12 +26,11 @@ export const plans: PricingPlan[] = [
     currency: "EUR",
     interval: "month",
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID ?? "",
-    revenueFrame: "Gemiddeld €150–€400 per maand teruggewonnen",
-    revenueDisclaimer: "Afhankelijk van praktijkgrootte en no-show percentage",
+    revenueFrame: "Gemiddeld €150–€500 per maand teruggewonnen",
     features: [
       "Basis wachtlijst",
-      "Automatische invulling",
-      "Beperkt dashboard",
+      "Handmatig aanbod sturen",
+      "Basis dashboard",
     ],
   },
   {
@@ -43,11 +42,11 @@ export const plans: PricingPlan[] = [
     currency: "EUR",
     interval: "month",
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ?? "",
-    revenueFrame: "Gemiddeld €500–€2.000 per maand teruggewonnen",
+    revenueFrame: "Gemiddeld €500–€1.500 per maand teruggewonnen",
     revenueSubNote: "De meeste praktijken verdienen dit plan binnen 1 week terug",
-    revenueDisclaimer: "Afhankelijk van praktijkgrootte en no-show percentage",
     features: [
       "Volledige automatisering",
+      "SMS/WhatsApp-aanbiedingen",
       "Dashboard inzichten",
       "Prioriteit in wachtrij",
     ],
@@ -56,18 +55,19 @@ export const plans: PricingPlan[] = [
   {
     id: "enterprise", // internal id retained for Stripe webhook compatibility
     name: "Growth",
-    tagline: "Voor meerstoelspraktijken",
-    description: "Voor meerstoelspraktijken",
+    tagline: "Voor meerstoelpraktijken",
+    description: "Voor meerstoelpraktijken",
     price: 119,
     currency: "EUR",
     interval: "month",
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID ?? "",
-    revenueFrame: "Gemiddeld €500–€1.200+ per maand teruggewonnen",
-    revenueDisclaimer: "Afhankelijk van praktijkgrootte en no-show percentage",
+    revenueFrame: "Gemiddeld €1.500–€4.000+ per maand teruggewonnen",
     features: [
       "Multi-chair optimalisatie",
       "Geavanceerde rapportage",
       "Snellere invulling",
+      "Meerdere behandelaren/stoelen",
+      "Slimme matching per behandelkamer",
     ],
   },
 ];

@@ -115,8 +115,13 @@ export default function PricingPage() {
             ))}
           </div>
 
+          {/* Disclaimer — revenue figures are indicative, not guaranteed. */}
+          <p className="mt-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
+            Indicatie op basis van praktijkgrootte en no-showpercentage. Resultaten verschillen per praktijk.
+          </p>
+
           {/* Trust line under the grid — zero friction language, no "probeer". */}
-          <p className="mt-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
             Maandelijks opzegbaar · BTW exclusief · Directe activatie na betaling
           </p>
         </div>
