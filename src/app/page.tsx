@@ -220,8 +220,8 @@ export default function HomePage() {
                 className="mx-auto mt-6 max-w-2xl"
                 style={{ fontSize: 18, lineHeight: 1.6, color: "var(--pf-fg-2)" }}
               >
-                Gemiddeld €500–€2.000 per maand teruggewonnen, afhankelijk
-                van praktijkgrootte en no-show percentage.
+                Gemiddeld €150–€4.000+ per maand teruggewonnen, afhankelijk
+                van praktijkgrootte en no-showpercentage.
               </p>
 
               {/* CTA row — always centered. Primary jumps straight into the
@@ -252,7 +252,7 @@ export default function HomePage() {
             <div className="mx-auto max-w-[1100px] px-6">
               <dl className="flex flex-col items-center justify-center gap-8 py-10 sm:flex-row sm:gap-16">
                 {[
-                  { value: "€500–€2.000", label: "per maand teruggewonnen" },
+                  { value: "€150–€4.000+", label: "per maand teruggewonnen" },
                   { value: "1 dag",      label: "tot u live bent" },
                   { value: "100%",       label: "automatisch, geen handmatig werk" },
                 ].map((item) => (
@@ -679,24 +679,24 @@ export default function HomePage() {
                   name: "STARTER",
                   price: "€59",
                   audience: "Voor kleine praktijken",
-                  savings: "Gemiddeld €150–€400 per maand teruggewonnen",
-                  features: ["Basis wachtlijst", "Automatische invulling", "Beperkt dashboard"],
+                  savings: "Gemiddeld €150–€500 per maand teruggewonnen",
+                  features: ["Basis wachtlijst", "Handmatig aanbod sturen", "Basis dashboard"],
                   featured: false,
                 },
                 {
                   name: "PRO",
                   price: "€79",
                   audience: "Voor groeiende praktijken",
-                  savings: "Gemiddeld €500–€2.000 per maand teruggewonnen",
-                  features: ["Volledige automatisering", "Dashboard inzichten", "Prioriteit in wachtrij"],
+                  savings: "Gemiddeld €500–€1.500 per maand teruggewonnen",
+                  features: ["Volledige automatisering", "SMS/WhatsApp-aanbiedingen", "Dashboard inzichten", "Prioriteit in wachtrij"],
                   featured: true,
                 },
                 {
                   name: "GROWTH",
                   price: "€119",
                   audience: "Voor meerstoelpraktijken",
-                  savings: "Gemiddeld €500–€1.200+ per maand teruggewonnen",
-                  features: ["Multi-chair optimalisatie", "Geavanceerde rapportage", "Snellere invulling"],
+                  savings: "Gemiddeld €1.500–€4.000+ per maand teruggewonnen",
+                  features: ["Multi-chair optimalisatie", "Geavanceerde rapportage", "Snellere invulling", "Meerdere behandelaren/stoelen", "Slimme matching per behandelkamer"],
                   featured: false,
                 },
               ].map((plan) => (
@@ -757,6 +757,9 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+            <p className="mx-auto mt-6 max-w-xl text-center text-xs" style={{ color: "var(--pf-fg-3)" }}>
+              Indicatie op basis van praktijkgrootte en no-showpercentage. Resultaten verschillen per praktijk.
+            </p>
           </div>
         </section>
 
