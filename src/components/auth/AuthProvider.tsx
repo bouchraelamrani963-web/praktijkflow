@@ -49,17 +49,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<SessionProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async (): Promise<SessionProfile | null> => {
     try {
       const res = await fetch("/api/auth/me");
       if (res.ok) {
         const data = await res.json();
         setProfile(data.user);
+        return data.user;
       } else {
         setProfile(null);
+        return null;
       }
     } catch {
       setProfile(null);
+      return null;
     }
   }, []);
 
@@ -72,22 +75,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // We set a non-null mock User so layout guards (e.g. "if (!user) redirect")
     // don't kick the user back to /login while we fetch the profile.
     if (DEV_AUTH_BYPASS) {
-      setUser({ email: "demo@noshowcontrol.local", uid: "demo-bypass" } as unknown as User);
-      fetchProfile().finally(() => setLoading(false));
-      return;
+      const timer = window.setTimeout(() => {
+        fetchProfile().finally(() => {
+          setUser({ email: "demo@noshowcontrol.local", uid: "demo-bypass" } as unknown as User);
+          setLoading(false);
+        });
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
 
+    let settled = false;
+
     const unsubscribe = onAuthChange(async (firebaseUser) => {
+      settled = true;
       setUser(firebaseUser);
       if (firebaseUser) {
         await fetchProfile();
       } else {
-        setProfile(null);
+        const serverProfile = await fetchProfile();
+        if (serverProfile) {
+          setUser({
+            email: serverProfile.email,
+            uid: serverProfile.firebaseUid,
+          } as unknown as User);
+        } else {
+          setProfile(null);
+        }
       }
       setLoading(false);
     });
 
-    return unsubscribe;
+    // Server-session fallback: a valid HttpOnly session cookie should be enough
+    // to keep dashboard pages usable, even if Firebase client persistence is
+    // slow, blocked, or unavailable in a fresh browser profile.
+    const timer = window.setTimeout(() => {
+      fetchProfile().then((serverProfile) => {
+        if (!serverProfile || settled) return;
+        setUser({
+          email: serverProfile.email,
+          uid: serverProfile.firebaseUid,
+        } as unknown as User);
+        setLoading(false);
+      });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
   }, [fetchProfile]);
 
   return (

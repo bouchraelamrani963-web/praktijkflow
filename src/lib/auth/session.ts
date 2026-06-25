@@ -3,6 +3,8 @@ import { NextRequest } from "next/server";
 import { adminAuth, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { prisma } from "@/lib/db";
 import type { Role } from "@/generated/prisma/client";
+import type { DecodedIdToken } from "firebase-admin/auth";
+import { ensureDefaultAppointmentTypes } from "@/lib/dental/ensure-default-types";
 
 /**
  * The auth bypass activates when:
@@ -61,7 +63,7 @@ export async function getCurrentUser(req?: NextRequest): Promise<SessionUser | n
 
     const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { firebaseUid: decoded.uid },
       include: {
         memberships: {
@@ -72,7 +74,9 @@ export async function getCurrentUser(req?: NextRequest): Promise<SessionUser | n
       },
     });
 
-    if (!user) return null;
+    if (!user || user.memberships.length === 0) {
+      user = await ensureUserHasPractice(decoded);
+    }
 
     const membership = user.memberships[0] ?? null;
 
@@ -91,6 +95,88 @@ export async function getCurrentUser(req?: NextRequest): Promise<SessionUser | n
   } catch {
     return null;
   }
+}
+
+/**
+ * Repairs legacy or manually-created Firebase accounts that can authenticate
+ * but do not yet have the required local User + PracticeMember rows.
+ *
+ * This keeps login idempotent: once a user has any active membership, it is
+ * reused. Otherwise we create a deterministic personal practice and OWNER
+ * membership so protected dashboard APIs have a valid practice scope.
+ */
+async function ensureUserHasPractice(decoded: DecodedIdToken) {
+  const email = decoded.email ?? `${decoded.uid}@firebase.local`;
+  const { firstName, lastName } = nameParts(decoded.name, email);
+  const practiceName = `${firstName}'s praktijk`;
+  const practiceSlug = `praktijk-${slugPart(decoded.uid)}`;
+
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.upsert({
+      where: { firebaseUid: decoded.uid },
+      update: { email, firstName, lastName },
+      create: {
+        firebaseUid: decoded.uid,
+        email,
+        firstName,
+        lastName,
+      },
+    });
+
+    const existing = await tx.practiceMember.findFirst({
+      where: { userId: user.id, isActive: true },
+      include: { practice: { select: { id: true, name: true } } },
+      take: 1,
+    });
+
+    if (existing) {
+      return { ...user, memberships: [existing] };
+    }
+
+    const practice = await tx.practice.upsert({
+      where: { slug: practiceSlug },
+      update: { email },
+      create: {
+        name: practiceName,
+        slug: practiceSlug,
+        email,
+      },
+      select: { id: true, name: true },
+    });
+
+    const membership = await tx.practiceMember.upsert({
+      where: {
+        practiceId_userId: {
+          practiceId: practice.id,
+          userId: user.id,
+        },
+      },
+      update: { isActive: true, role: "OWNER" },
+      create: {
+        practiceId: practice.id,
+        userId: user.id,
+        role: "OWNER",
+        isActive: true,
+      },
+      include: { practice: { select: { id: true, name: true } } },
+    });
+
+    await ensureDefaultAppointmentTypes(tx, practice.id);
+
+    return { ...user, memberships: [membership] };
+  });
+}
+
+function nameParts(name: string | undefined, email: string) {
+  const fallback = email.split("@")[0]?.replace(/[._-]+/g, " ") || "Gebruiker";
+  const parts = (name?.trim() || fallback).split(/\s+/).filter(Boolean);
+  const firstName = parts[0] || "Gebruiker";
+  const lastName = parts.slice(1).join(" ") || firstName;
+  return { firstName, lastName };
+}
+
+function slugPart(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "account";
 }
 
 /**

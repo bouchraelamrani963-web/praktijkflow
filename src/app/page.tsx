@@ -6,7 +6,6 @@ import {
   CheckCheck,
   Clock3,
   Euro,
-  PlayCircle,
   Send,
   Sparkles,
   TrendingDown,
@@ -154,7 +153,7 @@ export default function HomePage() {
             <Link href="/login" className="transition hover:text-white">Inloggen</Link>
           </nav>
           <Link href="/dashboard" className="pf-btn-primary text-xs" style={{ padding: "10px 20px" }}>
-            Start gratis
+            Dashboard
           </Link>
         </div>
       </header>

@@ -239,7 +239,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
           select: { name: true },
         })
       : Promise.resolve(null),
-    calculateRiskForClient(token.clientId, appt.startTime, "SCHEDULED"),
+    calculateRiskForClient(token.clientId, appt.startTime, "CONFIRMED"),
   ]);
 
   if (!client) {
@@ -274,7 +274,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
           appointmentTypeId: appt.appointmentTypeId,
           startTime: appt.startTime,
           endTime: appt.endTime,
-          status: "SCHEDULED",
+          status: "CONFIRMED",
           revenueEstimateCents: appt.revenueEstimateCents,
           riskScore: risk.riskScore,
           riskLevel: risk.riskLevel,
