@@ -27,9 +27,6 @@ const protectedPrefixes = [
   "/help",
 ];
 
-// Routes only for unauthenticated users
-const authOnlyPaths = ["/login", "/register"];
-
 export function middleware(req: NextRequest) {
   // In bypass mode, let every request through without cookie checks
   if (DEV_AUTH_BYPASS) {
@@ -39,11 +36,6 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const session = req.cookies.get("session")?.value;
   const isAuthenticated = !!session;
-
-  // Redirect authenticated users away from login/register
-  if (authOnlyPaths.some((p) => pathname.startsWith(p)) && isAuthenticated) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
 
   // Redirect unauthenticated users to login
   if (protectedPrefixes.some((p) => pathname.startsWith(p)) && !isAuthenticated) {

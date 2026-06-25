@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
@@ -121,20 +121,23 @@ function UserFooter({
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading, signOut, profile } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/login");
+      const redirect = pathname && pathname !== "/login"
+        ? `/login?redirect=${encodeURIComponent(pathname)}`
+        : "/login";
+      window.location.assign(redirect);
     }
-  }, [user, loading, router]);
+  }, [user, loading, pathname]);
 
   // Close the mobile drawer whenever the route changes — covers all entry
   // paths (link click, browser back/forward, programmatic push) in one place.
   useEffect(() => {
-    setMobileOpen(false);
+    const timer = window.setTimeout(() => setMobileOpen(false), 0);
+    return () => window.clearTimeout(timer);
   }, [pathname]);
 
   // ESC closes the drawer + lock body scroll while the drawer is open so
@@ -161,7 +164,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-50 px-4 text-center dark:bg-zinc-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Sessie verlopen. U wordt doorgestuurd naar inloggen...
+        </p>
+      </div>
+    );
+  }
 
   const fullName = profile?.fullName ?? "User";
   const firstName = profile?.firstName ?? "";

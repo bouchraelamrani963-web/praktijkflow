@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -17,14 +17,20 @@ function redirectAfterAuth(target: string) {
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { signIn, devMode } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const { signIn, devMode, user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
 
+  useEffect(() => {
+    if (!authLoading && user) {
+      redirectAfterAuth(redirect);
+    }
+  }, [authLoading, redirect, user]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     try {
       // Demo/bypass mode: skip Firebase entirely. The middleware lets the
       // request through and getCurrentUser() returns the seeded dev user.
@@ -58,7 +64,7 @@ function LoginForm() {
         toast.error(err instanceof Error && err.message ? err.message : "Inloggen mislukt.");
       }
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
@@ -116,10 +122,10 @@ function LoginForm() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={submitting}
           className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? "Inloggen..." : devMode ? "Doorgaan naar demo-dashboard" : "Inloggen"}
+          {submitting ? "Inloggen..." : devMode ? "Doorgaan naar demo-dashboard" : "Inloggen"}
         </button>
       </form>
 
