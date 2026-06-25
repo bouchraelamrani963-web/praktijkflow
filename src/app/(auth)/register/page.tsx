@@ -1,11 +1,18 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { FIREBASE_NOT_CONFIGURED } from "@/lib/firebase/auth";
 import toast from "react-hot-toast";
+
+function redirectAfterAuth(target: string) {
+  const safeTarget =
+    target.startsWith("/") && !target.startsWith("//") ? target : "/dashboard";
+
+  window.location.assign(safeTarget);
+}
 
 /**
  * Register page accepts an optional `?plan=` query param so the pricing
@@ -30,7 +37,6 @@ function RegisterForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signUp, devMode } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
 
@@ -62,7 +68,7 @@ function RegisterForm() {
       const dest = plan
         ? `/dashboard?plan=${encodeURIComponent(plan)}`
         : "/dashboard";
-      router.push(dest);
+      redirectAfterAuth(dest);
     } catch (err) {
       // Distinguish between common failure modes so the user knows what
       // to do next, rather than the prior misleading "email mogelijk al

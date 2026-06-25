@@ -1,18 +1,24 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { FIREBASE_NOT_CONFIGURED } from "@/lib/firebase/auth";
 import toast from "react-hot-toast";
+
+function redirectAfterAuth(target: string) {
+  const safeTarget =
+    target.startsWith("/") && !target.startsWith("//") ? target : "/dashboard";
+
+  window.location.assign(safeTarget);
+}
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn, devMode } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
 
@@ -24,20 +30,20 @@ function LoginForm() {
       // request through and getCurrentUser() returns the seeded dev user.
       if (devMode) {
         toast.success("Demo-modus — u bent ingelogd");
-        router.push(redirect);
+        redirectAfterAuth(redirect);
         return;
       }
 
       await signIn(email, password);
       toast.success("Welkom terug!");
-      router.push(redirect);
+      redirectAfterAuth(redirect);
     } catch (err) {
       // Distinguish failure modes so the user sees an actionable message
       // instead of a generic "wrong password" toast.
       const code = (err as { code?: string } | null)?.code ?? "";
       if (code === FIREBASE_NOT_CONFIGURED) {
         toast.success("Demo-modus — u bent ingelogd");
-        router.push(redirect);
+        redirectAfterAuth(redirect);
         return;
       }
       if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
