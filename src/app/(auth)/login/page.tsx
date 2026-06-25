@@ -18,15 +18,15 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn, devMode, user, loading: authLoading } = useAuth();
+  const { signIn, devMode, profile, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && profile) {
       redirectAfterAuth(redirect);
     }
-  }, [authLoading, redirect, user]);
+  }, [authLoading, profile, redirect]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
