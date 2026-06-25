@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(async (): Promise<SessionProfile | null> => {
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setProfile(data.user);
@@ -88,9 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthChange(async (firebaseUser) => {
       settled = true;
-      setUser(firebaseUser);
       if (firebaseUser) {
-        await fetchProfile();
+        const serverProfile = await fetchProfile();
+        setUser(serverProfile ? firebaseUser : null);
       } else {
         const serverProfile = await fetchProfile();
         if (serverProfile) {
