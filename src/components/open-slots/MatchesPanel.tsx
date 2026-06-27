@@ -147,19 +147,18 @@ export function MatchesPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(data.message ?? data.error ?? "Versturen mislukt");
-        if (data.error === "SMS niet geconfigureerd") {
-          // smsConfigured prop is from server render — if state shifted at
-          // runtime, surface it in the inline panel below for the operator.
-          setResults([
-            {
-              waitlistEntryId: "_global_",
-              clientName: "Server",
-              status: "failed",
-              reason: data.message ?? "SMS niet geconfigureerd",
-            },
-          ]);
-        }
+        const reason = data.message ?? data.error ?? "Versturen mislukt";
+        toast.error(reason);
+        setResults(
+          matches
+            .filter((m) => selected.has(m.id))
+            .map((m) => ({
+              waitlistEntryId: m.id,
+              clientName: m.clientName,
+              status: "failed" as const,
+              reason,
+            })),
+        );
         return;
       }
       setResults(data.results ?? []);
@@ -176,7 +175,18 @@ export function MatchesPanel({
       // reflects the new OFFERED waitlist transitions.
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Versturen mislukt");
+      const reason = err instanceof Error ? err.message : "Versturen mislukt";
+      toast.error(reason);
+      setResults(
+        matches
+          .filter((m) => selected.has(m.id))
+          .map((m) => ({
+            waitlistEntryId: m.id,
+            clientName: m.clientName,
+            status: "failed" as const,
+            reason,
+          })),
+      );
     } finally {
       setSending(false);
     }
@@ -264,16 +274,36 @@ export function MatchesPanel({
             </p>
           </div>
           <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {persistedOffers!.map((o) => (
+            {persistedOffers!.map((o) => {
+              const isFailed = o.status === "failed";
+              const isPending = o.status === "pending";
+              const isTest = o.status === "mock" || Boolean(o.claimUrl);
+              const badgeClass = isFailed
+                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                : isPending
+                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                  : isTest
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300";
+
+              return (
               <div key={o.waitlistEntryId} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                    <CheckCircle2 className="h-3 w-3" />
-                    {o.status === "failed"
+                  <span className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${badgeClass}`}>
+                    {isFailed ? (
+                      <AlertTriangle className="h-3 w-3" />
+                    ) : isPending ? (
+                      <MessageSquare className="h-3 w-3" />
+                    ) : isTest ? (
+                      <FlaskConical className="h-3 w-3" />
+                    ) : (
+                      <CheckCircle2 className="h-3 w-3" />
+                    )}
+                    {isFailed
                       ? "Mislukt"
-                      : o.status === "pending"
-                        ? "Pending"
-                        : o.status === "mock" || o.claimUrl
+                      : isPending
+                        ? "Bezig"
+                        : isTest
                           ? "Testmodus"
                           : "Verzonden"}
                   </span>
@@ -313,7 +343,8 @@ export function MatchesPanel({
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

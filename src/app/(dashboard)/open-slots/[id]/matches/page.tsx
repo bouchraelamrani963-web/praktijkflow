@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
+import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { findMatchesForSlot } from "@/lib/waitlist/matching";
@@ -32,6 +33,10 @@ interface PersistedOffer {
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function openSlotLogMarker(slotId: string): string {
+  return `open-slot:${slotId}`;
+}
 
 function fmtDateTime(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
@@ -83,17 +88,28 @@ export default async function OpenSlotMatchesPage({
   const smsAllowed = isSmsAllowed();
 
   // ─── Persisted offers ─────────────────────────────────────────────────
-  // When the slot is OFFERED, load MessageLog records so the matches panel
-  // can show per-patient offer status (and claim links in test mode) even
-  // after navigation/refresh. In real mode we never surface claim URLs.
+  // Load MessageLog records so the matches panel can show per-patient offer
+  // status even after navigation/refresh. Source slots are linked by
+  // appointmentId. Manual slots have no source appointment, so new claim
+  // links include the openSlotId in the /action URL and failed pre-token logs
+  // include a lightweight open-slot marker. In real mode we never surface
+  // claim URLs.
   const persistedOffers: PersistedOffer[] = [];
-  if (slot.status === "OFFERED" && slot.sourceAppointmentId) {
+  if (slot.status === "AVAILABLE" || slot.status === "OFFERED") {
+    const logLinks: Prisma.MessageLogWhereInput[] = [
+      { body: { contains: `/action/${slot.id}.` } },
+      { body: { contains: openSlotLogMarker(slot.id) } },
+    ];
+    if (slot.sourceAppointmentId) {
+      logLinks.unshift({ appointmentId: slot.sourceAppointmentId });
+    }
+
     const logs = await prisma.messageLog.findMany({
       where: {
         practiceId: user.practiceId,
-        appointmentId: slot.sourceAppointmentId,
         channel: "sms",
         status: { in: ["pending", "sent", "failed", "mock"] },
+        OR: logLinks,
       },
       include: {
         client: { select: { id: true, firstName: true, lastName: true } },
@@ -107,7 +123,7 @@ export default async function OpenSlotMatchesPage({
     const offeredEntries = await prisma.waitlistEntry.findMany({
       where: {
         practiceId: user.practiceId,
-        status: "OFFERED",
+        status: { in: ["WAITING", "OFFERED"] },
         clientId: { in: logs.map((l) => l.clientId) },
       },
       select: { id: true, clientId: true },

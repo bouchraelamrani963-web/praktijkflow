@@ -21,6 +21,12 @@ export default async function ActionPage({
   const { token: rawToken } = await params;
 
   const tokenRecord = await lookupToken(rawToken);
+  const appointmentStart = tokenRecord?.appointment?.startTime ?? tokenRecord?.openSlot?.startTime;
+  const claimSlotUnavailable =
+    tokenRecord?.action === "claim_open_slot" &&
+    tokenRecord.openSlot != null &&
+    tokenRecord.openSlot.status !== "AVAILABLE" &&
+    tokenRecord.openSlot.status !== "OFFERED";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
@@ -55,6 +61,16 @@ export default async function ActionPage({
               Deze link is al gebruikt.
             </p>
           </div>
+        ) : claimSlotUnavailable ? (
+          <div className="text-center">
+            <XCircle className="mx-auto h-16 w-16 text-amber-400" />
+            <h2 className="mt-4 text-xl font-semibold text-zinc-900">
+              Deze plek is al ingevuld
+            </h2>
+            <p className="mt-2 text-sm text-zinc-500">
+              Helaas was iemand anders eerder. Neem contact op met {tokenRecord.practice.name} voor hulp.
+            </p>
+          </div>
         ) : (
           <ActionExecutor
             token={rawToken}
@@ -62,7 +78,7 @@ export default async function ActionPage({
             practiceName={tokenRecord.practice.name}
             clientName={`${tokenRecord.client.firstName} ${tokenRecord.client.lastName}`}
             appointmentTime={
-              tokenRecord.appointment ? fmt(tokenRecord.appointment.startTime) : undefined
+              appointmentStart ? fmt(appointmentStart) : undefined
             }
           />
         )}

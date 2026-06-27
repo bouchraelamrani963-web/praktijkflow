@@ -8,6 +8,7 @@ export type TokenAction = "confirm_appointment" | "cancel_appointment" | "claim_
 export interface CreateTokenInput {
   practiceId: string;
   appointmentId?: string;
+  openSlotId?: string;
   clientId: string;
   action: TokenAction;
   expiresInHours?: number;
@@ -24,10 +25,31 @@ export interface ExecuteResult {
   appointmentId?: string;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function createRawToken(input: CreateTokenInput): string {
+  const secret = generateToken();
+  if (input.action === "claim_open_slot" && input.openSlotId) {
+    return `${input.openSlotId}.${secret}`;
+  }
+  return secret;
+}
+
+function extractOpenSlotId(rawToken: string): string | null {
+  const [candidate] = rawToken.split(".", 1);
+  return candidate && UUID_RE.test(candidate) ? candidate : null;
+}
+
+function clientLogRef(clientId: string): string {
+  return process.env.NODE_ENV === "production"
+    ? `client:${clientId.slice(0, 8)}`
+    : `client:${clientId}`;
+}
+
 // ─── Create ────────────────────────────────────────────────────────────────
 
 export async function createActionToken(input: CreateTokenInput): Promise<CreateTokenResult> {
-  const raw = generateToken();
+  const raw = createRawToken(input);
   const hash = hashToken(raw);
   const expiresAt = new Date(
     Date.now() + (input.expiresInHours ?? 24) * 60 * 60 * 1000,
@@ -70,7 +92,28 @@ export async function lookupToken(rawToken: string) {
       practice: { select: { id: true, name: true } },
     },
   });
-  return token;
+
+  if (!token) return null;
+
+  const openSlotId = token.action === "claim_open_slot" ? extractOpenSlotId(rawToken) : null;
+  const openSlot = openSlotId
+    ? await prisma.openSlot.findFirst({
+        where: { id: openSlotId, practiceId: token.practiceId },
+        select: {
+          id: true,
+          practiceId: true,
+          status: true,
+          practitionerId: true,
+          appointmentTypeId: true,
+          startTime: true,
+          endTime: true,
+          durationMinutes: true,
+          appointmentType: { select: { name: true, price: true } },
+        },
+      })
+    : null;
+
+  return { ...token, openSlot };
 }
 
 // ─── Execute ───────────────────────────────────────────────────────────────
@@ -201,45 +244,54 @@ async function cancelAppointment(token: TokenWithRelations): Promise<ExecuteResu
 }
 
 async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> {
-  if (!token.appointment) {
+  const slot = token.openSlot ?? (
+    token.appointment
+      ? await prisma.openSlot.findFirst({
+          where: { sourceAppointmentId: token.appointment.id },
+          select: {
+            id: true,
+            practiceId: true,
+            status: true,
+            practitionerId: true,
+            appointmentTypeId: true,
+            startTime: true,
+            endTime: true,
+            durationMinutes: true,
+            appointmentType: { select: { name: true, price: true } },
+          },
+        })
+      : null
+  );
+
+  if (!slot) {
+    if (token.appointment) {
+      console.log(`[CLAIM FAILED] No OpenSlot found for appointment ${token.appointment.id}`);
+    }
     return { outcome: "failed", message: "Plekreferentie niet gevonden." };
   }
 
-  const appt = token.appointment;
-
-  // Pre-check — find the slot (only for its id; actual claim is atomic below)
-  const slotPre = await prisma.openSlot.findFirst({
-    where: { sourceAppointmentId: appt.id },
-    select: { id: true, status: true },
-  });
-
-  if (!slotPre) {
-    console.log(`[CLAIM FAILED] No OpenSlot found for appointment ${appt.id}`);
-    return { outcome: "failed", message: "Deze plek is al ingevuld." };
-  }
-
-  if (slotPre.status !== "AVAILABLE" && slotPre.status !== "OFFERED") {
+  if (slot.status !== "AVAILABLE" && slot.status !== "OFFERED") {
     console.log(
-      `[CLAIM FAILED] Slot ${slotPre.id} already ${slotPre.status} — client ${token.clientId} lost race`,
+      `[CLAIM FAILED] Slot ${slot.id} already ${slot.status} - ${clientLogRef(token.clientId)} lost race`,
     );
     return { outcome: "failed", message: "Deze plek is al ingevuld." };
   }
 
-  // Resolve snapshot inputs (client name + appointment-type name) outside
-  // the transaction. These are read-only; the transaction only needs their
-  // already-resolved string values.
-  const [client, apptType, risk] = await Promise.all([
+  const startTime = token.appointment?.startTime ?? slot.startTime;
+  const endTime = token.appointment?.endTime ?? slot.endTime;
+  const appointmentTypeId = token.appointment?.appointmentTypeId ?? slot.appointmentTypeId;
+  const recoveredRevenueCents = token.appointment?.revenueEstimateCents
+    ?? slot.appointmentType?.price
+    ?? 0;
+
+  // Resolve snapshot inputs outside the transaction. These are read-only;
+  // the transaction only needs their already-resolved values.
+  const [client, risk] = await Promise.all([
     prisma.client.findUnique({
       where: { id: token.clientId },
       select: { firstName: true, lastName: true },
     }),
-    appt.appointmentTypeId
-      ? prisma.appointmentType.findUnique({
-          where: { id: appt.appointmentTypeId },
-          select: { name: true },
-        })
-      : Promise.resolve(null),
-    calculateRiskForClient(token.clientId, appt.startTime, "CONFIRMED"),
+    calculateRiskForClient(token.clientId, startTime, "CONFIRMED"),
   ]);
 
   if (!client) {
@@ -247,8 +299,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
   }
 
   const claimedClientName = `${client.firstName} ${client.lastName}`;
-  const claimedAppointmentType = apptType?.name ?? null;
-  const recoveredRevenueCents = appt.revenueEstimateCents;
+  const claimedAppointmentType = slot.appointmentType?.name ?? null;
 
   // ─── ATOMIC CLAIM ───────────────────────────────────────────────────────
   // All five audit fields (claimedAppointmentId, claimedAt, claimedClientName,
@@ -268,14 +319,14 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
       // for the slot's claimedAppointmentId snapshot.
       const newAppt = await tx.appointment.create({
         data: {
-          practiceId: appt.practiceId,
+          practiceId: slot.practiceId,
           clientId: token.clientId,
-          practitionerId: appt.practitionerId,
-          appointmentTypeId: appt.appointmentTypeId,
-          startTime: appt.startTime,
-          endTime: appt.endTime,
+          practitionerId: slot.practitionerId,
+          appointmentTypeId,
+          startTime,
+          endTime,
           status: "CONFIRMED",
-          revenueEstimateCents: appt.revenueEstimateCents,
+          revenueEstimateCents: recoveredRevenueCents,
           riskScore: risk.riskScore,
           riskLevel: risk.riskLevel,
         },
@@ -285,7 +336,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
       // in the same write that flips status. If another tx claimed it first,
       // updated.count === 0 and we throw to roll back the appointment.
       const updated = await tx.openSlot.updateMany({
-        where: { id: slotPre.id, status: { in: ["AVAILABLE", "OFFERED"] } },
+        where: { id: slot.id, status: { in: ["AVAILABLE", "OFFERED"] } },
         data: {
           status: "CLAIMED",
           claimedAppointmentId: newAppt.id,
@@ -312,18 +363,37 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
         data: { status: "ACCEPTED" },
       });
 
-      // Step 4: find & expire other OFFERED entries for the same slot
-      const otherTokens = await tx.patientActionToken.findMany({
-        where: {
-          practiceId: token.practiceId,
-          appointmentId: token.appointmentId,
-          action: "claim_open_slot",
-          clientId: { not: token.clientId },
-        },
-        select: { clientId: true },
-      });
-
-      const otherClientIds = [...new Set(otherTokens.map((t) => t.clientId))];
+      // Step 4: find & expire other OFFERED entries for the same slot.
+      // Source slots can use appointmentId. Manual slots have no appointmentId,
+      // so we link offer logs through the open-slot-prefixed claim URL.
+      const otherClientIds = token.appointmentId
+        ? [
+            ...new Set(
+              (await tx.patientActionToken.findMany({
+                where: {
+                  practiceId: token.practiceId,
+                  appointmentId: token.appointmentId,
+                  action: "claim_open_slot",
+                  clientId: { not: token.clientId },
+                },
+                select: { clientId: true },
+              })).map((t) => t.clientId),
+            ),
+          ]
+        : [
+            ...new Set(
+              (await tx.messageLog.findMany({
+                where: {
+                  practiceId: token.practiceId,
+                  channel: "sms",
+                  clientId: { not: token.clientId },
+                  body: { contains: `/action/${slot.id}.` },
+                  status: { in: ["sent", "mock"] },
+                },
+                select: { clientId: true },
+              })).map((l) => l.clientId),
+            ),
+          ];
       let expiredCount = 0;
 
       if (otherClientIds.length > 0) {
@@ -338,23 +408,27 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
         expiredCount = expired.count;
       }
 
-      // Step 5: invalidate other claim tokens for this appointment (one-time enforcement)
-      await tx.patientActionToken.updateMany({
-        where: {
-          practiceId: token.practiceId,
-          appointmentId: token.appointmentId,
-          action: "claim_open_slot",
-          clientId: { not: token.clientId },
-          usedAt: null,
-        },
-        data: { usedAt: new Date() },
-      });
+      // Step 5: invalidate other source-appointment claim tokens. Manual-slot
+      // links are blocked by the slot CAS/status check because the token table
+      // does not store openSlotId.
+      if (token.appointmentId) {
+        await tx.patientActionToken.updateMany({
+          where: {
+            practiceId: token.practiceId,
+            appointmentId: token.appointmentId,
+            action: "claim_open_slot",
+            clientId: { not: token.clientId },
+            usedAt: null,
+          },
+          data: { usedAt: new Date() },
+        });
+      }
 
       return { claimed: true as const, newAppointmentId: newAppt.id, expiredCount };
     });
 
     console.log(
-      `[CLAIM SUCCESS] Slot ${slotPre.id} claimed by client ${token.clientId} → new appointment ${result.newAppointmentId} — expired ${result.expiredCount} other offers`,
+      `[CLAIM SUCCESS] Slot ${slot.id} claimed by ${clientLogRef(token.clientId)} -> new appointment ${result.newAppointmentId} - expired ${result.expiredCount} other offers`,
     );
 
     return {
@@ -365,11 +439,11 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
   } catch (err) {
     if (err instanceof SlotRaceLostError) {
       console.log(
-        `[CLAIM FAILED] Race lost — slot ${slotPre.id} was claimed by another patient before client ${token.clientId}`,
+        `[CLAIM FAILED] Race lost - slot ${slot.id} was claimed before ${clientLogRef(token.clientId)}`,
       );
       return { outcome: "failed", message: "Deze plek is al ingevuld." };
     }
-    console.error(`[CLAIM FAILED] Transaction error for client ${token.clientId}:`, err);
+    console.error(`[CLAIM FAILED] Transaction error for ${clientLogRef(token.clientId)}:`, err);
     return { outcome: "failed", message: "Er is iets misgegaan. Neem contact op met de praktijk." };
   }
 }

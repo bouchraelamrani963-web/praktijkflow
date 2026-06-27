@@ -9,6 +9,10 @@ import { normalizePhoneNumber } from "@/lib/phone";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function openSlotLogMarker(slotId: string): string {
+  return `open-slot:${slotId}`;
+}
+
 /**
  * Offer an open slot to one or more waitlist patients.
  *
@@ -108,13 +112,6 @@ export async function POST(
   if (!slot) {
     return NextResponse.json({ error: "Open slot not available" }, { status: 404 });
   }
-  if (!slot.sourceAppointmentId) {
-    return NextResponse.json(
-      { error: "Manual slots cannot be offered via claim token — book the appointment directly" },
-      { status: 422 },
-    );
-  }
-
   // ─── Load all referenced waitlist entries in one query ──────────────────
   const entries = await prisma.waitlistEntry.findMany({
     where: { id: { in: entryIds }, practiceId: user.practiceId },
@@ -164,7 +161,7 @@ export async function POST(
           clientId: entry.client.id,
           channel: "sms",
           to: "",
-          body: "",
+          body: openSlotLogMarker(slot.id),
           status: "failed",
           errorMessage: "Patiënt heeft geen telefoonnummer",
         },
@@ -187,7 +184,7 @@ export async function POST(
           clientId: entry.client.id,
           channel: "sms",
           to: entry.client.phone,
-          body: "",
+          body: openSlotLogMarker(slot.id),
           status: "failed",
           errorMessage: phone.reason ?? "Geen geldig telefoonnummer",
         },
@@ -201,12 +198,17 @@ export async function POST(
       continue;
     }
 
+    let messageLogId: string | null = null;
+    let messageLogFinalized = false;
+
     try {
-      // Token tied to the source appointment so the claim flow can resolve
-      // the slot. SHA-256 hashed at storage time; rawToken returned once.
+      // Token tied to the open slot so manual and cancellation slots resolve
+      // through the same claim flow. SHA-256 hashed at storage time; rawToken
+      // returned once.
       const token = await createActionToken({
         practiceId: user.practiceId,
-        appointmentId: slot.sourceAppointmentId,
+        appointmentId: slot.sourceAppointmentId ?? undefined,
+        openSlotId: slot.id,
         clientId: entry.client.id,
         action: "claim_open_slot",
         expiresInHours: 2,
@@ -229,6 +231,7 @@ export async function POST(
           status: "pending",
         },
       });
+      messageLogId = messageLog.id;
 
       const smsResult = await sendSms(phone.normalized, smsBody);
 
@@ -259,6 +262,7 @@ export async function POST(
           externalSid: smsResult.sid ?? null,
         },
       });
+      messageLogFinalized = true;
 
       // Both 'sent' (real) and 'mock' (test mode) count as a successful
       // dispatch from the operator's perspective — flip waitlist → OFFERED
@@ -293,12 +297,23 @@ export async function POST(
         });
       }
     } catch (err) {
+      const reason = err instanceof Error ? err.message : "Onbekende fout";
+      if (messageLogId && !messageLogFinalized) {
+        await prisma.messageLog.update({
+          where: { id: messageLogId },
+          data: {
+            status: "failed",
+            errorMessage: reason,
+            externalSid: null,
+          },
+        }).catch(() => {});
+      }
       console.error(`[api.open-slots.offer] entry ${entry.id} failed:`, err);
       results.push({
         waitlistEntryId: entry.id,
         clientName,
         status: "failed",
-        reason: err instanceof Error ? err.message : "Onbekende fout",
+        reason,
       });
     }
   }
