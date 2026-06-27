@@ -432,7 +432,7 @@ model MessageLog {
   channel       String // "sms" | "email"
   to            String // phone number or email address
   body          String  @db.Text
-  status        String // "sent" | "skipped" | "failed" | "mock"
+  status        String // "pending" | "sent" | "skipped" | "failed" | "mock"
   errorMessage  String?
   externalSid   String? // Twilio SID or other provider reference
   reminderType  String? // "48h" | "24h"

@@ -1,9 +1,11 @@
 /**
  * Lightweight Twilio SMS wrapper.
  * Uses the REST API directly (no SDK dependency).
- * Falls back to console logging when credentials are missing.
+ * Sends real SMS only when SMS_TEST_MODE=false and Twilio is configured.
+ * Every other SMS_TEST_MODE value is fail-safe test mode.
  */
 import { getPublicAppUrl, extractActionPath } from "@/lib/url";
+import { maskPhoneNumber, maskPhoneNumbersInText, normalizePhoneNumber } from "@/lib/phone";
 
 export interface SmsResult {
   success: boolean;
@@ -15,9 +17,9 @@ export interface SmsResult {
 const TWILIO_API = "https://api.twilio.com/2010-04-01";
 
 function getConfig() {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_PHONE_NUMBER;
+  const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
+  const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();
+  const from = process.env.TWILIO_PHONE_NUMBER?.trim();
   return { accountSid, authToken, from };
 }
 
@@ -40,7 +42,11 @@ export function isTwilioConfigured(): boolean {
  *   4. Once happy, sets SMS_TEST_MODE=false → real SMS to next batch
  */
 export function isSmsTestMode(): boolean {
-  return process.env.SMS_TEST_MODE === "true";
+  return process.env.SMS_TEST_MODE?.trim().toLowerCase() !== "false";
+}
+
+export function isRealSmsEnabled(): boolean {
+  return !isSmsTestMode() && isTwilioConfigured();
 }
 
 /**
@@ -50,7 +56,7 @@ export function isSmsTestMode(): boolean {
  * stays consistent.
  */
 export function isSmsAllowed(): boolean {
-  return isSmsTestMode() || isTwilioConfigured();
+  return isSmsTestMode() || isRealSmsEnabled();
 }
 
 /**
@@ -64,36 +70,44 @@ export function extractActionUrl(body: string): string | null {
   return `${getPublicAppUrl()}${path}`;
 }
 
+function safeSmsLog(label: string, to: string, body: string) {
+  if (process.env.NODE_ENV === "production") {
+    const actionPath = extractActionPath(body);
+    console.log(`${label} To: ${maskPhoneNumber(to)}${actionPath ? " | Action link generated" : ""}`);
+    return;
+  }
+
+  console.log(`${label} To: ${to} | Body: ${body}`);
+}
+
+function sanitizeProviderError(message: unknown): string {
+  const raw = typeof message === "string" && message.trim()
+    ? message
+    : "SMS provider error";
+  return maskPhoneNumbersInText(raw);
+}
+
 export async function sendSms(to: string, body: string): Promise<SmsResult> {
   const { accountSid, authToken, from } = getConfig();
+  const phone = normalizePhoneNumber(to);
+  if (!phone.isValid || !phone.normalized) {
+    return { success: false, mock: false, error: phone.reason ?? "Geen geldig telefoonnummer" };
+  }
 
-  // Explicit SMS_TEST_MODE — caller has opted into walking the flow without
-  // hitting Twilio. We log the body (helpful in Vercel function logs for
-  // server-side verification) but the operator-facing claim URL is also
-  // surfaced separately by the offer endpoint so they don't need log access.
+  // Explicit SMS_TEST_MODE: walk the flow without hitting Twilio. Production
+  // logs are masked; local logs keep the body visible for development checks.
   if (isSmsTestMode()) {
-    console.log(`[SMS TEST MODE] To: ${to} | Body: ${body}`);
+    safeSmsLog("[SMS TEST MODE]", phone.normalized, body);
     const actionUrl = extractActionUrl(body);
-    if (actionUrl) {
+    if (actionUrl && process.env.NODE_ENV !== "production") {
       console.log(`[SMS TEST MODE LINK] ${actionUrl}`);
     }
     return { success: true, mock: true, sid: `TEST_${Date.now()}` };
   }
 
-  // Twilio missing AND not in test mode — historically the function returned
-  // a fake-success "MOCK_*" sid which downstream callers (the OLD offer
-  // endpoint, the reminder service) treated as a real send. The current
-  // open-slot offer endpoint gates on isSmsAllowed() upstream, so this
-  // branch should be unreachable from that path. We keep the mock fallback
-  // for legacy callers (reminder service in non-test-mode) but mark it
-  // clearly so it doesn't get mistaken for a real send.
-  if (!accountSid || !authToken || !from) {
-    console.log(`[TWILIO MOCK] To: ${to} | Body: ${body}`);
-    const actionUrl = extractActionUrl(body);
-    if (actionUrl) {
-      console.log(`[TWILIO MOCK LINK] ${actionUrl}`);
-    }
-    return { success: true, mock: true, sid: `MOCK_${Date.now()}` };
+  // Real SMS is allowed only through the central config gate.
+  if (!isRealSmsEnabled() || !accountSid || !authToken || !from) {
+    return { success: false, mock: false, error: "SMS provider niet geconfigureerd" };
   }
 
   try {
@@ -105,7 +119,7 @@ export async function sendSms(to: string, body: string): Promise<SmsResult> {
           Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({ To: to, From: from, Body: body }),
+        body: new URLSearchParams({ To: phone.normalized, From: from, Body: body }),
       },
     );
 
@@ -115,7 +129,7 @@ export async function sendSms(to: string, body: string): Promise<SmsResult> {
       return {
         success: false,
         mock: false,
-        error: data.message ?? `Twilio HTTP ${res.status}`,
+        error: sanitizeProviderError(data.message ?? `Twilio HTTP ${res.status}`),
       };
     }
 
@@ -124,7 +138,7 @@ export async function sendSms(to: string, body: string): Promise<SmsResult> {
     return {
       success: false,
       mock: false,
-      error: err instanceof Error ? err.message : "Unknown Twilio error",
+      error: err instanceof Error ? sanitizeProviderError(err.message) : "Unknown Twilio error",
     };
   }
 }

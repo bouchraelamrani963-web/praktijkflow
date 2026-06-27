@@ -3,10 +3,17 @@ import { findMatchesForSlot } from "./matching";
 import { createActionToken } from "@/lib/tokens/service";
 import { sendSms } from "@/lib/twilio";
 import { getPublicAppUrl } from "@/lib/url";
+import { normalizePhoneNumber } from "@/lib/phone";
 
 const MAX_OFFERS = 3;
 const CLAIM_EXPIRY_HOURS = 2;
 const COOLDOWN_HOURS = 2; // no patient receives more than 1 offer per 2 hours
+
+function candidateLogLabel(candidate: { id: string; clientName: string }) {
+  return process.env.NODE_ENV === "production"
+    ? `waitlistEntry:${candidate.id}`
+    : candidate.clientName;
+}
 
 interface AutoOfferResult {
   slotId: string;
@@ -131,7 +138,7 @@ export async function autoOfferSlot(
     if (recentOffer) {
       result.skipped++;
       console.log(
-        `[AUTO-OFFER] Skipped ${candidate.clientName} (cooldown): recent offer at ${recentOffer.createdAt.toISOString()}`,
+        `[AUTO-OFFER] Skipped ${candidateLogLabel(candidate)} (cooldown): recent offer at ${recentOffer.createdAt.toISOString()}`,
       );
 
       await prisma.actionLog.create({
@@ -148,6 +155,24 @@ export async function autoOfferSlot(
     }
 
     try {
+      const phone = normalizePhoneNumber(candidate.clientPhone);
+      if (!phone.isValid || !phone.normalized) {
+        result.skipped++;
+        await prisma.messageLog.create({
+          data: {
+            practiceId,
+            appointmentId: slot.sourceAppointmentId,
+            clientId: candidate.clientId,
+            channel: "sms",
+            to: candidate.clientPhone ?? "",
+            body: "",
+            status: "failed",
+            errorMessage: phone.reason ?? "Geen geldig telefoonnummer",
+          },
+        });
+        continue;
+      }
+
       // Create claim token with 2h expiry
       const token = await createActionToken({
         practiceId,
@@ -157,40 +182,37 @@ export async function autoOfferSlot(
         expiresInHours: CLAIM_EXPIRY_HOURS,
       });
 
-      // Mark waitlist entry as OFFERED
-      await prisma.waitlistEntry.update({
-        where: { id: candidate.id },
-        data: { status: "OFFERED" },
-      });
-
       // Send SMS
       const actionUrl = `/action/${token.rawToken}`;
       const appUrl = getPublicAppUrl();
-      let smsStatus = "no_phone";
+      const smsBody =
+        `Beste ${candidate.clientName.split(" ")[0]}, er is een plek vrijgekomen bij ${slot.practice.name} ` +
+        `op ${fmtDate}. U heeft 2 uur om te reageren. ` +
+        `Claim uw afspraak via: ${appUrl}${actionUrl}`;
 
-      if (candidate.clientPhone) {
-        const smsBody =
-          `Beste ${candidate.clientName.split(" ")[0]}, er is een plek vrijgekomen bij ${slot.practice.name} ` +
-          `op ${fmtDate}. U heeft 2 uur om te reageren. ` +
-          `Claim uw afspraak via: ${appUrl}${actionUrl}`;
+      const messageLog = await prisma.messageLog.create({
+        data: {
+          practiceId,
+          appointmentId: slot.sourceAppointmentId,
+          clientId: candidate.clientId,
+          channel: "sms",
+          to: phone.normalized,
+          body: smsBody,
+          status: "pending",
+        },
+      });
 
-        const smsResult = await sendSms(candidate.clientPhone, smsBody);
-        smsStatus = smsResult.mock ? "mock" : smsResult.success ? "sent" : "failed";
+      const smsResult = await sendSms(phone.normalized, smsBody);
+      const smsStatus = smsResult.mock ? "mock" : smsResult.success ? "sent" : "failed";
 
-        await prisma.messageLog.create({
-          data: {
-            practiceId,
-            appointmentId: slot.sourceAppointmentId,
-            clientId: candidate.clientId,
-            channel: "sms",
-            to: candidate.clientPhone,
-            body: smsBody,
-            status: smsStatus,
-            errorMessage: smsResult.error ?? null,
-            externalSid: smsResult.sid ?? null,
-          },
-        });
-      }
+      await prisma.messageLog.update({
+        where: { id: messageLog.id },
+        data: {
+          status: smsStatus,
+          errorMessage: smsResult.error ?? null,
+          externalSid: smsResult.sid ?? null,
+        },
+      });
 
       // Audit log
       await prisma.actionLog.create({
@@ -204,19 +226,26 @@ export async function autoOfferSlot(
         },
       });
 
-      result.offersSent++;
-      result.details.push({
-        waitlistEntryId: candidate.id,
-        clientName: candidate.clientName,
-        smsStatus,
-      });
+      if (smsStatus === "sent" || smsStatus === "mock") {
+        await prisma.waitlistEntry.update({
+          where: { id: candidate.id },
+          data: { status: "OFFERED" },
+        });
+
+        result.offersSent++;
+        result.details.push({
+          waitlistEntryId: candidate.id,
+          clientName: candidate.clientName,
+          smsStatus,
+        });
+      }
 
       console.log(
-        `[AUTO-OFFER] Offered slot ${slotId} to ${candidate.clientName} (score: ${candidate.score}, sms: ${smsStatus})`,
+        `[AUTO-OFFER] Processed slot ${slotId} for ${candidateLogLabel(candidate)} (score: ${candidate.score}, sms: ${smsStatus})`,
       );
     } catch (err) {
       console.error(
-        `[AUTO-OFFER] Failed to offer slot ${slotId} to ${candidate.clientName}:`,
+        `[AUTO-OFFER] Failed to offer slot ${slotId} to ${candidateLogLabel(candidate)}:`,
         err,
       );
 

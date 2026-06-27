@@ -255,13 +255,14 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 
 ### Twilio (optional)
 
-SMS reminders are optional. When Twilio credentials are missing, reminders log to the console instead of sending real SMS.
+SMS reminders are optional. SMS mode is fail-safe: only `SMS_TEST_MODE=false` enables real SMS delivery, and only when Twilio credentials are present. Empty, undefined, `true`, `1`, `yes`, or any typo stays in test mode.
 
 1. Sign up at [Twilio Console](https://console.twilio.com/).
 2. Get your **Account SID** and **Auth Token** from the dashboard.
 3. Buy or configure a phone number with SMS capability.
 
 ```
+SMS_TEST_MODE=false
 TWILIO_ACCOUNT_SID=AC...
 TWILIO_AUTH_TOKEN=...
 TWILIO_PHONE_NUMBER=+31612345678
@@ -449,12 +450,12 @@ Error: No signatures found matching the expected signature
 
 ### Twilio SMS not sending
 
-If `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, or `TWILIO_PHONE_NUMBER` are missing or empty, Twilio runs in mock mode and logs messages to the console. This is expected in development.
+If `SMS_TEST_MODE` is anything except exact `false`, SMS delivery runs in test mode and shows claim links without sending real SMS. If `SMS_TEST_MODE=false`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_PHONE_NUMBER` must be present or delivery fails.
 
-To verify mock mode is active, check the server console for:
+To verify test mode is active, check the server console for:
 
 ```
-[Twilio Mock] Would send SMS to +31612345678: ...
+[SMS TEST MODE] To: +31*******78 | Action link generated
 ```
 
 ### Build fails with type errors after schema changes

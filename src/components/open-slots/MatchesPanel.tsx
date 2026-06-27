@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Phone, Mail, AlertTriangle, CheckCircle2, MessageSquare, Copy, FlaskConical } from "lucide-react";
 import toast from "react-hot-toast";
+import { normalizePhoneNumber } from "@/lib/phone";
 
 /**
  * Mirror of the MatchedEntry shape returned by /api/open-slots/[id]/matches
@@ -26,7 +27,8 @@ export interface MatchedEntry {
 interface PersistedOffer {
   waitlistEntryId: string;
   clientName: string;
-  status: "sent";
+  status: "pending" | "sent" | "failed" | "mock";
+  reason?: string;
   claimUrl?: string;
 }
 
@@ -35,9 +37,9 @@ interface Props {
   initialMatches: MatchedEntry[];
   /** Twilio SDK env vars are present (real send possible). */
   smsConfigured: boolean;
-  /** SMS_TEST_MODE=true on the server (mock send + claim URL surfaced). */
+  /** Fail-safe SMS test mode is active (mock send + claim URL surfaced). */
   smsTestMode: boolean;
-  /** Convenience flag: smsConfigured || smsTestMode. Drives the submit
+  /** Server-side SMS gate from the central config. Drives the submit
    *  button enable state. */
   smsAllowed: boolean;
   slotAvailable: boolean;
@@ -48,9 +50,9 @@ interface Props {
 interface OfferResult {
   waitlistEntryId: string;
   clientName: string;
-  status: "sent" | "failed" | "no_phone" | "not_eligible";
+  status: "pending" | "sent" | "failed" | "mock" | "no_phone" | "invalid_phone" | "not_eligible" | "test";
   reason?: string;
-  /** Only present when SMS_TEST_MODE=true. Operator clicks this to walk
+  /** Only present in SMS test mode. Operator clicks this to walk
    *  the claim flow as if they were the patient. */
   claimUrl?: string;
 }
@@ -87,6 +89,10 @@ export function MatchesPanel({
   );
 
   const matches = initialMatches;
+  const validPhoneIds = useMemo(
+    () => new Set(matches.filter((m) => normalizePhoneNumber(m.clientPhone).isValid).map((m) => m.id)),
+    [matches],
+  );
 
   function toggle(id: string) {
     setSelected((cur) => {
@@ -98,17 +104,17 @@ export function MatchesPanel({
   }
 
   function toggleAll() {
-    if (selected.size === matches.length) {
+    if (selected.size === validPhoneIds.size) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(matches.filter((m) => m.clientPhone).map((m) => m.id)));
+      setSelected(new Set(matches.filter((m) => validPhoneIds.has(m.id)).map((m) => m.id)));
     }
   }
 
   const selectedCount = selected.size;
   const selectedWithPhone = useMemo(
-    () => matches.filter((m) => selected.has(m.id) && m.clientPhone).length,
-    [matches, selected],
+    () => matches.filter((m) => selected.has(m.id) && validPhoneIds.has(m.id)).length,
+    [matches, selected, validPhoneIds],
   );
 
   async function handleOffer() {
@@ -121,7 +127,15 @@ export function MatchesPanel({
       return;
     }
     setSending(true);
-    setResults(null);
+    setResults(
+      matches
+        .filter((m) => selected.has(m.id))
+        .map((m) => ({
+          waitlistEntryId: m.id,
+          clientName: m.clientName,
+          status: "pending" as const,
+        })),
+    );
     try {
       const res = await fetch(`/api/open-slots/${slotId}/offer`, {
         method: "POST",
@@ -243,7 +257,7 @@ export function MatchesPanel({
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
           <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-800/50">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
-              Aanbod verzonden
+              Aanbodstatus
             </h3>
             <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
               {persistedOffers!.length} patiënt{persistedOffers!.length === 1 ? "" : "en"} uitgenodigd
@@ -255,7 +269,13 @@ export function MatchesPanel({
                 <div className="flex items-center gap-3">
                   <span className="inline-flex w-fit items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                     <CheckCircle2 className="h-3 w-3" />
-                    {o.claimUrl ? "Mock verzonden" : "Aangeboden"}
+                    {o.status === "failed"
+                      ? "Mislukt"
+                      : o.status === "pending"
+                        ? "Pending"
+                        : o.status === "mock" || o.claimUrl
+                          ? "Testmodus"
+                          : "Verzonden"}
                   </span>
                   <span className="text-sm font-medium text-zinc-900 dark:text-white">
                     {o.clientName}
@@ -304,9 +324,9 @@ export function MatchesPanel({
           <input
             type="checkbox"
             id="match-select-all"
-            checked={selectedCount > 0 && selected.size === matches.filter((m) => m.clientPhone).length}
+            checked={selectedCount > 0 && selected.size === validPhoneIds.size}
             onChange={toggleAll}
-            disabled={!slotAvailable || !smsAllowed || matches.every((m) => !m.clientPhone)}
+            disabled={!slotAvailable || !smsAllowed || validPhoneIds.size === 0}
             className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
           <label htmlFor="match-select-all" className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -343,17 +363,37 @@ export function MatchesPanel({
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {matches.map((m) => {
-                const r = resultByEntry.get(m.id);
+                const rawResult = resultByEntry.get(m.id);
+                const phone = normalizePhoneNumber(m.clientPhone);
                 const noPhone = !m.clientPhone;
+                const invalidPhone = !!m.clientPhone && !phone.isValid;
+                const cannotSend = noPhone || invalidPhone;
+                const r = rawResult ?? (
+                  invalidPhone
+                    ? {
+                        waitlistEntryId: m.id,
+                        clientName: m.clientName,
+                        status: "invalid_phone" as const,
+                        reason: phone.reason,
+                      }
+                    : noPhone
+                      ? {
+                          waitlistEntryId: m.id,
+                          clientName: m.clientName,
+                          status: "no_phone" as const,
+                          reason: "Geen telefoonnummer",
+                        }
+                      : undefined
+                );
                 return (
-                  <tr key={m.id} className={noPhone ? "opacity-60" : ""}>
+                  <tr key={m.id} className={cannotSend ? "opacity-60" : ""}>
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
                         aria-label={`Selecteer ${m.clientName}`}
                         checked={selected.has(m.id)}
                         onChange={() => toggle(m.id)}
-                        disabled={!slotAvailable || !smsAllowed || noPhone || sending}
+                        disabled={!slotAvailable || !smsAllowed || cannotSend || sending}
                         className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                       />
                     </td>
@@ -362,10 +402,15 @@ export function MatchesPanel({
                     </td>
                     <td className="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
                       <div className="flex flex-col gap-1">
-                        {m.clientPhone ? (
+                        {m.clientPhone && !invalidPhone ? (
                           <span className="flex items-center gap-1">
                             <Phone className="h-3 w-3" />
                             {m.clientPhone}
+                          </span>
+                        ) : invalidPhone ? (
+                          <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                            <Phone className="h-3 w-3" />
+                            geen geldig telefoonnummer
                           </span>
                         ) : (
                           <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
@@ -404,11 +449,11 @@ export function MatchesPanel({
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {r ? (
-                        r.status === "sent" ? (
+                        r.status === "sent" || r.status === "test" || r.status === "mock" ? (
                           <div className="flex flex-col gap-1">
                             <span className="inline-flex w-fit items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                              <CheckCircle2 className="h-3 w-3" />
-                              {r.claimUrl ? "Mock verzonden" : "Verzonden"}
+                              {r.status === "test" || r.status === "mock" ? <FlaskConical className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                              {r.status === "test" || r.status === "mock" ? "Testmodus" : "Verzonden"}
                             </span>
                             {/* Test-mode only: surface the claim URL so the
                                 operator can walk the patient flow themselves.
@@ -447,9 +492,14 @@ export function MatchesPanel({
                               </div>
                             )}
                           </div>
-                        ) : r.status === "no_phone" ? (
+                        ) : r.status === "pending" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                            <MessageSquare className="h-3 w-3" />
+                            Pending
+                          </span>
+                        ) : r.status === "no_phone" || r.status === "invalid_phone" ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                            Geen telefoon
+                            Geen geldig telefoonnummer
                           </span>
                         ) : (
                           <span

@@ -4,13 +4,14 @@ import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { findMatchesForSlot } from "@/lib/waitlist/matching";
-import { isTwilioConfigured, isSmsTestMode, extractActionUrl } from "@/lib/twilio";
+import { isTwilioConfigured, isSmsTestMode, isSmsAllowed, extractActionUrl } from "@/lib/twilio";
 import { MatchesPanel } from "@/components/open-slots/MatchesPanel";
 
 interface PersistedOffer {
   waitlistEntryId: string;
   clientName: string;
-  status: "sent";
+  status: "pending" | "sent" | "failed" | "mock";
+  reason?: string;
   claimUrl?: string;
 }
 
@@ -79,20 +80,20 @@ export default async function OpenSlotMatchesPage({
   // the banner copy + claim-URL display.
   const smsConfigured = isTwilioConfigured();
   const smsTestMode = isSmsTestMode();
-  const smsAllowed = smsConfigured || smsTestMode;
+  const smsAllowed = isSmsAllowed();
 
   // ─── Persisted offers ─────────────────────────────────────────────────
   // When the slot is OFFERED, load MessageLog records so the matches panel
   // can show per-patient offer status (and claim links in test mode) even
   // after navigation/refresh. In real mode we never surface claim URLs.
-  let persistedOffers: PersistedOffer[] = [];
+  const persistedOffers: PersistedOffer[] = [];
   if (slot.status === "OFFERED" && slot.sourceAppointmentId) {
     const logs = await prisma.messageLog.findMany({
       where: {
         practiceId: user.practiceId,
         appointmentId: slot.sourceAppointmentId,
         channel: "sms",
-        status: { in: ["sent", "mock"] },
+        status: { in: ["pending", "sent", "failed", "mock"] },
       },
       include: {
         client: { select: { id: true, firstName: true, lastName: true } },
@@ -124,7 +125,10 @@ export default async function OpenSlotMatchesPage({
       const offer: PersistedOffer = {
         waitlistEntryId: entry?.id ?? log.clientId,
         clientName: `${log.client.firstName} ${log.client.lastName}`,
-        status: "sent",
+        status: log.status === "pending" || log.status === "failed" || log.status === "mock"
+          ? log.status
+          : "sent",
+        reason: log.errorMessage ?? undefined,
       };
 
       // Only surface claim URL in test mode

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { createActionToken } from "@/lib/tokens/service";
 import { sendSms, isTwilioConfigured, isSmsTestMode, isSmsAllowed } from "@/lib/twilio";
 import { getPublicAppUrl } from "@/lib/url";
+import { normalizePhoneNumber } from "@/lib/phone";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -39,7 +40,7 @@ const offerSchema = z
 interface OfferResult {
   waitlistEntryId: string;
   clientName: string;
-  status: "sent" | "failed" | "no_phone" | "not_eligible";
+  status: "pending" | "sent" | "failed" | "no_phone" | "invalid_phone" | "not_eligible" | "test";
   reason?: string;
   smsSid?: string;
   /** In SMS_TEST_MODE only: the claim URL the patient would have received,
@@ -156,11 +157,46 @@ export async function POST(
       continue;
     }
     if (!entry.client.phone) {
+      await prisma.messageLog.create({
+        data: {
+          practiceId: user.practiceId,
+          appointmentId: slot.sourceAppointmentId,
+          clientId: entry.client.id,
+          channel: "sms",
+          to: "",
+          body: "",
+          status: "failed",
+          errorMessage: "Patiënt heeft geen telefoonnummer",
+        },
+      });
       results.push({
         waitlistEntryId: entry.id,
         clientName,
         status: "no_phone",
         reason: "Patiënt heeft geen telefoonnummer",
+      });
+      continue;
+    }
+
+    const phone = normalizePhoneNumber(entry.client.phone);
+    if (!phone.isValid || !phone.normalized) {
+      await prisma.messageLog.create({
+        data: {
+          practiceId: user.practiceId,
+          appointmentId: slot.sourceAppointmentId,
+          clientId: entry.client.id,
+          channel: "sms",
+          to: entry.client.phone,
+          body: "",
+          status: "failed",
+          errorMessage: phone.reason ?? "Geen geldig telefoonnummer",
+        },
+      });
+      results.push({
+        waitlistEntryId: entry.id,
+        clientName,
+        status: "invalid_phone",
+        reason: phone.reason ?? "Geen geldig telefoonnummer",
       });
       continue;
     }
@@ -182,7 +218,19 @@ export async function POST(
         `Beste ${entry.client.firstName}, er is een plek vrijgekomen bij ${slot.practice.name} ` +
         `op ${fmt}. Claim uw afspraak via: ${base}${actionUrl}`;
 
-      const smsResult = await sendSms(entry.client.phone, smsBody);
+      const messageLog = await prisma.messageLog.create({
+        data: {
+          practiceId: user.practiceId,
+          appointmentId: slot.sourceAppointmentId,
+          clientId: entry.client.id,
+          channel: "sms",
+          to: phone.normalized,
+          body: smsBody,
+          status: "pending",
+        },
+      });
+
+      const smsResult = await sendSms(phone.normalized, smsBody);
 
       // Test mode → mock=true is the EXPECTED success path. Real mode →
       // mock=true would be an unexpected leak from sendSms() (e.g. Twilio
@@ -203,14 +251,9 @@ export async function POST(
           ? "Twilio gate slipped through — refusing to claim success"
           : (smsResult.error ?? null);
 
-      await prisma.messageLog.create({
+      await prisma.messageLog.update({
+        where: { id: messageLog.id },
         data: {
-          practiceId: user.practiceId,
-          appointmentId: slot.sourceAppointmentId,
-          clientId: entry.client.id,
-          channel: "sms",
-          to: entry.client.phone,
-          body: smsBody,
           status: logStatus,
           errorMessage: errorMsg,
           externalSid: smsResult.sid ?? null,
@@ -232,7 +275,7 @@ export async function POST(
         results.push({
           waitlistEntryId: entry.id,
           clientName,
-          status: "sent", // unified status field for the UI
+          status: testMode ? "test" : "sent",
           smsSid: smsResult.sid,
           // Surface the claim URL ONLY in test mode so the operator can
           // walk the flow themselves. In real mode the patient receives
@@ -260,8 +303,8 @@ export async function POST(
     }
   }
 
-  const sent = results.filter((r) => r.status === "sent").length;
-  const failed = results.length - sent;
+  const sent = results.filter((r) => r.status === "sent" || r.status === "test").length;
+  const failed = results.filter((r) => r.status !== "sent" && r.status !== "test").length;
 
   // ─── Update OpenSlot status to OFFERED when at least one dispatch succeeded ──
   if (sent > 0) {

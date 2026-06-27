@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
       ]);
       return { total, items };
     },
-    { total: 0, items: [] as Prisma.ClientGetPayload<{}>[] },
+    { total: 0, items: [] as Prisma.ClientModel[] },
   );
 
   return NextResponse.json({
