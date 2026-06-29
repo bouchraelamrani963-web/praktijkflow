@@ -13,6 +13,7 @@ const JS_DAY_TO_ENUM: Record<number, DayOfWeek> = {
 
 interface MatchedEntry {
   id: string;
+  waitlistEntryId: string;
   clientId: string;
   clientName: string;
   clientPhone: string | null;
@@ -125,6 +126,7 @@ export async function findMatchesForSlot(
 
     results.push({
       id: entry.id,
+      waitlistEntryId: entry.id,
       clientId: entry.client.id,
       clientName: `${entry.client.firstName} ${entry.client.lastName}`,
       clientPhone: entry.client.phone,

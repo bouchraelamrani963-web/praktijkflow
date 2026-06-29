@@ -14,7 +14,7 @@ import { normalizePhoneNumber } from "@/lib/phone";
 import { createActionToken } from "@/lib/tokens/service";
 import { getPublicAppUrl } from "@/lib/url";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function openSlotLogMarker(slotId: string): string {
   return `open-slot:${slotId}`;
@@ -154,6 +154,7 @@ export async function POST(
     }
 
     const clientName = `${entry.client.firstName} ${entry.client.lastName}`;
+    const patientId = entry.client.id;
     if (entry.status !== "WAITING") {
       results.push({
         waitlistEntryId: entry.id,
@@ -174,7 +175,7 @@ export async function POST(
         data: {
           practiceId: user.practiceId,
           appointmentId: slot.sourceAppointmentId,
-          clientId: entry.client.id,
+          clientId: patientId,
           channel,
           to: "",
           body: openSlotLogMarker(slot.id),
@@ -194,7 +195,7 @@ export async function POST(
         practiceId: user.practiceId,
         appointmentId: slot.sourceAppointmentId ?? undefined,
         openSlotId: slot.id,
-        clientId: entry.client.id,
+        clientId: patientId,
         action: "claim_open_slot",
         expiresInHours: 2,
       });
@@ -214,7 +215,7 @@ export async function POST(
         data: {
           practiceId: user.practiceId,
           appointmentId: slot.sourceAppointmentId,
-          clientId: entry.client.id,
+          clientId: patientId,
           channel,
           to: destination.normalized,
           body: messageText,

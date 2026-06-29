@@ -18,6 +18,7 @@ import type { MessageChannel } from "@/lib/messaging/service";
 
 export interface MatchedEntry {
   id: string;
+  waitlistEntryId: string;
   clientId: string;
   clientName: string;
   clientPhone: string | null;
@@ -57,6 +58,37 @@ interface OfferResult {
   claimUrl?: string;
 }
 
+function matchEntryId(match: MatchedEntry): string {
+  return match.waitlistEntryId;
+}
+
+function offerErrorMessage(data: unknown): string {
+  if (data && typeof data === "object") {
+    const body = data as {
+      message?: unknown;
+      error?: unknown;
+      issues?: {
+        fieldErrors?: Record<string, string[] | undefined>;
+        formErrors?: string[];
+      };
+    };
+
+    if (typeof body.message === "string" && body.message.trim()) return body.message;
+
+    const firstFieldError = body.issues?.fieldErrors
+      ? Object.values(body.issues.fieldErrors).flat().find(Boolean)
+      : undefined;
+    if (firstFieldError) return firstFieldError;
+
+    const firstFormError = body.issues?.formErrors?.find(Boolean);
+    if (firstFormError) return firstFormError;
+
+    if (typeof body.error === "string" && body.error.trim()) return body.error;
+  }
+
+  return "Versturen mislukt";
+}
+
 export function MatchesPanel({
   slotId,
   initialMatches,
@@ -75,13 +107,13 @@ export function MatchesPanel({
 
   const matches = initialMatches;
   const validEmailIds = useMemo(
-    () => new Set(matches.filter((m) => normalizeEmailAddress(m.clientEmail).isValid).map((m) => m.id)),
+    () => new Set(matches.filter((m) => normalizeEmailAddress(m.clientEmail).isValid).map(matchEntryId)),
     [matches],
   );
 
   const selectedCount = selected.size;
   const selectedWithEmail = useMemo(
-    () => matches.filter((m) => selected.has(m.id) && validEmailIds.has(m.id)).length,
+    () => matches.filter((m) => selected.has(matchEntryId(m)) && validEmailIds.has(matchEntryId(m))).length,
     [matches, selected, validEmailIds],
   );
 
@@ -107,7 +139,7 @@ export function MatchesPanel({
     if (selected.size === validEmailIds.size) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(matches.filter((m) => validEmailIds.has(m.id)).map((m) => m.id)));
+      setSelected(new Set(matches.filter((m) => validEmailIds.has(matchEntryId(m))).map(matchEntryId)));
     }
   }
 
@@ -121,11 +153,11 @@ export function MatchesPanel({
       return;
     }
 
-    const selectedMatches = matches.filter((m) => selected.has(m.id));
+    const selectedMatches = matches.filter((m) => selected.has(matchEntryId(m)));
     setSending(true);
     setResults(
       selectedMatches.map((m) => ({
-        waitlistEntryId: m.id,
+        waitlistEntryId: matchEntryId(m),
         clientName: m.clientName,
         status: "pending" as const,
       })),
@@ -142,11 +174,11 @@ export function MatchesPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const reason = data.message ?? data.error ?? "Versturen mislukt";
+        const reason = offerErrorMessage(data);
         toast.error(reason);
         setResults(
           selectedMatches.map((m) => ({
-            waitlistEntryId: m.id,
+            waitlistEntryId: matchEntryId(m),
             clientName: m.clientName,
             status: "failed" as const,
             reason,
@@ -171,7 +203,7 @@ export function MatchesPanel({
       toast.error(reason);
       setResults(
         selectedMatches.map((m) => ({
-          waitlistEntryId: m.id,
+          waitlistEntryId: matchEntryId(m),
           clientName: m.clientName,
           status: "failed" as const,
           reason,
@@ -350,13 +382,14 @@ export function MatchesPanel({
                 </thead>
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                   {matches.map((m) => {
-                    const rawResult = resultByEntry.get(m.id);
+                    const waitlistEntryId = matchEntryId(m);
+                    const rawResult = resultByEntry.get(waitlistEntryId);
                     const email = normalizeEmailAddress(m.clientEmail);
                     const invalidEmail = !email.isValid;
                     const r = rawResult ?? (
                       invalidEmail
                         ? {
-                            waitlistEntryId: m.id,
+                            waitlistEntryId,
                             clientName: m.clientName,
                             status: "failed" as const,
                             reason: email.reason ?? "Geen geldig e-mailadres",
@@ -365,13 +398,13 @@ export function MatchesPanel({
                     );
 
                     return (
-                      <tr key={m.id} className={invalidEmail ? "opacity-60" : ""}>
+                      <tr key={waitlistEntryId} className={invalidEmail ? "opacity-60" : ""}>
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
                             aria-label={`Selecteer ${m.clientName}`}
-                            checked={selected.has(m.id)}
-                            onChange={() => toggle(m.id)}
+                            checked={selected.has(waitlistEntryId)}
+                            onChange={() => toggle(waitlistEntryId)}
                             disabled={!slotAvailable || !messageAllowed || invalidEmail || sending}
                             className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                           />
