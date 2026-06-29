@@ -5,7 +5,13 @@ import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { findMatchesForSlot } from "@/lib/waitlist/matching";
-import { isTwilioConfigured, isSmsTestMode, isSmsAllowed, extractActionUrl } from "@/lib/twilio";
+import {
+  isEmailConfigured,
+  isOfferMessageAllowed,
+  isOfferMessageTestMode,
+  type MessageChannel,
+} from "@/lib/messaging/service";
+import { extractActionUrl } from "@/lib/twilio";
 import { MatchesPanel } from "@/components/open-slots/MatchesPanel";
 
 interface PersistedOffer {
@@ -24,9 +30,8 @@ interface PersistedOffer {
  *   - Resolve + authorize the slot (must be AVAILABLE in the user's practice)
  *   - Pre-run findMatchesForSlot() so the page has data on first paint
  *     without an extra round-trip; the client can refresh if needed
- *   - Read isTwilioConfigured() here (env vars aren't browser-readable)
- *     and thread it down so the offer button can render an honest
- *     disabled state when SMS isn't configured.
+ *   - Read message config here (env vars aren't browser-readable) and
+ *     thread it down so the offer button can render an honest disabled state.
  *
  * The actual offer POST and per-entry result rendering live in the
  * MatchesPanel client component below.
@@ -79,13 +84,10 @@ export default async function OpenSlotMatchesPage({
       ? await findMatchesForSlot(slot.id, user.practiceId)
       : [];
 
-  // Three states: real (Twilio configured, no test mode), test (test mode
-  // on — bypasses Twilio gate), disabled (neither). The panel uses
-  // `smsAllowed` to enable the submit button and `smsTestMode` to toggle
-  // the banner copy + claim-URL display.
-  const smsConfigured = isTwilioConfigured();
-  const smsTestMode = isSmsTestMode();
-  const smsAllowed = isSmsAllowed();
+  const offerChannel: MessageChannel = "email";
+  const messageConfigured = isEmailConfigured();
+  const messageTestMode = isOfferMessageTestMode(offerChannel);
+  const messageAllowed = isOfferMessageAllowed(offerChannel);
 
   // ─── Persisted offers ─────────────────────────────────────────────────
   // Load MessageLog records so the matches panel can show per-patient offer
@@ -107,7 +109,7 @@ export default async function OpenSlotMatchesPage({
     const logs = await prisma.messageLog.findMany({
       where: {
         practiceId: user.practiceId,
-        channel: "sms",
+        channel: offerChannel,
         status: { in: ["pending", "sent", "failed", "mock"] },
         OR: logLinks,
       },
@@ -148,7 +150,7 @@ export default async function OpenSlotMatchesPage({
       };
 
       // Only surface claim URL in test mode
-      if (smsTestMode && log.body) {
+      if (messageTestMode && log.body) {
         const url = extractActionUrl(log.body);
         if (url) offer.claimUrl = url;
       }
@@ -234,9 +236,10 @@ export default async function OpenSlotMatchesPage({
       <MatchesPanel
         slotId={slot.id}
         initialMatches={matches}
-        smsConfigured={smsConfigured}
-        smsTestMode={smsTestMode}
-        smsAllowed={smsAllowed}
+        channel={offerChannel}
+        messageConfigured={messageConfigured}
+        messageTestMode={messageTestMode}
+        messageAllowed={messageAllowed}
         slotAvailable={slot.status === "AVAILABLE" || slot.status === "OFFERED"}
         persistedOffers={persistedOffers}
       />

@@ -13,7 +13,8 @@ Practice management SaaS for Dutch healthcare practitioners. Handles appointment
 | Database | PostgreSQL, Prisma 7.6 (`@prisma/adapter-pg`) |
 | Auth | Firebase Auth (client + Admin SDK), HttpOnly session cookies |
 | Payments | Stripe 22 (subscriptions, checkout, webhooks) |
-| SMS | Twilio REST API (optional — mock mode when unconfigured) |
+| E-mail | Resend REST API (primary offer channel, fail-safe test mode) |
+| SMS | Twilio REST API (optional, reserved for later) |
 | Validation | Zod 4 |
 | Styling | Tailwind CSS 4 |
 | Testing | Vitest 4 |
@@ -25,7 +26,8 @@ Practice management SaaS for Dutch healthcare practitioners. Handles appointment
 - **PostgreSQL** >= 14
 - **Firebase project** with Authentication enabled (Email/Password provider)
 - **Stripe account** with products and webhook configured
-- **Twilio account** (optional — SMS reminders log to console without it)
+- **Resend account** (optional while `EMAIL_TEST_MODE=true`)
+- **Twilio account** (optional, for future SMS delivery)
 
 ---
 
@@ -42,7 +44,7 @@ npm install
 ### 2. Environment variables
 
 ```bash
-cp .env.local.example .env.local
+cp .env.example .env.local
 ```
 
 Edit `.env.local` and fill in every value. See [Service setup](#service-setup) below for where to find each credential.
@@ -253,6 +255,27 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 
 ---
 
+### E-mail (primary offer channel)
+
+Offer messages to waitlist patients use e-mail by default. E-mail mode is fail-safe: only `EMAIL_TEST_MODE=false` enables real delivery, and only when `RESEND_API_KEY`, `EMAIL_FROM`, and `NEXT_PUBLIC_APP_URL` are present. Empty, undefined, `true`, `1`, `yes`, or any typo stays in test mode.
+
+Test mode creates the claim token, writes `MessageLog` with `channel: "email"` and `status: "mock"`, and shows the claim link in the UI without sending a real e-mail.
+
+1. Sign up at [Resend](https://resend.com/).
+2. Create an API key.
+3. Configure a verified sender/domain.
+
+```
+EMAIL_TEST_MODE=false
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=re_...
+EMAIL_FROM="NoShow Control <afspraken@your-domain.nl>"
+EMAIL_REPLY_TO="info@your-domain.nl"
+NEXT_PUBLIC_APP_URL=https://noshowcontrol.nl
+```
+
+---
+
 ### Twilio (optional)
 
 SMS reminders are optional. SMS mode is fail-safe: only `SMS_TEST_MODE=false` enables real SMS delivery, and only when Twilio credentials are present. Empty, undefined, `true`, `1`, `yes`, or any typo stays in test mode.
@@ -278,12 +301,17 @@ Import your Git repository in the [Vercel Dashboard](https://vercel.com/new).
 
 ### 2. Environment variables
 
-Add all variables from `.env.local.example` to **Settings** > **Environment Variables**. Key differences from local:
+Add all variables from `.env.example` to **Settings** > **Environment Variables**. `.env.local.example` is intentionally ignored by the broad `.env*` rule; `.env.example` is the tracked safe template. Key differences from local:
 
 | Variable | Production value |
 |----------|-----------------|
 | `DATABASE_URL` | Your managed PostgreSQL connection string |
 | `NEXT_PUBLIC_APP_URL` | `https://your-domain.com` |
+| `EMAIL_TEST_MODE` | `true` for test links only, exact `false` for real e-mail |
+| `EMAIL_PROVIDER` | `resend` |
+| `RESEND_API_KEY` | Production Resend API key |
+| `EMAIL_FROM` | Verified sender, e.g. `NoShow Control <afspraken@your-domain.com>` |
+| `EMAIL_REPLY_TO` | Optional reply-to address |
 | `STRIPE_WEBHOOK_SECRET` | The production webhook signing secret (not the CLI one) |
 | `FIREBASE_PRIVATE_KEY` | Paste the full key including `-----BEGIN/END-----` markers |
 
@@ -371,7 +399,7 @@ This is an MVP. Known limitations:
 
 - **No real-time updates** — dashboard and lists require manual refresh
 - **No pagination controls** — API supports pagination but the UI doesn't expose page navigation
-- **No email sending** — only SMS via Twilio; email templates exist but no email transport is configured
+- **SMS is optional** — offer messages use e-mail first; Twilio SMS remains available for later configuration
 - **No file uploads** — no avatar or document upload support
 - **No recurring appointments** — each appointment is standalone
 - **No calendar view** — appointments are list-only
@@ -456,6 +484,16 @@ To verify test mode is active, check the server console for:
 
 ```
 [SMS TEST MODE] To: +31*******78 | Action link generated
+```
+
+### Offer e-mail not sending
+
+If `EMAIL_TEST_MODE` is anything except exact `false`, offer delivery runs in test mode and shows claim links without sending real e-mail. If `EMAIL_TEST_MODE=false`, `RESEND_API_KEY`, `EMAIL_FROM`, and `NEXT_PUBLIC_APP_URL` must be present or delivery fails.
+
+To verify test mode is active, check the server console for:
+
+```
+[EMAIL TEST MODE] To: jo***@e***.nl | Action link generated
 ```
 
 ### Build fails with type errors after schema changes

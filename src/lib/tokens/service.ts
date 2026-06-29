@@ -385,7 +385,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
               (await tx.messageLog.findMany({
                 where: {
                   practiceId: token.practiceId,
-                  channel: "sms",
+                  channel: { in: ["email", "sms"] },
                   clientId: { not: token.clientId },
                   body: { contains: `/action/${slot.id}.` },
                   status: { in: ["sent", "mock"] },
