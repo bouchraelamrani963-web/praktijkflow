@@ -4,8 +4,7 @@ import { prisma } from "@/lib/db";
 import { appointmentUpdateSchema } from "@/lib/validations/appointment";
 import { calculateRiskForClient } from "@/lib/risk/calculate";
 import { maybeCreateOpenSlot } from "@/lib/open-slots/service";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from "@/lib/validations/uuid";
 
 async function authorize(req: NextRequest) {
   const user = await getCurrentUser(req);
@@ -21,7 +20,7 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  if (!isUuid(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
   const { error, user } = await authorize(req);
   if (error) return error;
@@ -47,7 +46,7 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  if (!isUuid(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
   const { error, user } = await authorize(req);
   if (error) return error;
@@ -252,7 +251,7 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  if (!isUuid(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
   const { error, user } = await authorize(req);
   if (error) return error;

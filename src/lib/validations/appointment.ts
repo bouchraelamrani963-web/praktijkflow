@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UuidSchema } from "@/lib/validations/uuid";
 
 export const AppointmentStatusSchema = z.enum([
   "SCHEDULED",
@@ -20,7 +21,7 @@ const optionalIsoDate = z
   .optional()
   .refine((s) => !s || !Number.isNaN(Date.parse(s)), { message: "Invalid date/time" });
 
-const uuid = z.string().uuid();
+const uuid = UuidSchema;
 
 /**
  * Multi-code support — one appointment can carry N treatment codes.

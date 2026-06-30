@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UuidSchema } from "@/lib/validations/uuid";
 
 export const tokenActionSchema = z.enum([
   "confirm_appointment",
@@ -7,8 +8,8 @@ export const tokenActionSchema = z.enum([
 ]);
 
 export const createTokenSchema = z.object({
-  appointmentId: z.string().uuid().optional(),
-  clientId: z.string().uuid(),
+  appointmentId: UuidSchema.optional(),
+  clientId: UuidSchema,
   action: tokenActionSchema,
   expiresInHours: z.number().int().min(1).max(720).optional(), // max 30 days
 });

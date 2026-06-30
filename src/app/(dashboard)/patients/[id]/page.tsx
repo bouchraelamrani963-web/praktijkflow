@@ -4,6 +4,7 @@ import { ArrowLeft, Pencil, Mail, Phone, MapPin, Calendar } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { AddToWaitlistButton } from "@/components/appointments/AddToWaitlistButton";
+import { isUuid } from "@/lib/validations/uuid";
 
 const riskColors: Record<string, string> = {
   LOW: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
@@ -30,8 +31,6 @@ const statusLabels: Record<string, string> = {
   NO_SHOW: "Niet verschenen",
 };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function formatDate(d: Date | null | undefined) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
@@ -53,7 +52,7 @@ export default async function PatientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!UUID_RE.test(id)) notFound();
+  if (!isUuid(id)) notFound();
 
   const user = await getCurrentUser();
   if (!user) redirect("/login");

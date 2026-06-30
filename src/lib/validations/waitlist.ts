@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { UuidSchema } from "@/lib/validations/uuid";
 
-const uuid = z.string().uuid();
+const uuid = UuidSchema;
 
 export const DayOfWeekSchema = z.enum([
   "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY",

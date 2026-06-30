@@ -4,8 +4,7 @@ import { ArrowLeft, Mail, Phone, CalendarClock, Send, CheckCheck, Clock3 } from 
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { DAY_LABELS, TIME_LABELS, TYPE_LABELS } from "@/lib/labels";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from "@/lib/validations/uuid";
 
 const statusColors: Record<string, string> = {
   WAITING: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
@@ -72,7 +71,7 @@ export default async function WaitlistDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!UUID_RE.test(id)) notFound();
+  if (!isUuid(id)) notFound();
 
   const user = await getCurrentUser();
   if (!user) redirect("/login");

@@ -13,8 +13,7 @@ import {
 import { normalizePhoneNumber } from "@/lib/phone";
 import { createActionToken } from "@/lib/tokens/service";
 import { getPublicAppUrl } from "@/lib/url";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { UuidSchema, isUuid } from "@/lib/validations/uuid";
 
 function openSlotLogMarker(slotId: string): string {
   return `open-slot:${slotId}`;
@@ -31,8 +30,8 @@ function escapeHtml(value: string): string {
 
 const offerSchema = z
   .object({
-    waitlistEntryIds: z.array(z.string().uuid()).min(1).max(10).optional(),
-    waitlistEntryId: z.string().uuid().optional(),
+    waitlistEntryIds: z.array(UuidSchema).min(1).max(10).optional(),
+    waitlistEntryId: UuidSchema.optional(),
     channel: z.enum(["email", "sms"]).default("email"),
   })
   .refine(
@@ -80,7 +79,7 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id: slotId } = await ctx.params;
-  if (!UUID_RE.test(slotId)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  if (!isUuid(slotId)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

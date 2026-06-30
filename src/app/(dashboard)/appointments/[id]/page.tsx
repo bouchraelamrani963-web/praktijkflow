@@ -9,8 +9,7 @@ import { AddToWaitlistButton } from "@/components/appointments/AddToWaitlistButt
 import { RecoveryTimeline } from "@/components/appointments/RecoveryTimeline";
 import { RISK_LABELS, TYPE_LABELS } from "@/lib/labels";
 import { isRealSmsEnabled } from "@/lib/twilio";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from "@/lib/validations/uuid";
 
 const riskColors: Record<string, string> = {
   LOW: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
@@ -40,7 +39,7 @@ export default async function AppointmentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!UUID_RE.test(id)) notFound();
+  if (!isUuid(id)) notFound();
 
   const user = await getCurrentUser();
   if (!user) redirect("/login");

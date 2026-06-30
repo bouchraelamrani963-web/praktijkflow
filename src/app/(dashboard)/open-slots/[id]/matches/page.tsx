@@ -13,6 +13,7 @@ import {
 } from "@/lib/messaging/service";
 import { extractActionUrl } from "@/lib/twilio";
 import { MatchesPanel } from "@/components/open-slots/MatchesPanel";
+import { isUuid } from "@/lib/validations/uuid";
 
 interface PersistedOffer {
   waitlistEntryId: string;
@@ -37,8 +38,6 @@ interface PersistedOffer {
  * MatchesPanel client component below.
  */
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function openSlotLogMarker(slotId: string): string {
   return `open-slot:${slotId}`;
 }
@@ -60,7 +59,7 @@ export default async function OpenSlotMatchesPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!UUID_RE.test(id)) notFound();
+  if (!isUuid(id)) notFound();
 
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -97,7 +96,6 @@ export default async function OpenSlotMatchesPage({
   // include a lightweight open-slot marker. In real mode we never surface
   // claim URLs.
   const persistedOffers: PersistedOffer[] = [];
-  if (slot.status === "AVAILABLE" || slot.status === "OFFERED") {
     const logLinks: Prisma.MessageLogWhereInput[] = [
       { body: { contains: `/action/${slot.id}.` } },
       { body: { contains: openSlotLogMarker(slot.id) } },
@@ -157,7 +155,6 @@ export default async function OpenSlotMatchesPage({
 
       persistedOffers.push(offer);
     }
-  }
 
   return (
     <div className="max-w-4xl">

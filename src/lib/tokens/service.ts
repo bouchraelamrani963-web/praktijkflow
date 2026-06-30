@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { generateToken, hashToken } from "./crypto";
 import { recalcAndSave, calculateRiskForClient } from "@/lib/risk/calculate";
 import { maybeCreateOpenSlot } from "@/lib/open-slots/service";
+import { isUuid } from "@/lib/validations/uuid";
 
 export type TokenAction = "confirm_appointment" | "cancel_appointment" | "claim_open_slot";
 
@@ -25,8 +26,6 @@ export interface ExecuteResult {
   appointmentId?: string;
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function createRawToken(input: CreateTokenInput): string {
   const secret = generateToken();
   if (input.action === "claim_open_slot" && input.openSlotId) {
@@ -37,7 +36,7 @@ function createRawToken(input: CreateTokenInput): string {
 
 function extractOpenSlotId(rawToken: string): string | null {
   const [candidate] = rawToken.split(".", 1);
-  return candidate && UUID_RE.test(candidate) ? candidate : null;
+  return isUuid(candidate) ? candidate : null;
 }
 
 function clientLogRef(clientId: string): string {

@@ -5,8 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { loadAppointmentFormOptions } from "@/lib/appointments/formOptions";
 import { AppointmentForm, type AppointmentFormValues } from "@/components/appointments/AppointmentForm";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from "@/lib/validations/uuid";
 
 function toLocalDatetime(d: Date): string {
   const dt = new Date(d);
@@ -20,7 +19,7 @@ export default async function EditAppointmentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!UUID_RE.test(id)) notFound();
+  if (!isUuid(id)) notFound();
 
   const user = await getCurrentUser();
   if (!user) redirect("/login");

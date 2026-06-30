@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { UuidSchema } from "@/lib/validations/uuid";
 
 const isoDate = z
   .string()
   .refine((s) => !Number.isNaN(Date.parse(s)), { message: "Invalid date/time" });
 
-const uuid = z.string().uuid();
+const uuid = UuidSchema;
 
 export const OpenSlotStatusSchema = z.enum(["AVAILABLE", "OFFERED", "CLAIMED", "EXPIRED"]);
 

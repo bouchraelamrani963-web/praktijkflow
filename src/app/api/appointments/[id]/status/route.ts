@@ -4,15 +4,14 @@ import { prisma } from "@/lib/db";
 import { appointmentStatusSchema } from "@/lib/validations/appointment";
 import { calculateRiskForClient } from "@/lib/risk/calculate";
 import { maybeCreateOpenSlot } from "@/lib/open-slots/service";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from "@/lib/validations/uuid";
 
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  if (!isUuid(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
