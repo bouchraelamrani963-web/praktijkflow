@@ -1,8 +1,13 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { findMatchesForSlot } from "./matching";
 import { createActionToken } from "@/lib/tokens/service";
 import { normalizeEmailAddress } from "@/lib/email";
-import { sendOfferMessage, isEmailTestMode } from "@/lib/messaging/service";
+import {
+  sendOfferMessage,
+  isEmailTestMode,
+  isRealEmailEnabled,
+} from "@/lib/messaging/service";
 import { getPublicAppUrl } from "@/lib/url";
 
 const MAX_OFFERS = 3;
@@ -17,6 +22,23 @@ function candidateLogLabel(candidate: { id: string; clientName: string }) {
 
 function openSlotLogMarker(slotId: string): string {
   return `open-slot:${slotId}`;
+}
+
+function isAutoOfferRealDeliveryEnabled(): boolean {
+  return process.env.AUTO_OFFER_ENABLED?.trim().toLowerCase() === "true" && isRealEmailEnabled();
+}
+
+function slotMessageLogFilters(slot: { id: string; sourceAppointmentId: string | null }): Prisma.MessageLogWhereInput[] {
+  const filters: Prisma.MessageLogWhereInput[] = [
+    { body: { contains: `/action/${slot.id}.` } },
+    { body: { contains: openSlotLogMarker(slot.id) } },
+  ];
+
+  if (slot.sourceAppointmentId) {
+    filters.unshift({ appointmentId: slot.sourceAppointmentId });
+  }
+
+  return filters;
 }
 
 interface AutoOfferResult {
@@ -69,8 +91,11 @@ export async function autoOfferSlot(
     return result;
   }
 
-  if (!isEmailTestMode()) {
-    console.log(`[AUTO-OFFER] Slot ${slotId}: real email mode active, automatic production sending disabled`);
+  const emailTestMode = isEmailTestMode();
+  if (!emailTestMode && !isAutoOfferRealDeliveryEnabled()) {
+    console.log(
+      `[AUTO-OFFER] Slot ${slotId}: real automatic e-mail disabled; set AUTO_OFFER_ENABLED=true with complete Resend config to enable`,
+    );
     return result;
   }
 
@@ -180,6 +205,30 @@ export async function autoOfferSlot(
         continue;
       }
 
+      const existingOffer = await prisma.messageLog.findFirst({
+        where: {
+          practiceId,
+          clientId: candidate.clientId,
+          channel: "email",
+          status: { in: ["pending", "sent", "mock"] },
+          OR: slotMessageLogFilters(slot),
+        },
+        select: { id: true, status: true },
+      });
+
+      if (existingOffer) {
+        result.skipped++;
+        result.details.push({
+          waitlistEntryId: candidate.id,
+          clientName: candidate.clientName,
+          messageStatus: existingOffer.status,
+        });
+        console.log(
+          `[AUTO-OFFER] Skipped ${candidateLogLabel(candidate)}: existing ${existingOffer.status} offer for slot ${slotId}`,
+        );
+        continue;
+      }
+
       // Create claim token with 2h expiry
       const token = await createActionToken({
         practiceId,
@@ -217,13 +266,24 @@ export async function autoOfferSlot(
         subject,
         text: messageBody,
       });
-      const messageStatus = messageResult.mock ? "mock" : messageResult.success ? "sent" : "failed";
+      const isHealthyMock = emailTestMode && messageResult.mock;
+      const messageStatus = isHealthyMock
+        ? "mock"
+        : messageResult.mock
+          ? "failed"
+          : messageResult.success
+            ? "sent"
+            : "failed";
 
       await prisma.messageLog.update({
         where: { id: messageLog.id },
         data: {
           status: messageStatus,
-          errorMessage: messageResult.error ?? null,
+          errorMessage: isHealthyMock
+            ? null
+            : messageResult.mock
+              ? "Berichtprovider gate mismatch - levering niet bevestigd"
+              : (messageResult.error ?? null),
           externalSid: messageResult.sid ?? null,
         },
       });

@@ -3,7 +3,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { appointmentUpdateSchema } from "@/lib/validations/appointment";
 import { calculateRiskForClient } from "@/lib/risk/calculate";
-import { maybeCreateOpenSlot } from "@/lib/open-slots/service";
+import {
+  maybeCreateOpenSlot,
+  shouldCreateOpenSlotForAppointmentStatus,
+} from "@/lib/open-slots/service";
 import { isUuid } from "@/lib/validations/uuid";
 
 async function authorize(req: NextRequest) {
@@ -228,8 +231,8 @@ export async function PATCH(
     return u;
   });
 
-  // Auto-create open slot if status changed to CANCELLED
-  if (data.status === "CANCELLED") {
+  // Auto-create open slot if the appointment frees usable chair time.
+  if (data.status && shouldCreateOpenSlotForAppointmentStatus(data.status)) {
     await maybeCreateOpenSlot(id);
   }
 

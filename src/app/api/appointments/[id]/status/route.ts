@@ -3,7 +3,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { appointmentStatusSchema } from "@/lib/validations/appointment";
 import { calculateRiskForClient } from "@/lib/risk/calculate";
-import { maybeCreateOpenSlot } from "@/lib/open-slots/service";
+import {
+  maybeCreateOpenSlot,
+  shouldCreateOpenSlotForAppointmentStatus,
+} from "@/lib/open-slots/service";
 import { isUuid } from "@/lib/validations/uuid";
 
 export async function POST(
@@ -55,8 +58,8 @@ export async function POST(
     select: { id: true, status: true, riskScore: true, riskLevel: true },
   });
 
-  // Auto-create open slot if cancelled
-  if (parsed.data.status === "CANCELLED") {
+  // Auto-create open slot if the appointment frees usable chair time.
+  if (shouldCreateOpenSlotForAppointmentStatus(parsed.data.status)) {
     await maybeCreateOpenSlot(id);
   }
 

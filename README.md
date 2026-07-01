@@ -261,6 +261,8 @@ Offer messages to waitlist patients use e-mail by default. E-mail mode is fail-s
 
 Test mode creates the claim token, writes `MessageLog` with `channel: "email"` and `status: "mock"`, and shows the claim link in the UI without sending a real e-mail.
 
+Automatic offers after a cancellation or no-show are fail-safe. In test mode they may create mock `MessageLog` rows and claim links. Real automatic e-mail delivery requires `EMAIL_TEST_MODE=false`, complete Resend config, and exact `AUTO_OFFER_ENABLED=true`; by default `AUTO_OFFER_ENABLED=false`.
+
 1. Sign up at [Resend](https://resend.com/).
 2. Create an API key.
 3. Configure a verified sender/domain.
@@ -272,6 +274,7 @@ RESEND_API_KEY=re_...
 EMAIL_FROM="NoShow Control <afspraken@your-domain.nl>"
 EMAIL_REPLY_TO="info@your-domain.nl"
 NEXT_PUBLIC_APP_URL=https://noshowcontrol.nl
+AUTO_OFFER_ENABLED=false
 ```
 
 ---
@@ -312,6 +315,7 @@ Add all variables from `.env.example` to **Settings** > **Environment Variables*
 | `RESEND_API_KEY` | Production Resend API key |
 | `EMAIL_FROM` | Verified sender, e.g. `NoShow Control <afspraken@your-domain.com>` |
 | `EMAIL_REPLY_TO` | Optional reply-to address |
+| `AUTO_OFFER_ENABLED` | Keep `false` unless you intentionally enable real automatic e-mail |
 | `STRIPE_WEBHOOK_SECRET` | The production webhook signing secret (not the CLI one) |
 | `FIREBASE_PRIVATE_KEY` | Paste the full key including `-----BEGIN/END-----` markers |
 
@@ -489,6 +493,8 @@ To verify test mode is active, check the server console for:
 ### Offer e-mail not sending
 
 If `EMAIL_TEST_MODE` is anything except exact `false`, offer delivery runs in test mode and shows claim links without sending real e-mail. If `EMAIL_TEST_MODE=false`, `RESEND_API_KEY`, `EMAIL_FROM`, and `NEXT_PUBLIC_APP_URL` must be present or delivery fails.
+
+Automatic offers are stricter than manual "Stuur aanbod": real automatic e-mail also requires exact `AUTO_OFFER_ENABLED=true`. Leave it `false` while testing the cancellation/no-show flow.
 
 To verify test mode is active, check the server console for:
 
