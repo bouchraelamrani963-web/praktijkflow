@@ -85,7 +85,7 @@ export function ActionExecutor({ token, action, practiceName, clientName, appoin
         <p className="mt-2 text-sm text-zinc-500">{subtitle}</p>
         {isClaim && (
           <p className="mt-4 text-xs text-zinc-400">
-            Bewaar deze bevestiging. Een herinnering volgt per SMS.
+            Uw praktijk kan u later nog een herinnering sturen.
           </p>
         )}
       </div>

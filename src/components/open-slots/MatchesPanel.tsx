@@ -257,7 +257,7 @@ export function MatchesPanel({
           <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-300" />
           <div>
             <strong className="font-semibold">Testmodus actief.</strong>{" "}
-            Er worden <em>geen</em> echte berichten verstuurd. Na &quot;Stuur aanbod&quot;
+            Er worden geen echte berichten verstuurd. Na &quot;Stuur aanbod&quot;
             verschijnt per patient een claim-link die u zelf kunt openen om de claim-flow te
             doorlopen. Zet <code>EMAIL_TEST_MODE=false</code> zodra u echte e-mails wilt versturen.
           </div>
