@@ -89,11 +89,15 @@ function UserFooter({
   firstName,
   email,
   onSignOut,
+  signingOut,
+  signOutError,
 }: {
   fullName: string;
   firstName: string;
   email: string | null | undefined;
-  onSignOut: () => void;
+  onSignOut: () => void | Promise<void>;
+  signingOut: boolean;
+  signOutError: string | null;
 }) {
   return (
     <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
@@ -107,14 +111,21 @@ function UserFooter({
           </p>
           <p className="truncate text-xs text-zinc-500">{email ?? ""}</p>
         </div>
-        <button
-          onClick={onSignOut}
-          className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-          aria-label="Uitloggen"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
       </div>
+      <button
+        type="button"
+        onClick={onSignOut}
+        disabled={signingOut}
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white"
+      >
+        <LogOut className="h-4 w-4" />
+        Uitloggen
+      </button>
+      {signOutError && (
+        <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+          {signOutError}
+        </p>
+      )}
     </div>
   );
 }
@@ -123,6 +134,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading, signOut, profile } = useAuth();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -178,6 +191,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const fullName = profile?.fullName ?? "User";
   const firstName = profile?.firstName ?? "";
 
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutError(null);
+    try {
+      await signOut();
+      window.location.replace("/login");
+    } catch {
+      setSigningOut(false);
+      setSignOutError("Uitloggen mislukt. Probeer opnieuw.");
+    }
+  }
+
   return (
     <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {/* ─── Desktop sidebar (lg+) ─────────────────────────────────────── */}
@@ -194,7 +220,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           fullName={fullName}
           firstName={firstName}
           email={user.email}
-          onSignOut={() => signOut()}
+          onSignOut={handleSignOut}
+          signingOut={signingOut}
+          signOutError={signOutError}
         />
       </aside>
 
@@ -242,8 +270,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           email={user.email}
           onSignOut={() => {
             setMobileOpen(false);
-            signOut();
+            handleSignOut();
           }}
+          signingOut={signingOut}
+          signOutError={signOutError}
         />
       </aside>
 

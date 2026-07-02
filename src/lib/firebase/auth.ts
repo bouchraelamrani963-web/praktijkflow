@@ -84,13 +84,33 @@ export async function signIn(email: string, password: string): Promise<User> {
  * Sign out: clear server session, then sign out of Firebase.
  */
 export async function signOut(): Promise<void> {
-  if (skipFirebase()) {
-    // Bypass mode: nothing to sign out from
-    return;
+  let logoutError: Error | null = null;
+
+  try {
+    const res = await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      logoutError = new Error("Uitloggen mislukt: sessie kon niet worden gewist.");
+    }
+  } catch {
+    logoutError = new Error("Uitloggen mislukt: sessie kon niet worden gewist.");
   }
 
-  await fetch("/api/auth/logout", { method: "POST" });
-  await firebaseSignOut(getFirebaseAuth());
+  if (!skipFirebase()) {
+    try {
+      await firebaseSignOut(getFirebaseAuth());
+    } catch {
+      logoutError ??= new Error("Uitloggen mislukt: Firebase sessie kon niet worden gewist.");
+    }
+  }
+
+  if (logoutError) {
+    throw logoutError;
+  }
 }
 
 /**
