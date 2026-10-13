@@ -1,12 +1,12 @@
-@import "tailwindcss";
-
-/* ─── Fonts ──────────────────────────────────────────────────────────────
+/* Fonts.
    Sora (display) + DM Sans (body) per the NoShow Control design system.
    Loaded once globally so any page can opt in via the .pf-dark scope or
    the --font-display / --font-body custom properties.
    (The `pf-*` prefix is a legacy artefact from the prior PraktijkFlow
    branding — kept to avoid a global CSS-class rename in this sprint.) */
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+@import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -15,42 +15,42 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* ─── NoShow Control design system tokens ────────────────────────────
+  /* NoShow Control design system tokens.
      Available everywhere as CSS vars but only *applied* inside the
-     .pf-dark scope below — so the dashboard's existing zinc styling is
+     .pf-dark scope below, so the dashboard's existing zinc styling is
      untouched. */
 
   /* Backgrounds */
-  --pf-bg-base:        #0a0612;
-  --pf-bg-deep:        #07040e;
-  --pf-bg-mid:         #150d2e;
-  --pf-bg-surface:     rgba(255, 255, 255, 0.04);
-  --pf-bg-surface-2:   rgba(255, 255, 255, 0.07);
-  --pf-bg-overlay:     rgba(10, 6, 18, 0.85);
+  --pf-bg-base:        #f8fafc;
+  --pf-bg-deep:        #f1f5f9;
+  --pf-bg-mid:         #e2e8f0;
+  --pf-bg-surface:     #ffffff;
+  --pf-bg-surface-2:   #f8fafc;
+  --pf-bg-overlay:     rgba(255, 255, 255, 0.92);
 
   /* Borders */
-  --pf-border-subtle:  rgba(255, 255, 255, 0.07);
-  --pf-border-dim:     rgba(255, 255, 255, 0.12);
-  --pf-border-bright:  rgba(255, 255, 255, 0.22);
+  --pf-border-subtle:  #e5e7eb;
+  --pf-border-dim:     #d4d4d8;
+  --pf-border-bright:  #a1a1aa;
 
   /* Foreground */
-  --pf-fg-1:           #ffffff;
-  --pf-fg-2:           rgba(255, 255, 255, 0.65);
-  --pf-fg-3:           rgba(255, 255, 255, 0.38);
+  --pf-fg-1:           #111827;
+  --pf-fg-2:           #475569;
+  --pf-fg-3:           #64748b;
 
-  /* Accent — Purple (primary) */
-  --pf-purple:         #7c3aed;
-  --pf-purple-light:   #a78bfa;
-  --pf-purple-dark:    #3b1f6e;
-  --pf-purple-glow:    rgba(124, 58, 237, 0.35);
-  --pf-purple-dim:     rgba(124, 58, 237, 0.12);
-  --pf-purple-border:  rgba(124, 58, 237, 0.28);
+  /* Accent: reserved blue, used sparingly for primary actions. */
+  --pf-purple:         #1d4ed8;
+  --pf-purple-light:   #2563eb;
+  --pf-purple-dark:    #1e3a8a;
+  --pf-purple-glow:    rgba(29, 78, 216, 0.12);
+  --pf-purple-dim:     #eff6ff;
+  --pf-purple-border:  #bfdbfe;
 
-  /* Accent — Teal (secondary) */
-  --pf-teal:           #00d4b4;
-  --pf-teal-light:     #4dffd8;
-  --pf-teal-dim:       rgba(0, 212, 180, 0.12);
-  --pf-teal-glow:      rgba(0, 212, 180, 0.28);
+  /* Secondary neutral accent. */
+  --pf-teal:           #334155;
+  --pf-teal-light:     #475569;
+  --pf-teal-dim:       #f1f5f9;
+  --pf-teal-glow:      rgba(51, 65, 85, 0.08);
 
   /* Semantic */
   --pf-success:        #22c55e;
@@ -58,22 +58,22 @@
   --pf-error:          #ef4444;
 
   /* Gradients */
-  --pf-grad-hero:      linear-gradient(160deg, #07040e 0%, #150d2e 50%, #0a0e22 100%);
-  --pf-grad-text:      linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.75) 100%);
-  --pf-grad-accent:    linear-gradient(135deg, #7c3aed 0%, #00d4b4 100%);
+  --pf-grad-hero:      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --pf-grad-text:      linear-gradient(135deg, #111827 0%, #334155 100%);
+  --pf-grad-accent:    linear-gradient(135deg, #1d4ed8 0%, #334155 100%);
 
   /* Elevation */
-  --pf-shadow-1:       0 4px 16px rgba(0, 0, 0, 0.3);
-  --pf-shadow-2:       0 12px 40px rgba(0, 0, 0, 0.45);
-  --pf-shadow-3:       0 24px 64px rgba(0, 0, 0, 0.55);
-  --pf-shadow-glow-purple: 0 0 40px rgba(124, 58, 237, 0.28);
-  --pf-shadow-glow-teal:   0 0 40px rgba(0, 212, 180, 0.22);
+  --pf-shadow-1:       0 1px 2px rgba(15, 23, 42, 0.06);
+  --pf-shadow-2:       0 8px 24px rgba(15, 23, 42, 0.08);
+  --pf-shadow-3:       0 16px 40px rgba(15, 23, 42, 0.10);
+  --pf-shadow-glow-purple: 0 8px 24px rgba(29, 78, 216, 0.10);
+  --pf-shadow-glow-teal:   0 8px 24px rgba(51, 65, 85, 0.08);
 
   /* Radius */
   --pf-radius-sm:      6px;
-  --pf-radius-md:      10px;
-  --pf-radius-lg:      16px;
-  --pf-radius-xl:      24px;
+  --pf-radius-md:      8px;
+  --pf-radius-lg:      8px;
+  --pf-radius-xl:      12px;
   --pf-radius-full:    9999px;
 
   /* Fonts */
@@ -105,7 +105,7 @@ body {
 /* ═══════════════════════════════════════════════════════════════════════
    NoShow Control design system scope.
 
-   Any element inside `.pf-dark` switches to the dark-purple SaaS theme.
+   Any element inside `.pf-dark` switches to the calmer SaaS marketing theme.
    The dashboard does NOT add this class — it keeps the existing zinc/blue
    light theme. Only the marketing landing opts in.
    ═══════════════════════════════════════════════════════════════════════ */
@@ -114,33 +114,30 @@ body {
   background: var(--pf-bg-base);
   color: var(--pf-fg-1);
   font-family: var(--pf-font-body);
+  overflow-x: hidden;
 }
 
-/* Display typography — Sora, tight tracking */
 .pf-dark .pf-display {
   font-family: var(--pf-font-display);
 }
-.pf-dark h1.pf-display { letter-spacing: -0.03em; }
+.pf-dark h1.pf-display { letter-spacing: 0; }
 .pf-dark h2.pf-display,
-.pf-dark h3.pf-display { letter-spacing: -0.02em; }
+.pf-dark h3.pf-display { letter-spacing: 0; }
 
 /* Eyebrow — small uppercase label */
 .pf-dark .pf-eyebrow {
   font-family: var(--pf-font-body);
   font-weight: 600;
   font-size: 12px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: var(--pf-fg-3);
 }
 
-/* Glassmorphism card */
 .pf-dark .pf-card {
   background: var(--pf-bg-surface);
   border: 1px solid var(--pf-border-subtle);
   border-radius: var(--pf-radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--pf-shadow-1);
   transition: border-color 250ms var(--pf-ease), transform 250ms var(--pf-ease);
 }
@@ -150,33 +147,32 @@ body {
 }
 
 .pf-dark .pf-card-featured {
-  background: var(--pf-purple-dim);
+  background: #ffffff;
   border-color: var(--pf-purple-border);
-  box-shadow: 0 0 40px rgba(124, 58, 237, 0.18);
+  box-shadow: var(--pf-shadow-2);
 }
 
-/* Buttons — pill-shaped, font-weight 600 body */
 .pf-dark .pf-btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: var(--pf-purple);
+  background: var(--pf-purple-dark);
   color: #fff;
   border: none;
-  border-radius: var(--pf-radius-full);
+  border-radius: var(--pf-radius-md);
   padding: 14px 28px;
   font-family: var(--pf-font-body);
   font-size: 15px;
   font-weight: 600;
   line-height: 1;
-  box-shadow: 0 0 24px var(--pf-purple-glow);
+  box-shadow: var(--pf-shadow-1);
   transition: box-shadow 200ms var(--pf-ease), transform 150ms var(--pf-ease);
   cursor: pointer;
   text-decoration: none;
 }
 .pf-dark .pf-btn-primary:hover {
-  box-shadow: 0 0 36px rgba(124, 58, 237, 0.6);
+  box-shadow: var(--pf-shadow-2);
   transform: translateY(-1px);
 }
 
@@ -188,7 +184,7 @@ body {
   background: transparent;
   color: var(--pf-fg-1);
   border: 1px solid var(--pf-border-bright);
-  border-radius: var(--pf-radius-full);
+  border-radius: var(--pf-radius-md);
   padding: 13px 26px;
   font-family: var(--pf-font-body);
   font-size: 15px;
@@ -199,11 +195,10 @@ body {
   text-decoration: none;
 }
 .pf-dark .pf-btn-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.32);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--pf-purple-border);
+  background: var(--pf-purple-dim);
 }
 
-/* Feature icon container — 48×48 with subtle purple frame */
 .pf-dark .pf-icon-tile {
   display: inline-flex;
   align-items: center;
@@ -218,29 +213,28 @@ body {
 
 /* Background utilities */
 .pf-dot-grid {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.055) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(rgba(15, 23, 42, 0.045) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
 }
 .pf-grad-hero {
-  background: linear-gradient(160deg, #07040e 0%, #150d2e 50%, #0a0e22 100%);
+  background: var(--pf-grad-hero);
 }
 
-/* Ambient glow blobs — absolute-positioned divs with these classes
-   for top-left purple and bottom-right teal accents. */
 .pf-glow-purple {
-  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.22) 0%, transparent 65%);
+  display: none;
+  background: radial-gradient(ellipse at center, rgba(29, 78, 216, 0.08) 0%, transparent 65%);
   filter: blur(20px);
   pointer-events: none;
 }
 .pf-glow-teal {
-  background: radial-gradient(ellipse at center, rgba(0, 212, 180, 0.16) 0%, transparent 65%);
+  display: none;
+  background: radial-gradient(ellipse at center, rgba(51, 65, 85, 0.06) 0%, transparent 65%);
   filter: blur(20px);
   pointer-events: none;
 }
 
-/* Sticky navbar — translucent dark with blur */
 .pf-dark .pf-nav {
-  background: rgba(10, 6, 18, 0.82);
+  background: rgba(255, 255, 255, 0.92);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--pf-border-subtle);

@@ -10,7 +10,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
     }
 
-    // Verify the Firebase ID token and create a long-lived session cookie
+    // Verify the Firebase ID token server-side before minting a cookie.
+    await adminAuth.verifyIdToken(idToken, true);
+
+    // Create a long-lived session cookie after verification succeeds.
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {
       expiresIn: SESSION_EXPIRES_IN,
     });

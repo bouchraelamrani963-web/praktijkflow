@@ -9,13 +9,12 @@ import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
 /**
  * Returns true when the three required Firebase Admin env vars are present
- * (existence-only check — does NOT validate format). Used by session.ts to
- * decide whether bypass mode is active.
+ * (existence-only check — does NOT validate format). Missing config must
+ * fail closed in session validation.
  *
  * If env vars exist but are malformed (e.g. private key with no newlines),
  * `getAdminApp()` will throw with a specific error message at first use —
- * intentionally a loud failure so misconfigured deploys surface fast
- * instead of silently degrading to bypass.
+ * intentionally a loud failure so misconfigured deploys surface fast.
  */
 export function isFirebaseAdminConfigured(): boolean {
   return !!(

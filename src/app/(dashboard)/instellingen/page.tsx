@@ -220,10 +220,8 @@ export default function InstellingenPage() {
               an accidental delete. */}
           <RestoreTreatmentTypesPanel />
 
-          {/* Demo / sample data — moved here from the prior dashboard
-              top-banner. Lives in settings because (a) it's an admin action,
-              not part of normal daily flow, and (b) production users never
-              need to see "Demo-modus actief" splashed across their dashboard. */}
+          {/* Demo / sample data — admin-only sample data action, separate
+              from the public static /demo environment. */}
           <DemoDataPanel />
 
           {/* Opening hours */}

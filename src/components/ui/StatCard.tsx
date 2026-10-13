@@ -18,24 +18,24 @@ const toneAccents: Record<
     hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
   },
   info: {
-    iconBg:      "bg-blue-50 dark:bg-blue-900/30",
+    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
     iconText:    "text-blue-600 dark:text-blue-400",
-    hoverBorder: "hover:border-blue-300 dark:hover:border-blue-700",
+    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
   },
   success: {
-    iconBg:      "bg-emerald-50 dark:bg-emerald-900/30",
+    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
     iconText:    "text-emerald-600 dark:text-emerald-400",
-    hoverBorder: "hover:border-emerald-300 dark:hover:border-emerald-700",
+    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
   },
   warning: {
-    iconBg:      "bg-amber-50 dark:bg-amber-900/30",
+    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
     iconText:    "text-amber-600 dark:text-amber-400",
-    hoverBorder: "hover:border-amber-300 dark:hover:border-amber-700",
+    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
   },
   danger: {
-    iconBg:      "bg-red-50 dark:bg-red-900/30",
+    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
     iconText:    "text-red-600 dark:text-red-400",
-    hoverBorder: "hover:border-red-300 dark:hover:border-red-700",
+    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
   },
 };
 
@@ -92,7 +92,7 @@ export function StatCard({
   );
 
   const baseCls =
-    "block rounded-xl border border-zinc-200 bg-white p-4 transition dark:border-zinc-800 dark:bg-zinc-900";
+    "block rounded-lg border border-zinc-200 bg-white p-4 transition dark:border-zinc-800 dark:bg-zinc-900";
   const interactiveCls = href
     ? `cursor-pointer hover:shadow-sm hover:-translate-y-0.5 ${accent.hoverBorder}`
     : "";

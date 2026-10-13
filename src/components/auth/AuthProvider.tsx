@@ -3,20 +3,7 @@
 import { createContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { type User } from "firebase/auth";
 import { onAuthChange, signIn, signUp, signOut } from "@/lib/firebase/auth";
-import { isFirebaseConfigured } from "@/lib/firebase/config";
 import type { Role } from "@/generated/prisma/client";
-
-/**
- * Auth bypass: active when explicitly opted-in via NEXT_PUBLIC_DEV_AUTH_BYPASS=true,
- * or when Firebase client env vars are absent (e.g. Vercel deploy without secrets).
- *
- * Previously gated to NODE_ENV === "development" only — that broke production
- * demo deploys that ship without Firebase credentials. The gate is now
- * environment-agnostic. Evaluated once at bundle time (NEXT_PUBLIC_ vars are
- * inlined by Next.js).
- */
-const DEV_AUTH_BYPASS =
-  process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true" || !isFirebaseConfigured();
 
 export interface SessionProfile {
   uid: string;
@@ -71,19 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile]);
 
   useEffect(() => {
-    // Bypass mode: skip Firebase entirely, use server-side dev user.
-    // We set a non-null mock User so layout guards (e.g. "if (!user) redirect")
-    // don't kick the user back to /login while we fetch the profile.
-    if (DEV_AUTH_BYPASS) {
-      const timer = window.setTimeout(() => {
-        fetchProfile().finally(() => {
-          setUser({ email: "demo@noshowcontrol.local", uid: "demo-bypass" } as unknown as User);
-          setLoading(false);
-        });
-      }, 0);
-      return () => window.clearTimeout(timer);
-    }
-
     let settled = false;
 
     const unsubscribe = onAuthChange(async (firebaseUser) => {
@@ -131,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         profile,
         loading,
-        devMode: DEV_AUTH_BYPASS,
+        devMode: false,
         signIn,
         signUp,
         signOut,

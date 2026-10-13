@@ -166,7 +166,7 @@ export async function RecoveryTimeline({
       tone: "emerald" as const,
       time: newAppt && claimedAt ? fmt(claimedAt) : null,
       detail: newAppt
-        ? `€${((Number.isFinite(newAppt.revenueEstimateCents) ? newAppt.revenueEstimateCents : 0) / 100).toFixed(2)} teruggewonnen`
+        ? `Geschatte waarde: €${((Number.isFinite(newAppt.revenueEstimateCents) ? newAppt.revenueEstimateCents : 0) / 100).toFixed(2)}`
         : "Nog niet ingepland",
       isCurrent: currentAppointmentId === newAppt?.id,
     },

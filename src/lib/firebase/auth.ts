@@ -9,13 +9,11 @@ import {
 import { getFirebaseAuth, isFirebaseConfigured } from "./config";
 
 /**
- * True when Firebase should not be touched: explicit opt-in env var, or no
- * Firebase config present. Activates in any NODE_ENV — production deploys
- * without Firebase secrets fall through to the bypass path so the demo
- * dashboard remains reachable.
+ * True when Firebase client SDK cannot be used. This never enables an auth
+ * bypass; it only lets UI show a clear failure instead of crashing.
  */
 function skipFirebase(): boolean {
-  return process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true" || !isFirebaseConfigured();
+  return !isFirebaseConfigured();
 }
 
 /** Stable error code the login form can detect to switch into demo navigation. */
@@ -24,7 +22,7 @@ export const FIREBASE_NOT_CONFIGURED = "auth/firebase-not-configured";
 class FirebaseNotConfiguredError extends Error {
   code = FIREBASE_NOT_CONFIGURED;
   constructor() {
-    super("Firebase is niet geconfigureerd. Demo-modus actief.");
+    super("Firebase is niet geconfigureerd. Inloggen is tijdelijk niet beschikbaar.");
   }
 }
 
@@ -115,7 +113,6 @@ export async function signOut(): Promise<void> {
 
 /**
  * Listen for Firebase auth state changes.
- * In bypass mode, fires callback with null once (AuthProvider handles the rest).
  */
 export function onAuthChange(callback: (user: User | null) => void) {
   if (skipFirebase()) {

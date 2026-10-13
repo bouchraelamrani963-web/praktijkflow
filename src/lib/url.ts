@@ -2,38 +2,64 @@
  * Resolves the public-facing base URL of the app.
  *
  * Priority:
- *   1. NEXT_PUBLIC_APP_URL (explicit, set by the operator)
- *   2. VERCEL_PROJECT_PRODUCTION_URL (auto-set by Vercel on every deploy)
- *   3. localhost:3000 (development only — guarded by NODE_ENV)
+ *   1. Production: NEXT_PUBLIC_APP_URL (explicit, set by the operator)
+ *   2. Preview: VERCEL_BRANCH_URL, then VERCEL_URL (never production URL)
+ *   3. Development: NEXT_PUBLIC_APP_URL, then localhost:3000
  *
  * Always returns a URL without trailing slash.
  */
 export function getPublicAppUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL;
-  if (explicit) {
-    const url = explicit.replace(/\/+$/, "");
-    if (process.env.NODE_ENV === "production" && url.includes("localhost")) {
-      console.warn(
-        `[getPublicAppUrl] NEXT_PUBLIC_APP_URL contains "localhost" in production — this is almost certainly wrong. Value: ${url}`,
+  const vercelEnv = process.env.VERCEL_ENV?.trim().toLowerCase();
+  const isPreview = vercelEnv === "preview";
+  const isProduction = vercelEnv === "production" || process.env.NODE_ENV === "production";
+
+  if (isPreview) {
+    const previewUrl = normalizeUrl(process.env.VERCEL_BRANCH_URL) ?? normalizeUrl(process.env.VERCEL_URL);
+    if (!previewUrl) {
+      throw new Error(
+        "Preview public URL is not configured. Set VERCEL_BRANCH_URL or VERCEL_URL before generating action links.",
       );
     }
-    return url;
+    if (isProductionHost(previewUrl)) {
+      throw new Error("Preview public URL resolved to the production domain. Refusing to generate action links.");
+    }
+    return previewUrl;
   }
 
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (vercel) {
-    const base = `https://${vercel}`.replace(/\/+$/, "");
-    console.log(`[getPublicAppUrl] Using VERCEL_PROJECT_PRODUCTION_URL: ${base}`);
-    return base;
+  const explicit = normalizeUrl(process.env.NEXT_PUBLIC_APP_URL);
+  if (explicit) {
+    if (isProduction && explicit.includes("localhost")) {
+      throw new Error("NEXT_PUBLIC_APP_URL points to localhost in production. Refusing to generate action links.");
+    }
+    return explicit;
   }
 
-  if (process.env.NODE_ENV === "production") {
-    console.warn(
-      "[getPublicAppUrl] No NEXT_PUBLIC_APP_URL or VERCEL_PROJECT_PRODUCTION_URL set in production — falling back to localhost",
-    );
+  if (isProduction) {
+    throw new Error("Production public URL is not configured. Set NEXT_PUBLIC_APP_URL before generating action links.");
   }
 
   return "http://localhost:3000";
+}
+
+function normalizeUrl(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(withProtocol);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.origin.replace(/\/+$/, "");
+  } catch {
+    return null;
+  }
+}
+
+function isProductionHost(url: string): boolean {
+  try {
+    return new URL(url).hostname === "noshowcontrol.nl";
+  } catch {
+    return false;
+  }
 }
 
 /**

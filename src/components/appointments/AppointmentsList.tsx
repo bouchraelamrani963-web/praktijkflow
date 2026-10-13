@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState, type ComponentType } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -65,6 +65,7 @@ const riskTone: Record<AppointmentRow["client"]["riskLevel"], RiskTone> = {
 };
 
 type StatusTone = "info" | "success" | "danger" | "muted" | "warning";
+type AgendaView = "day" | "week" | "list";
 const statusTone: Record<AppointmentRow["status"], StatusTone> = {
   SCHEDULED:   "info",
   CONFIRMED:   "info",
@@ -100,6 +101,24 @@ function formatDateTime(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function isSameLocalDay(iso: string, day: Date): boolean {
+  const date = new Date(iso);
+  return (
+    date.getFullYear() === day.getFullYear() &&
+    date.getMonth() === day.getMonth() &&
+    date.getDate() === day.getDate()
+  );
+}
+
+function isWithinCurrentWeek(iso: string): boolean {
+  const date = new Date(iso);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(today);
+  weekEnd.setDate(today.getDate() + 7);
+  return date >= today && date < weekEnd;
 }
 
 /**
@@ -155,6 +174,7 @@ function Inner({
   const [status, setStatus] = useState(searchParams.get("status") ?? "");
   const [risk, setRisk] = useState(searchParams.get("riskLevel") ?? "");
   const [practitionerId, setPractitionerId] = useState(searchParams.get("practitionerId") ?? "");
+  const [agendaView, setAgendaView] = useState<AgendaView>("list");
 
   // Seed from server-rendered initial data when available (no loading flash).
   const [data, setData] = useState<ApiResponse | null>(initialData ?? null);
@@ -209,7 +229,16 @@ function Inner({
     return () => clearTimeout(t);
   }, [dateFrom, dateTo, status, risk, practitionerId, fetchAppts, router]);
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
+  const visibleItems = useMemo(() => {
+    if (agendaView === "day") {
+      return items.filter((appointment) => isSameLocalDay(appointment.startTime, new Date()));
+    }
+    if (agendaView === "week") {
+      return items.filter((appointment) => isWithinCurrentWeek(appointment.startTime));
+    }
+    return items;
+  }, [agendaView, items]);
   // Revenue rule: CANCELLED and NO_SHOW appointments contribute €0 to
   // estimated revenue. They are shown as €0 in the row and excluded from the
   // total. Keeping the raw estimate on the record is fine; the display layer
@@ -225,11 +254,17 @@ function Inner({
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Afspraken</h1>
+          <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Agenda</p>
+          <h1 className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-white">
+            Beschikbaarheid en afspraken
+          </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {data
               ? `${data.total} afspra${data.total === 1 ? "ak" : "ken"} · Geschatte omzet €${((Number.isFinite(totalRevenue) ? totalRevenue : 0) / 100).toFixed(2)}`
               : "Laden…"}
+          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+            NoShow Control toont hier de afspraken en vrijgekomen plekken die de app beheert. Dit is geen volledige externe praktijkagenda.
           </p>
         </div>
         <div className="flex gap-2">
@@ -248,6 +283,28 @@ function Inner({
             Nieuwe afspraak
           </Link>
         </div>
+      </div>
+
+      <div className="mb-4 inline-flex w-full rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900 sm:w-fit">
+        {[
+          { value: "day", label: "Dag" },
+          { value: "week", label: "Week" },
+          { value: "list", label: "Lijst" },
+        ].map((view) => (
+          <button
+            key={view.value}
+            type="button"
+            onClick={() => setAgendaView(view.value as AgendaView)}
+            className={`min-h-10 flex-1 rounded-md px-4 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-blue-500 sm:flex-none ${
+              agendaView === view.value
+                ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-800 dark:text-white"
+                : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-300"
+            }`}
+            aria-pressed={agendaView === view.value}
+          >
+            {view.label}
+          </button>
+        ))}
       </div>
 
       {/* Filters */}
@@ -339,7 +396,7 @@ function Inner({
           <div className="flex items-center justify-center p-8">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
           </div>
-        ) : items.length === 0 ? (
+        ) : visibleItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 p-14 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
               <Calendar className="h-6 w-6" />
@@ -347,7 +404,7 @@ function Inner({
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-white">Geen afspraken gevonden</p>
               <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                Plan je eerste afspraak om te beginnen.
+                Pas de filters of weergave aan, of plan een nieuwe afspraak.
               </p>
             </div>
             <Link
@@ -373,7 +430,7 @@ function Inner({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {items.map((a) => {
+                {visibleItems.map((a) => {
                   const StatusIcon = statusIcon[a.status];
                   const rel = relativeDayLabel(a.startTime);
                   return (

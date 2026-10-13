@@ -4,14 +4,14 @@ const sections = [
   {
     icon: HelpCircle,
     title: "Hoe werkt NoShow Control?",
-    content: `NoShow Control helpt uw praktijk om verloren omzet door annuleringen en no-shows automatisch terug te winnen.
+    content: `NoShow Control helpt uw praktijk om annuleringen, open plekken en wachtlijstpatiënten overzichtelijk op te volgen.
 
 Wanneer een afspraak uitvalt:
 
 1. komt de plek direct vrij
-2. ontvangen wachtende patiënten automatisch een aanbod
+2. kunnen passende wachtlijstpatiënten een aanbod ontvangen
 3. wordt de plek opnieuw ingevuld
-4. en blijft de omzet behouden`,
+4. en blijft de agenda actueel`,
   },
   {
     icon: Calendar,
@@ -45,7 +45,7 @@ Configureer herinneringen via Instellingen → No-show herinneringen.`,
 • Patiënten op de wachtlijst worden automatisch gematcht
 • Via "Matches bekijken" ziet u welke wachtlijstpatiënten in aanmerking komen
 • U kunt handmatig een aanbod doen, waarna de patiënt een invullink ontvangt
-• Zodra iemand de plek invult, wordt deze als "Opnieuw ingevuld" gemarkeerd — de omzet is teruggewonnen`,
+• Zodra iemand de plek invult, wordt deze als "Opnieuw ingevuld" gemarkeerd`,
   },
   {
     icon: Zap,
@@ -64,7 +64,7 @@ Stap voor stap:
 
 3. Aanbod → De top 1 tot 3 kandidaten krijgen tegelijkertijd een SMS met een unieke invullink. Let op: wie het eerst klikt, krijgt de plek.
 
-4. Invullen → Zodra één patiënt op de link klikt en bevestigt, wordt de plek direct voor hem of haar gereserveerd — omzet teruggewonnen. De andere aanbiedingen vervallen automatisch.
+4. Invullen → Zodra één patiënt op de link klikt en bevestigt, wordt de plek direct voor hem of haar gereserveerd. De andere aanbiedingen vervallen automatisch.
 
 5. Fallback → Als niemand binnen 2 uur reageert, blijft de plek open en kunt u handmatig iemand uitnodigen via "Open plekken".
 
@@ -109,7 +109,7 @@ export default function HelpPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Hulp & uitleg</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Leer hoe u met NoShow Control maximaal omzet terugwint uit annuleringen en no-shows.
+          Leer hoe u met NoShow Control open plekken, wachtlijst en aanbiedingen beheert.
         </p>
       </div>
 

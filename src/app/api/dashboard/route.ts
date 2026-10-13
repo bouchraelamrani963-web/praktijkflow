@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import {
+  buildAutomationDashboardModel,
+  EMPTY_AUTOMATION_DASHBOARD,
+} from "@/lib/dashboard/automation";
 
 /**
  * Dashboard KPI endpoint — production-hardened.
@@ -53,6 +57,7 @@ export async function GET(req: NextRequest) {
     highRiskUpcoming: [],
     recentCancellations: [],
     recentOpenSlots: [],
+    automation: EMPTY_AUTOMATION_DASHBOARD,
     userName: user.firstName,
     demoMode: false,
     degraded: true as const,
@@ -74,6 +79,7 @@ export async function GET(req: NextRequest) {
       highRiskUpcoming,
       recentCancellations,
       recentOpenSlots,
+      automation,
     ] = await Promise.all([
       // Appointments today
       prisma.appointment.count({
@@ -208,6 +214,8 @@ export async function GET(req: NextRequest) {
           appointmentType: { select: { id: true, name: true } },
         },
       }),
+
+      buildAutomationDashboardModel(practiceId),
     ]);
 
     // Orphan detection — warn if any CLAIMED recentOpenSlots lack claimedAppointmentId.
@@ -237,11 +245,6 @@ export async function GET(req: NextRequest) {
       missedRevenueThisMonthCents - recoveredRevenueThisMonthCents,
     );
 
-    // ─── Demo-mode augmentation ────────────────────────────────────────────
-    // When the practice has not yet accrued any recovered revenue (empty
-    // demo DB, fresh account), we substitute a believable recovery scenario
-    // so the dashboard always tells a "money just came back" story. This
-    // ONLY mutates the response payload — the DB is untouched.
     const isDemoMode =
       process.env.NODE_ENV === "development" ||
       process.env.NEXT_PUBLIC_DEMO_MODE === "true";
@@ -266,67 +269,12 @@ export async function GET(req: NextRequest) {
       revenueTodayCents: revenueTodayAgg._sum.revenueEstimateCents ?? 0,
     };
 
-    let finalOpenSlots: typeof recentOpenSlots | Array<
-      (typeof recentOpenSlots)[number] | Record<string, unknown>
-    > = recentOpenSlots;
-
-    if (isDemoMode && recoveredRevenueThisMonthCents === 0) {
-      // Guaranteed non-zero demo numbers. Missed > recovered so the net-loss
-      // card still communicates "there's more to recover".
-      kpis.recoveredRevenueThisMonthCents = 17000;
-      kpis.missedRevenueThisMonthCents = 32000;
-      kpis.netLossThisMonthCents = 15000;
-      kpis.recoveredRevenueCents = Math.max(17000, kpis.recoveredRevenueCents);
-      kpis.openSlotsCreated = Math.max(2, kpis.openSlotsCreated);
-      kpis.openSlotsClaimed = Math.max(1, kpis.openSlotsClaimed);
-
-      // Ensure ≥1 CLAIMED row with a real click target. We pick an
-      // existing appointment so /appointments/[id] resolves cleanly.
-      const hasClaimed = recentOpenSlots.some(
-        (s) => s.status === "CLAIMED" && s.claimedAppointmentId,
-      );
-      if (!hasClaimed) {
-        const anyAppt = await prisma.appointment.findFirst({
-          where: { practiceId },
-          orderBy: { updatedAt: "desc" },
-          include: {
-            practitioner: { select: { firstName: true, lastName: true } },
-            appointmentType: { select: { id: true, name: true } },
-          },
-        });
-        if (anyAppt) {
-          const claimedAt = new Date(now.getTime() - 30 * 60 * 1000);
-          const syntheticSlot = {
-            id: `demo-claimed-${anyAppt.id}`,
-            practiceId,
-            sourceAppointmentId: null,
-            practitionerId: anyAppt.practitionerId,
-            appointmentTypeId: anyAppt.appointmentTypeId,
-            startTime: new Date(now.getTime() + 24 * 60 * 60 * 1000),
-            endTime: new Date(now.getTime() + 25 * 60 * 60 * 1000),
-            durationMinutes: 30,
-            status: "CLAIMED" as const,
-            notes: null,
-            claimedAppointmentId: anyAppt.id,
-            claimedAt,
-            claimedClientName: null,
-            claimedAppointmentType: anyAppt.appointmentType?.name ?? null,
-            recoveredRevenueCents: 9500,
-            createdAt: new Date(now.getTime() - 60 * 60 * 1000),
-            updatedAt: claimedAt,
-            practitioner: anyAppt.practitioner,
-            appointmentType: anyAppt.appointmentType,
-          };
-          finalOpenSlots = [syntheticSlot, ...recentOpenSlots];
-        }
-      }
-    }
-
     return NextResponse.json({
       kpis,
       highRiskUpcoming,
       recentCancellations,
-      recentOpenSlots: finalOpenSlots,
+      recentOpenSlots,
+      automation,
       userName: user.firstName,
       demoMode: isDemoMode,
     });

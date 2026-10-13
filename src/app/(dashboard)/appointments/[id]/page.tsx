@@ -377,7 +377,7 @@ export default async function AppointmentDetailPage({
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-800 dark:bg-emerald-950/30">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
               <Zap className="h-4 w-4" />
-              Omzet teruggewonnen via de wachtlijst
+              Opnieuw ingevuld via de wachtlijst
             </h2>
             <dl className="mt-4 space-y-3 text-sm">
               {claimLog && (
@@ -436,10 +436,10 @@ export default async function AppointmentDetailPage({
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-800 dark:bg-emerald-950/30">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
               <TrendingUp className="h-4 w-4" />
-              Omzet teruggewonnen via de wachtlijst
+              Opnieuw ingevuld via de wachtlijst
             </h2>
             <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
-              Deze omzet was anders verloren gegaan — nu automatisch hersteld
+              Deze vrijgekomen afspraak is opnieuw bevestigd via de wachtlijst.
             </p>
             <p className="mt-1 text-xs font-medium text-emerald-800 dark:text-emerald-300">
               {recoveredDetail.fillTime}
@@ -473,9 +473,9 @@ export default async function AppointmentDetailPage({
                 </dd>
               </div>
               <div className="border-t border-emerald-200 pt-3 dark:border-emerald-800">
-                <dt className="text-xs uppercase text-emerald-700 dark:text-emerald-400">Teruggewonnen omzet</dt>
+                <dt className="text-xs uppercase text-emerald-700 dark:text-emerald-400">Geschatte waarde</dt>
                 <dd className="mt-1 font-mono font-semibold text-emerald-900 dark:text-emerald-200">
-                  €{((Number.isFinite(recoveredDetail.revenueEstimateCents) ? recoveredDetail.revenueEstimateCents : 0) / 100).toFixed(2)} teruggewonnen
+                  €{((Number.isFinite(recoveredDetail.revenueEstimateCents) ? recoveredDetail.revenueEstimateCents : 0) / 100).toFixed(2)}
                 </dd>
               </div>
             </dl>

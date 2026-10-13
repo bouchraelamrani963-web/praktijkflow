@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const decoded = await adminAuth.verifyIdToken(idToken);
+    const decoded = await adminAuth.verifyIdToken(idToken, true);
 
     // ─── Tenant bootstrap in one transaction ──────────────────────────────
     // Either everything is created or nothing — prevents the half-state
