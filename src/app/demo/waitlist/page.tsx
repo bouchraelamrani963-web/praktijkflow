@@ -125,6 +125,7 @@ export default function DemoWaitlistPage() {
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-slate-950">{item.name}</p>
+                        <p className="truncate text-xs text-slate-500">Geboren {item.birthDate}</p>
                         <p className="truncate text-xs text-slate-500">{item.preference}</p>
                       </div>
                       <div className="min-w-0">
@@ -157,32 +158,85 @@ export default function DemoWaitlistPage() {
             <h2 id="waitlist-detail-heading" className="mt-2 text-base font-semibold text-slate-950">
               {selectedItem.name}
             </h2>
-            <dl className="mt-4 grid gap-3 text-sm">
-              <div>
-                <dt className="text-xs font-medium uppercase text-slate-500">Voorkeur</dt>
-                <dd className="mt-1 text-slate-800">{selectedItem.preference}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-slate-500">Behandelaar</dt>
-                <dd className="mt-1 text-slate-800">{selectedItem.practitionerPreference}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-slate-500">Matchstatus</dt>
-                <dd className="mt-1 text-slate-800">{selectedItem.match}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-slate-500">Aanbod</dt>
-                <dd className="mt-1">
-                  <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-                    {selectedItem.offerMode}
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-slate-500">Notitie</dt>
-                <dd className="mt-1 text-slate-700">{selectedItem.note}</dd>
-              </div>
-            </dl>
+            <div className="mt-4 space-y-5 text-sm">
+              <section aria-labelledby="waitlist-patient-details">
+                <h3 id="waitlist-patient-details" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Patiëntgegevens
+                </h3>
+                <dl className="mt-3 grid gap-3">
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Volledige naam</dt>
+                    <dd className="mt-1 text-slate-800">{selectedItem.name}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Geboortedatum</dt>
+                    <dd className="mt-1 text-slate-800">{selectedItem.birthDate}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Adres</dt>
+                    <dd className="mt-1 text-slate-800">{selectedItem.street}</dd>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <dt className="text-xs font-medium uppercase text-slate-500">Postcode</dt>
+                      <dd className="mt-1 text-slate-800">{selectedItem.postalCode}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-medium uppercase text-slate-500">Woonplaats</dt>
+                      <dd className="mt-1 text-slate-800">{selectedItem.city}</dd>
+                    </div>
+                  </div>
+                </dl>
+              </section>
+
+              <section aria-labelledby="waitlist-treatment-details">
+                <h3 id="waitlist-treatment-details" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Behandelvoorkeuren
+                </h3>
+                <dl className="mt-3 grid gap-3">
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Gewenste behandeling</dt>
+                    <dd className="mt-1 text-slate-800">{selectedItem.preference.split(",")[0]}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Voorkeursmoment</dt>
+                    <dd className="mt-1 text-slate-800">{selectedItem.preference.includes(",") ? selectedItem.preference.split(",").slice(1).join(",").trim() : "Geen specifieke voorkeur"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Voorkeursbehandelaar</dt>
+                    <dd className="mt-1 text-slate-800">{selectedItem.practitionerPreference}</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section aria-labelledby="waitlist-status-details">
+                <h3 id="waitlist-status-details" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Wachtlijststatus
+                </h3>
+                <dl className="mt-3 grid gap-3">
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Matchstatus</dt>
+                    <dd className="mt-1 text-slate-800">{selectedItem.match}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Wachtlijststatus</dt>
+                    <dd className="mt-1 text-slate-800">{selectedItem.status}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Aanbod</dt>
+                    <dd className="mt-1">
+                      <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                        {selectedItem.offerMode}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Notities</dt>
+                    <dd className="mt-1 text-slate-700">{selectedItem.note}</dd>
+                  </div>
+                </dl>
+              </section>
+            </div>
             <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
               Geen actieknoppen in deze demo. Selecteren en aanbieden gebeurt in de echte flow bewust via de open plek.
             </div>

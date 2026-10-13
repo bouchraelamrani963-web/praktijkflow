@@ -298,6 +298,10 @@ export const demoWaitlistItems = [
   {
     id: "waitlist-1",
     name: "Lina Vermeer",
+    birthDate: "14-03-1986",
+    street: "Voorbeeldstraat 12",
+    postalCode: "1234 AB",
+    city: "Demostad",
     preference: "Controle, ochtend",
     practitionerPreference: "Geen voorkeur",
     match: "Goede match",
@@ -309,6 +313,10 @@ export const demoWaitlistItems = [
   {
     id: "waitlist-2",
     name: "Samir El Amrani",
+    birthDate: "22-09-1979",
+    street: "Oefenlaan 8",
+    postalCode: "2345 CD",
+    city: "Proefdam",
     preference: "Consult, flexibel",
     practitionerPreference: "Dr. Jansen",
     match: "Past op vrijdag",
@@ -320,6 +328,10 @@ export const demoWaitlistItems = [
   {
     id: "waitlist-3",
     name: "Eva Bakker",
+    birthDate: "05-12-1991",
+    street: "Testsingel 41",
+    postalCode: "3456 EF",
+    city: "Voorbeelddorp",
     preference: "Gebitsreiniging",
     practitionerPreference: "Dr. Bakker",
     match: "Geen passende plek",
@@ -331,6 +343,10 @@ export const demoWaitlistItems = [
   {
     id: "waitlist-4",
     name: "Mila Peeters",
+    birthDate: "30-06-1968",
+    street: "Demoplein 3",
+    postalCode: "4567 GH",
+    city: "Fictiestad",
     preference: "Controle, middag",
     practitionerPreference: "Dr. Smit",
     match: "Aanbod in testmodus",
