@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
   Calendar,
+  Users,
   Activity,
   Settings,
   LogOut,
@@ -18,6 +19,7 @@ import {
 const sidebarLinks = [
   { href: "/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
   { href: "/appointments", label: "Agenda",       icon: Calendar },
+  { href: "/patients",     label: "Patiënten",    icon: Users },
   { href: "/waitlist",     label: "Wachtlijst",   icon: ClipboardList },
   { href: "/open-slots",   label: "Activiteiten", icon: Activity },
   { href: "/instellingen", label: "Instellingen", icon: Settings },
