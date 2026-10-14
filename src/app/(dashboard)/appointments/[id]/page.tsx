@@ -20,6 +20,7 @@ const riskColors: Record<string, string> = {
 
 function fmt(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -385,6 +386,7 @@ export default async function AppointmentDetailPage({
                   <dt className="text-xs uppercase text-emerald-700 dark:text-emerald-400">Opnieuw ingevuld op</dt>
                   <dd className="mt-1 text-emerald-900 dark:text-emerald-200">
                     {new Date(claimLog.createdAt).toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
                       weekday: "long",
                       day: "numeric",
                       month: "long",
@@ -401,6 +403,7 @@ export default async function AppointmentDetailPage({
                   <dd className="mt-1 text-emerald-900 dark:text-emerald-200">
                     Annulering op{" "}
                     {new Date(claimedSlot.sourceAppointment.startTime).toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
                       day: "numeric",
                       month: "long",
                       year: "numeric",
@@ -420,6 +423,7 @@ export default async function AppointmentDetailPage({
                 <dt className="text-xs uppercase text-emerald-700 dark:text-emerald-400">Open plek aangemaakt</dt>
                 <dd className="mt-1 text-emerald-900 dark:text-emerald-200">
                   {new Date(claimedSlot.createdAt).toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
                     day: "numeric",
                     month: "long",
                     hour: "2-digit",
@@ -536,28 +540,28 @@ export default async function AppointmentDetailPage({
 
         const headline = (() => {
           if (fillMinutes === null) {
-            return "Deze geannuleerde afspraak werd automatisch opnieuw ingevuld via de wachtlijst — zonder tussenkomst van de praktijk.";
+            return "Deze geannuleerde afspraak werd opnieuw ingevuld via de wachtlijst.";
           }
           if (fillMinutes < 1) {
-            return "Deze geannuleerde afspraak werd binnen 1 minuut automatisch opnieuw ingevuld via de wachtlijst — zonder tussenkomst van de praktijk.";
+            return "Deze geannuleerde afspraak werd binnen 1 minuut opnieuw ingevuld via de wachtlijst.";
           }
           if (fillMinutes < 60) {
             const unit = fillMinutes === 1 ? "minuut" : "minuten";
-            return `Deze geannuleerde afspraak werd binnen ${fillMinutes} ${unit} automatisch opnieuw ingevuld via de wachtlijst — zonder tussenkomst van de praktijk.`;
+            return `Deze geannuleerde afspraak werd binnen ${fillMinutes} ${unit} opnieuw ingevuld via de wachtlijst.`;
           }
           if (fillMinutes < 1440) {
             const hours = Math.round(fillMinutes / 60);
             const unit = hours === 1 ? "uur" : "uur";
-            return `Deze geannuleerde afspraak werd binnen ${hours} ${unit} automatisch opnieuw ingevuld via de wachtlijst — zonder tussenkomst van de praktijk.`;
+            return `Deze geannuleerde afspraak werd binnen ${hours} ${unit} opnieuw ingevuld via de wachtlijst.`;
           }
           const days = Math.round(fillMinutes / 1440);
           const unit = days === 1 ? "dag" : "dagen";
-          return `Deze geannuleerde afspraak werd binnen ${days} ${unit} automatisch opnieuw ingevuld via de wachtlijst — zonder tussenkomst van de praktijk.`;
+          return `Deze geannuleerde afspraak werd binnen ${days} ${unit} opnieuw ingevuld via de wachtlijst.`;
         })();
 
         // ── Fill-time label for step 3 of the mini logic diagram ─────────
         const stepThreeFillLabel = (() => {
-          if (fillMinutes === null) return "Automatisch opnieuw ingevuld";
+          if (fillMinutes === null) return "Opnieuw ingevuld via wachtlijst";
           if (fillMinutes < 1) return "Binnen 1 minuut opnieuw ingevuld";
           if (fillMinutes < 60) {
             const unit = fillMinutes === 1 ? "minuut" : "minuten";
@@ -578,8 +582,8 @@ export default async function AppointmentDetailPage({
           recoveredDetail?.revenueEstimateCents ?? appt.revenueEstimateCents ?? 0;
         const recoveredLabel =
           recoveredCents > 0
-            ? `€${(recoveredCents / 100).toFixed(2).replace(".", ",")} omzet behouden die anders verloren was gegaan`
-            : "Omzet behouden die anders verloren was gegaan";
+            ? `€${(recoveredCents / 100).toFixed(2).replace(".", ",")} geschatte omzet voor de opnieuw ingeplande afspraak`
+            : "Afspraak opnieuw ingepland (geschatte omzet onbekend)";
 
         return (
           <div className="mt-6">
@@ -588,8 +592,7 @@ export default async function AppointmentDetailPage({
                 {headline}
               </p>
 
-              {/* 3-step logic — text only, no new page, no tooltip. Reinforces
-                  the automatic-recovery narrative with zero ambiguity. */}
+              {/* 3-step logic — text only, no new page, no tooltip. Shows the recovery steps without claiming the offer was automatic. */}
               <ol className="mt-3 grid gap-2 text-sm text-emerald-900 dark:text-emerald-200 sm:grid-cols-3">
                 <li className="flex items-start gap-2">
                   <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-semibold text-white">
@@ -601,7 +604,7 @@ export default async function AppointmentDetailPage({
                   <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-semibold text-white">
                     2
                   </span>
-                  <span>Automatisch aangeboden aan wachtlijst</span>
+                  <span>Aanbod aangemaakt voor wachtlijst</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-semibold text-white">
