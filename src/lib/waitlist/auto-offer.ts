@@ -130,6 +130,7 @@ export async function autoOfferSlot(
   const topCandidates = matches.slice(0, MAX_OFFERS);
 
   const fmtDate = slot.startTime.toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
     weekday: "long",
     day: "numeric",
     month: "long",
