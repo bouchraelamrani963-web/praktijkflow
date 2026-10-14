@@ -226,7 +226,7 @@ export default async function AppointmentDetailPage({
             {appt.treatments.length > 0 ? (
               <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
                 <dt className="mb-2 text-xs uppercase text-zinc-500">
-                  Behandelcodes — Tarieven 2025
+                  Behandelcodes — Tarief bij vastleggen
                 </dt>
                 <dd>
                   <ul className="space-y-1.5">
