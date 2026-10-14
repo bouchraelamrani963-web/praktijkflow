@@ -48,6 +48,7 @@ function fmtDateTime(d: Date) {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Amsterdam",
     hour: "2-digit",
     minute: "2-digit",
   });
