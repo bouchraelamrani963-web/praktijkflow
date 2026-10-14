@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Filter } from "lucide-react";
 import { DemoShell } from "../DemoShell";
 import { demoAgendaItems } from "../demo-data";
@@ -21,6 +22,12 @@ const statusFilters = [
 ] as const;
 
 type AgendaView = (typeof views)[number]["key"];
+type DemoAgendaItem = (typeof demoAgendaItems)[number];
+type DatedAgendaItem = DemoAgendaItem & {
+  dateObject: Date;
+  dateLabel: string;
+  fullDateLabel: string;
+};
 
 const TIME_ZONE = "Europe/Amsterdam";
 
@@ -76,11 +83,16 @@ function sameDay(a: Date, b: Date): boolean {
   return startOfLocalDay(a).getTime() === startOfLocalDay(b).getTime();
 }
 
-function itemDate(item: (typeof demoAgendaItems)[number], today: Date): Date {
+function itemDate(item: DemoAgendaItem, today: Date): Date {
   if (item.date === "Morgen") return addDays(today, 1);
   if (item.date === "Donderdag") return addDays(startOfWeek(today), 3);
   if (item.date === "Vrijdag") return addDays(startOfWeek(today), 4);
   return today;
+}
+
+function getPatientName(item: DemoAgendaItem): string {
+  if ("patient" in item && item.patient) return item.patient;
+  return "Niet gekoppeld";
 }
 
 function sortByDateAndTime<T extends { dateObject: Date; start: string }>(items: T[]): T[] {
@@ -92,12 +104,27 @@ function sortByDateAndTime<T extends { dateObject: Date; start: string }>(items:
 }
 
 export default function DemoAgendaPage() {
+  return (
+    <Suspense fallback={<DemoAgendaShell />}>
+      <DemoAgendaContent />
+    </Suspense>
+  );
+}
+
+function DemoAgendaContent() {
+  const searchParams = useSearchParams();
+  const requestedAppointmentId = searchParams.get("appointmentId");
+  const requestedAgendaItem = demoAgendaItems.find((item) => item.id === requestedAppointmentId) ?? null;
+  const hasInvalidRequestedAppointment = Boolean(requestedAppointmentId && !requestedAgendaItem);
+
   const [view, setView] = useState<AgendaView>("day");
   const [practitioner, setPractitioner] = useState("all");
   const [status, setStatus] = useState("all");
-  const [selectedId, setSelectedId] = useState(demoAgendaItems[0]?.id ?? "");
   const today = useMemo(() => startOfLocalDay(new Date()), []);
-  const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedId, setSelectedId] = useState(
+    requestedAgendaItem?.id ?? (requestedAppointmentId ? "" : demoAgendaItems[0]?.id ?? ""),
+  );
+  const [selectedDate, setSelectedDate] = useState(requestedAgendaItem ? itemDate(requestedAgendaItem, today) : today);
   const [selectedWeekDay, setSelectedWeekDay] = useState<Date | null>(null);
 
   const practitioners = useMemo(
@@ -158,7 +185,9 @@ export default function DemoAgendaPage() {
     }));
   }, [filteredItems]);
 
-  const selectedItem = filteredItems.find((item) => item.id === selectedId) ?? filteredItems[0] ?? null;
+  const selectedItem =
+    filteredItems.find((item) => item.id === selectedId) ??
+    (requestedAppointmentId ? null : filteredItems[0] ?? null);
   const visibleSelectedId = selectedItem?.id ?? "";
 
   const periodLabel = view === "week"
@@ -414,6 +443,10 @@ export default function DemoAgendaPage() {
                     </dd>
                   </div>
                   <div>
+                    <dt className="text-xs font-medium uppercase text-slate-500">Patiënt</dt>
+                    <dd className="mt-1 text-slate-800">{getPatientName(selectedItem)}</dd>
+                  </div>
+                  <div>
                     <dt className="text-xs font-medium uppercase text-slate-500">Behandelaar</dt>
                     <dd className="mt-1 text-slate-800">{selectedItem.practitioner}</dd>
                   </div>
@@ -431,7 +464,9 @@ export default function DemoAgendaPage() {
               </>
             ) : (
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                Selecteer een zichtbare afspraak om de details te bekijken.
+                {hasInvalidRequestedAppointment
+                  ? "Deze fictieve afspraak-ID bestaat niet in de demo."
+                  : "Selecteer een zichtbare afspraak om de details te bekijken."}
               </div>
             )}
             <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
@@ -445,12 +480,24 @@ export default function DemoAgendaPage() {
   );
 }
 
+function DemoAgendaShell() {
+  return (
+    <DemoShell>
+      <main className="mx-auto max-w-6xl px-5 py-7">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
+          Agenda wordt geladen...
+        </div>
+      </main>
+    </DemoShell>
+  );
+}
+
 function AgendaItemList({
   items,
   selectedId,
   onSelect,
 }: {
-  items: ((typeof demoAgendaItems)[number] & { dateLabel: string })[];
+  items: DatedAgendaItem[];
   selectedId: string;
   onSelect: (id: string) => void;
 }) {
@@ -474,6 +521,9 @@ function AgendaItemList({
               <p className="truncate text-xs text-slate-500">
                 {item.dateLabel} - {item.practitioner} - {item.treatment}
               </p>
+              {"patient" in item && item.patient && (
+                <p className="truncate text-xs text-slate-500">{item.patient}</p>
+              )}
             </div>
             <span className={`w-fit rounded-full border px-2 py-1 text-xs font-medium ${item.tone}`}>
               {item.status}
@@ -484,3 +534,5 @@ function AgendaItemList({
     </ul>
   );
 }
+
+

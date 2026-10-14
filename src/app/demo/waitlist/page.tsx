@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, Users } from "lucide-react";
 import { DemoShell } from "../DemoShell";
 import { demoWaitlistItems } from "../demo-data";
@@ -19,10 +20,23 @@ const statusFilters = [
 ] as const;
 
 export default function DemoWaitlistPage() {
+  return (
+    <Suspense fallback={<DemoWaitlistShell />}>
+      <DemoWaitlistContent />
+    </Suspense>
+  );
+}
+
+function DemoWaitlistContent() {
+  const searchParams = useSearchParams();
+  const requestedPatientId = searchParams.get("patientId");
+  const validRequestedPatientId = demoWaitlistItems.some((item) => item.id === requestedPatientId)
+    ? requestedPatientId
+    : null;
   const [query, setQuery] = useState("");
   const [match, setMatch] = useState("all");
   const [status, setStatus] = useState("all");
-  const [selectedId, setSelectedId] = useState(demoWaitlistItems[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState(validRequestedPatientId ?? demoWaitlistItems[0]?.id ?? "");
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -38,8 +52,11 @@ export default function DemoWaitlistPage() {
     });
   }, [match, query, status]);
 
+  const hasInvalidRequestedPatient = Boolean(requestedPatientId && !validRequestedPatientId);
   const selectedItem =
-    filteredItems.find((item) => item.id === selectedId) ?? filteredItems[0] ?? demoWaitlistItems[0];
+    filteredItems.find((item) => item.id === selectedId) ??
+    (requestedPatientId ? null : filteredItems[0] ?? demoWaitlistItems[0] ?? null);
+  const visibleSelectedId = selectedItem?.id ?? "";
 
   return (
     <DemoShell>
@@ -120,7 +137,7 @@ export default function DemoWaitlistPage() {
                       type="button"
                       onClick={() => setSelectedId(item.id)}
                       className={`grid w-full gap-2 px-4 py-3 text-left outline-none transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:grid-cols-[1fr_1fr_9rem] sm:items-center ${
-                        selectedItem.id === item.id ? "bg-blue-50/60" : ""
+                        visibleSelectedId === item.id ? "bg-blue-50/60" : ""
                       }`}
                     >
                       <div className="min-w-0">
@@ -155,10 +172,12 @@ export default function DemoWaitlistPage() {
 
           <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" aria-labelledby="waitlist-detail-heading">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Read-only detail</p>
-            <h2 id="waitlist-detail-heading" className="mt-2 text-base font-semibold text-slate-950">
-              {selectedItem.name}
-            </h2>
-            <div className="mt-4 space-y-5 text-sm">
+            {selectedItem ? (
+              <>
+                <h2 id="waitlist-detail-heading" className="mt-2 text-base font-semibold text-slate-950">
+                  {selectedItem.name}
+                </h2>
+                <div className="mt-4 space-y-5 text-sm">
               <section aria-labelledby="waitlist-patient-details">
                 <h3 id="waitlist-patient-details" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Patiëntgegevens
@@ -236,11 +255,31 @@ export default function DemoWaitlistPage() {
                   </div>
                 </dl>
               </section>
-            </div>
+                </div>
+              </>
+            ) : (
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-600">
+                {hasInvalidRequestedPatient
+                  ? "Deze fictieve patiënt-ID bestaat niet in de demo."
+                  : "Selecteer een zichtbare patiënt om de details te bekijken."}
+              </div>
+            )}
             <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
               Geen actieknoppen in deze demo. Selecteren en aanbieden gebeurt in de echte flow bewust via de open plek.
             </div>
           </aside>
+        </div>
+      </main>
+    </DemoShell>
+  );
+}
+
+function DemoWaitlistShell() {
+  return (
+    <DemoShell>
+      <main className="mx-auto max-w-6xl px-5 py-7">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
+          Wachtlijst wordt geladen...
         </div>
       </main>
     </DemoShell>
