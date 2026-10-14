@@ -1,15 +1,22 @@
 import type { DayOfWeek } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 
-const JS_DAY_TO_ENUM: Record<number, DayOfWeek> = {
-  0: "SUNDAY",
-  1: "MONDAY",
-  2: "TUESDAY",
-  3: "WEDNESDAY",
-  4: "THURSDAY",
-  5: "FRIDAY",
-  6: "SATURDAY",
+const DUTCH_WEEKDAY_TO_ENUM: Record<string, DayOfWeek> = {
+  sunday: "SUNDAY",
+  monday: "MONDAY",
+  tuesday: "TUESDAY",
+  wednesday: "WEDNESDAY",
+  thursday: "THURSDAY",
+  friday: "FRIDAY",
+  saturday: "SATURDAY",
 };
+
+const DUTCH_TIME_FORMAT = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/Amsterdam",
+  weekday: "long",
+  hour: "2-digit",
+  hourCycle: "h23",
+});
 
 interface MatchedEntry {
   id: string;
@@ -54,8 +61,13 @@ export async function findMatchesForSlot(
 
   if (!slot) return [];
 
-  const slotDay = JS_DAY_TO_ENUM[slot.startTime.getDay()];
-  const slotHour = slot.startTime.getHours();
+  // Match against the appointment's Dutch wall-clock time (incl. DST),
+  // never the Vercel server's UTC timezone.
+  const localParts = DUTCH_TIME_FORMAT.formatToParts(slot.startTime);
+  const weekday = localParts.find((part) => part.type === "weekday")?.value.toLowerCase() ?? "";
+  const slotDay = DUTCH_WEEKDAY_TO_ENUM[weekday];
+  const slotHour = Number(localParts.find((part) => part.type === "hour")?.value);
+  if (!slotDay || !Number.isFinite(slotHour)) return [];
 
   // Load all WAITING entries for this practice
   const entries = await prisma.waitlistEntry.findMany({
