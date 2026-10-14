@@ -332,7 +332,7 @@ export function AppointmentForm({
             <ListPlus className="h-4 w-4 text-blue-500" aria-hidden="true" />
             Behandelcodes
             <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
-              — Tarieven 2025
+              — Prijzen uit praktijkcatalogus
             </span>
           </h3>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -404,7 +404,7 @@ export function AppointmentForm({
           {types.length === 0 ? (
             <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
               Geen behandelcodes beschikbaar. Ga naar Instellingen →
-              &laquo;Standaard behandelcodes 2025 laden&raquo; om de KNMT-catalog
+              &laquo;NZa 2026 importeren&raquo; om de behandelcatalog
               te importeren.
             </p>
           ) : (
