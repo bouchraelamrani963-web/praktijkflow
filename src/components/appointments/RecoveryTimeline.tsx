@@ -10,6 +10,7 @@ interface Props {
 
 function fmt(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
     day: "numeric",
     month: "short",
     hour: "2-digit",
