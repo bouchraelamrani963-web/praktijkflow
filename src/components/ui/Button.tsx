@@ -5,7 +5,7 @@ import type { ComponentProps, ReactNode } from "react";
 
 /**
  * Visual variants:
- *   - "primary":  gradient blue → indigo, the marquee CTA
+ *   - "primary":  solid professional blue, the main CTA
  *   - "secondary": neutral border, on-canvas action
  *   - "ghost":    text-only, sidebar / nav use
  *   - "danger":   destructive intent
@@ -24,8 +24,7 @@ const base =
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-500/20 " +
-    "hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/30",
+    "bg-blue-700 text-white shadow-sm hover:bg-blue-800",
   secondary:
     "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50 " +
     "dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",

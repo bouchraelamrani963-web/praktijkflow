@@ -1,682 +1,380 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/hooks/useAuth";
 import {
-  Calendar,
-  Users,
-  CheckCircle2,
-  XCircle,
   AlertTriangle,
-  CalendarClock,
-  TrendingUp,
   ArrowRight,
-  Sparkles,
-  TrendingDown,
-  Scale,
+  CheckCircle2,
+  Clock3,
+  Inbox,
+  Loader2,
+  RefreshCw,
+  Search,
 } from "lucide-react";
-import { SlotFillPanel } from "@/components/dashboard/SlotFillPanel";
-import { STATUS_LABELS, RISK_LABELS, TYPE_LABELS } from "@/lib/labels";
-import { StatCard, Section } from "@/components/ui";
+import { useAuth } from "@/lib/hooks/useAuth";
+
+type AutomationCategory = "open" | "in_progress" | "filled" | "action_needed";
+
+interface AutomationDashboardItem {
+  id: string;
+  category: AutomationCategory;
+  priority: "high" | "normal" | "low";
+  title: string;
+  description: string;
+  statusLabel: string;
+  slotStatus: string;
+  startTime: string;
+  practitionerName: string;
+  appointmentTypeName: string | null;
+  sourceLabel: string;
+  href: string;
+  primaryActionLabel: string;
+  matchCount: number | null;
+  offerSummary: {
+    total: number;
+    pending: number;
+    sent: number;
+    mock: number;
+    failed: number;
+  };
+  details: string[];
+}
 
 interface DashboardData {
-  kpis: {
-    appointmentsToday: number;
-    totalClients: number;
-    scheduled: number;
-    confirmed: number;
-    cancelled: number;
-    noShow: number;
-    completed: number;
-    openSlotsCreated: number;
-    openSlotsClaimed: number;
-    revenueThisMonthCents: number;
-    recoveredRevenueCents: number;
-    recoveredRevenueThisMonthCents: number;
-    missedRevenueThisMonthCents: number;
-    netLossThisMonthCents: number;
-    /** "Vandaag in je praktijk" — today-scoped figures, present from API onward. */
-    noShowsToday?: number;
-    revenueTodayCents?: number;
+  automation: {
+    summary: {
+      open: number;
+      inProgress: number;
+      filled: number;
+      actionNeeded: number;
+    };
+    worklist: AutomationDashboardItem[];
   };
-  highRiskUpcoming: {
-    id: string;
-    startTime: string;
-    riskLevel: string;
-    client: { id: string; firstName: string; lastName: string };
-    practitioner: { id: string; firstName: string; lastName: string };
-    appointmentType: { name: string } | null;
-  }[];
-  recentCancellations: {
-    id: string;
-    updatedAt: string;
-    client: { firstName: string; lastName: string };
-    appointmentType: { name: string } | null;
-  }[];
-  recentOpenSlots: {
-    id: string;
-    startTime: string;
-    status: string;
-    createdAt: string;
-    practitioner: { firstName: string; lastName: string };
-    appointmentType: { id: string; name: string } | null;
-    claimedAppointmentId: string | null;
-  }[];
   userName: string | null;
-  demoMode?: boolean;
+  degraded?: boolean;
 }
 
-function formatCents(cents: number | null | undefined): string {
-  // Defensive: a null, undefined, or non-finite value must never render as
-  // "€NaN" on screen. Coerce to 0 and format normally.
-  const safe = Number.isFinite(cents as number) ? (cents as number) : 0;
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-  }).format(safe / 100);
-}
+const CATEGORY_COPY: Record<
+  AutomationCategory,
+  {
+    label: string;
+    description: string;
+    icon: typeof Inbox;
+    cardClass: string;
+    badgeClass: string;
+  }
+> = {
+  open: {
+    label: "Open plekken",
+    description: "Beschikbaar en klaar om aan de wachtlijst aan te bieden.",
+    icon: Inbox,
+    cardClass: "border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
+    badgeClass: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  },
+  in_progress: {
+    label: "In behandeling",
+    description: "Aanbod loopt; er wordt gewacht op reactie.",
+    icon: Clock3,
+    cardClass: "border-blue-200 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/20",
+    badgeClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+  },
+  filled: {
+    label: "Ingevuld",
+    description: "Geclaimd binnen NoShow Control.",
+    icon: CheckCircle2,
+    cardClass: "border-teal-200 bg-teal-50/60 dark:border-teal-900/50 dark:bg-teal-950/20",
+    badgeClass: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+  },
+  action_needed: {
+    label: "Actie nodig",
+    description: "Uitzonderingen die de praktijk moet beoordelen.",
+    icon: AlertTriangle,
+    cardClass: "border-amber-200 bg-amber-50/70 dark:border-amber-900/50 dark:bg-amber-950/20",
+    badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  },
+};
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("nl-NL", {
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("nl-NL", {
     weekday: "short",
     day: "numeric",
     month: "short",
-  });
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("nl-NL", {
     hour: "2-digit",
     minute: "2-digit",
   });
 }
 
-function riskBadge(level: string) {
-  const cls =
-    level === "CRITICAL"
-      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-      : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
-  return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
-      {RISK_LABELS[level] ?? level}
-    </span>
-  );
+function categoryCount(data: DashboardData, category: AutomationCategory): number {
+  if (category === "open") return data.automation.summary.open;
+  if (category === "in_progress") return data.automation.summary.inProgress;
+  if (category === "filled") return data.automation.summary.filled;
+  return data.automation.summary.actionNeeded;
 }
 
-function statusBadge(status: string) {
-  const map: Record<string, string> = {
-    AVAILABLE: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-    CLAIMED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    EXPIRED: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
-  };
+function WorklistEmptyState() {
   return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${map[status] ?? map.EXPIRED}`}>
-      {STATUS_LABELS[status] ?? status}
-    </span>
+    <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-6 py-10 text-center dark:border-zinc-700 dark:bg-zinc-900">
+      <CheckCircle2 className="mx-auto h-8 w-8 text-teal-600 dark:text-teal-400" />
+      <h2 className="mt-3 text-sm font-semibold text-zinc-900 dark:text-white">
+        Geen lopende open plekken
+      </h2>
+      <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+        Zodra een afspraak wordt geannuleerd, als no-show wordt gemarkeerd of handmatig als open plek wordt
+        aangemaakt, verschijnt deze hier.
+      </p>
+      <Link
+        href="/open-slots/new"
+        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      >
+        Nieuwe open plek
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
   );
 }
 
 export default function DashboardPage() {
   const { profile } = useAuth();
-  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  async function loadDashboard() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/dashboard");
+      if (!res.ok) throw new Error("Dashboard kon niet geladen worden");
+      setData(await res.json());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Dashboard kon niet geladen worden");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    fetch("/api/dashboard")
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Dashboard kon niet geladen worden");
-        return res.json();
-      })
-      .then(setData)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+    void loadDashboard();
   }, []);
+
+  const sortedWorklist = useMemo(() => data?.automation.worklist ?? [], [data]);
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+      <div className="flex min-h-64 items-center justify-center">
+        <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
+          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+          Dashboard laden...
+        </div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3">
-        <AlertTriangle className="h-8 w-8 text-red-400" />
-        <p className="text-sm text-red-600">{error ?? "Dashboard kon niet geladen worden"}</p>
+      <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-lg border border-red-200 bg-red-50 p-8 text-center dark:border-red-900/50 dark:bg-red-950/20">
+        <AlertTriangle className="h-8 w-8 text-red-500" />
+        <p className="text-sm font-medium text-red-700 dark:text-red-300">
+          {error ?? "Dashboard kon niet geladen worden"}
+        </p>
         <button
-          onClick={() => { setError(null); setLoading(true); fetch("/api/dashboard").then(async (res) => { if (!res.ok) throw new Error("Dashboard kon niet geladen worden"); return res.json(); }).then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false)); }}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          type="button"
+          onClick={() => void loadDashboard()}
+          className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900/60 dark:bg-zinc-950 dark:text-red-300"
         >
+          <RefreshCw className="h-4 w-4" />
           Opnieuw proberen
         </button>
       </div>
     );
   }
 
-  const k = data.kpis;
+  const greetingName = data.userName ?? profile?.firstName ?? "collega";
+  const categories: AutomationCategory[] = ["action_needed", "open", "in_progress", "filled"];
 
-  // Local-date YYYY-MM-DD (sv-SE locale format matches the HTML <input type="date"> value).
-  const todayIso = new Date().toLocaleDateString("sv-SE");
-
-  // Fill rate — “Invulpercentage” in the revenue framing. Safely handle the
-  // 0-denominator case so an empty practice doesn’t show NaN%.
-  const fillPct =
-    k.openSlotsCreated > 0
-      ? Math.round((k.openSlotsClaimed / k.openSlotsCreated) * 100)
-      : 0;
-
-  type KpiCard = {
-    label: string;
-    value: string | number;
-    icon: typeof Calendar;
-    href: string;
-    subtitle?: string;
-  };
-
-  const kpiCards: KpiCard[] = [
-    // ─── Revenue trio FIRST — the money answer comes before operational data.
-    // Order per conversion brief: Teruggewonnen → Gemiste → Netto.
-    {
-      label: "Teruggewonnen omzet",
-      value: formatCents(k.recoveredRevenueThisMonthCents),
-      icon: Sparkles,
-      href: "/open-slots?status=CLAIMED",
-      subtitle: "Omzet die anders verloren was gegaan — automatisch hersteld",
-    },
-    {
-      label: "Gemiste omzet",
-      value: formatCents(k.missedRevenueThisMonthCents),
-      icon: TrendingDown,
-      href: "/appointments?status=CANCELLED",
-      subtitle: "Omzet verloren door no-shows en annuleringen",
-    },
-    {
-      label: "Netto winst na herstel",
-      value: formatCents(k.netLossThisMonthCents),
-      icon: Scale,
-      href: "/appointments?status=CANCELLED",
-      subtitle: "Wat u daadwerkelijk verliest na herstel via de wachtlijst",
-    },
-    {
-      label: "Invulpercentage",
-      value: `${fillPct}%`,
-      icon: CalendarClock,
-      href: "/open-slots",
-      subtitle: "Hoeveel vrijgekomen plekken opnieuw zijn ingevuld",
-    },
-    { label: "Omzet (maand)", value: formatCents(k.revenueThisMonthCents), icon: TrendingUp, href: "/appointments?status=COMPLETED" },
-    // ─── Operationele metrics onderaan — nuttig, maar niet de hoofdboodschap.
-    { label: "Afspraken vandaag", value: k.appointmentsToday, icon: Calendar, href: `/appointments?dateFrom=${todayIso}&dateTo=${todayIso}` },
-    { label: "Gepland", value: k.scheduled, icon: Calendar, href: "/appointments?status=SCHEDULED" },
-    { label: "Bevestigd", value: k.confirmed, icon: CheckCircle2, href: "/appointments?status=CONFIRMED" },
-    { label: "Geannuleerd (maand)", value: k.cancelled, icon: XCircle, href: "/appointments?status=CANCELLED" },
-    { label: "Niet verschenen (maand)", value: k.noShow, icon: AlertTriangle, href: "/appointments?status=NO_SHOW" },
-    { label: "Totaal patiënten", value: k.totalClients, icon: Users, href: "/patients" },
-  ];
-
-  // ─── T5: in demo mode we only show the revenue quartet. Operational
-  // metrics are noise for a first-time viewer who needs to grasp the
-  // money story in under 2 minutes. Keeps ONLY the first four cards.
-  const visibleKpiCards = data.demoMode ? kpiCards.slice(0, 4) : kpiCards;
-
-  // ─── Brand-new practice empty-state ────────────────────────────────────
-  // For a freshly-registered practice with no patients yet, the entire KPI
-  // grid is just zeros — and the revenue narrative ("Kosten NoShow Control",
-  // "Gemiste omzet", "Netto winst na herstel") is misleading because the
-  // user hasn't started using the product yet. Render a focused onboarding
-  // card instead. As soon as the first patient is added, the regular
-  // dashboard takes over.
-  const isEmptyPractice =
-    !data.demoMode &&
-    k.totalClients === 0 &&
-    k.appointmentsToday === 0 &&
-    (data.recentCancellations?.length ?? 0) === 0 &&
-    (data.recentOpenSlots?.length ?? 0) === 0;
-
-  if (isEmptyPractice) {
-    return (
-      <div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-            Welkom, {data.userName ?? profile?.firstName ?? "collega"}
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Automation First</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-white">
+            Goedemorgen, {greetingName}
           </h1>
-          <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-            Uw praktijk is klaar voor gebruik. Begin met de drie stappen hieronder.
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+            Zie direct welke plekken automatisch worden opgevolgd en waar de praktijk moet ingrijpen.
+            Statussen zijn gebaseerd op bestaande open plekken, aanbiedingen en claims.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => void loadDashboard()}
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Vernieuwen
+        </button>
+      </header>
 
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <ol className="space-y-5">
-            {[
-              {
-                step: 1,
-                title: "Voeg uw eerste patiënt toe",
-                body: "Patiënten zijn de basis: zonder hen kunnen er geen afspraken of wachtlijst-vermeldingen worden aangemaakt.",
-                cta: { href: "/patients/new", label: "Nieuwe patiënt" },
-                icon: Users,
-              },
-              {
-                step: 2,
-                title: "Plan uw eerste afspraak",
-                body: "Maak een afspraak voor de zojuist toegevoegde patiënt. Zodra deze wordt geannuleerd, wordt de plek automatisch aangeboden aan de wachtlijst.",
-                cta: { href: "/appointments/new", label: "Nieuwe afspraak" },
-                icon: Calendar,
-              },
-              {
-                step: 3,
-                title: "Stel herinneringen in",
-                body: "Activeer 48-uurs en 24-uurs SMS-herinneringen om no-shows te verminderen voordat ze gebeuren.",
-                cta: { href: "/instellingen", label: "Naar instellingen" },
-                icon: Sparkles,
-              },
-            ].map((s) => (
-              <li key={s.step} className="flex items-start gap-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                  {s.step}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    {s.title}
-                  </h2>
-                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                    {s.body}
-                  </p>
-                  <Link
-                    href={s.cta.href}
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                  >
-                    {s.cta.label}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ol>
+      {data.degraded && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          Dashboardgegevens konden niet volledig worden geladen. Probeer te vernieuwen of controleer later opnieuw.
         </div>
-      </div>
-    );
-  }
+      )}
 
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-          Welkom terug, {data.userName ?? profile?.firstName ?? "collega"}
-        </h1>
-        <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-          Hier is een overzicht van je praktijk.
-        </p>
-      </div>
-
-      {/* "Vandaag in je praktijk" — three at-a-glance numbers scoped to today.
-          Helps the user orient themselves the moment they open the dashboard:
-          how busy is today, how many no-shows so far, what was actually billed.
-          Each card links into the appointments list pre-filtered for context.
-          Implemented via the shared StatCard primitive so all KPI cards share
-          one visual contract. */}
-      <Section
-        title="Vandaag in je praktijk"
-        variant="eyebrow"
-        id="today-heading"
-      >
-        <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard
-            label="Afspraken vandaag"
-            value={k.appointmentsToday ?? 0}
-            icon={Calendar}
-            tone="info"
-            href={`/appointments?dateFrom=${todayIso}&dateTo=${todayIso}`}
-            hint={k.appointmentsToday > 0 ? "Bekijk alle afspraken van vandaag" : "Geen afspraken gepland"}
-          />
-          <StatCard
-            label="No-shows vandaag"
-            value={k.noShowsToday ?? 0}
-            icon={AlertTriangle}
-            tone="warning"
-            href={`/appointments?status=NO_SHOW&dateFrom=${todayIso}&dateTo=${todayIso}`}
-            hint={(k.noShowsToday ?? 0) > 0 ? "Plekken in te vullen vanuit wachtlijst" : "Alles op koers"}
-          />
-          <StatCard
-            label="Omzet vandaag"
-            value={formatCents(k.revenueTodayCents)}
-            icon={TrendingUp}
-            tone="success"
-            href={`/appointments?status=COMPLETED&dateFrom=${todayIso}&dateTo=${todayIso}`}
-            hint="Som van afgeronde afspraken vandaag"
-          />
-        </div>
-      </Section>
-
-      {/* Prominent recovered-revenue banner — the headline number for the month.
-          T4: force the click through router.push so the user always lands on
-          /open-slots?status=CLAIMED, then scroll the first CLAIMED row into
-          view so the guided demo flow never dead-ends on an empty viewport. */}
-      <button
-        type="button"
-        onClick={() => {
-          router.push("/open-slots?status=CLAIMED#scroll-claimed");
-          // Post-navigation scroll is handled by the target page. We also
-          // hint scroll here in case the user is already on /open-slots.
-          if (typeof window !== "undefined") {
-            window.requestAnimationFrame(() => {
-              const el = document.querySelector<HTMLElement>(
-                "[data-slot-status='CLAIMED']",
-              );
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-            });
-          }
-        }}
-        aria-label="Bekijk geclaimde plekken deze maand"
-        className="group mb-6 block w-full overflow-hidden rounded-2xl border border-emerald-300/60 bg-gradient-to-r from-emerald-500 via-emerald-500 to-teal-500 p-6 text-left shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-400/30 transition hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white dark:from-emerald-600 dark:via-emerald-600 dark:to-teal-600"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20 ring-1 ring-white/30">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-50/90">
-                Extra omzet teruggewonnen
-              </p>
-              <p className="mt-0.5 text-3xl font-bold text-white sm:text-4xl">
-                {formatCents(k.recoveredRevenueThisMonthCents)}
-                <span className="ml-2 text-base font-semibold text-emerald-50/90">
-                  deze maand
-                </span>
-              </p>
-              {/* Money-framing sub-copy: first line tells the user WHAT this
-                  number represents ("omzet die anders verloren was gegaan"),
-                  second line tells them HOW it got here. This is the 3-second
-                  comprehension target. */}
-              <p className="mt-1 text-sm font-medium text-white">
-                Dit is omzet die anders verloren was gegaan
-              </p>
-              <p className="mt-0.5 text-xs text-emerald-50/90">
-                Volledig automatisch via de wachtlijst — zonder bellen, zonder
-                handmatig plannen. Uit {k.openSlotsClaimed} opnieuw ingevulde plek
-                {k.openSlotsClaimed === 1 ? "" : "ken"}.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 text-sm font-medium text-white ring-1 ring-white/20 transition group-hover:bg-white/25">
-            Bekijk hoe dit werkt
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-          </div>
-        </div>
-      </button>
-
-      {/* Pricing reinforcement — converts the recovered-revenue banner into a
-          cost/benefit frame. Rendered inline using dashboard data only; no
-          new page, no popup, no new component surface. */}
-      <PricingReinforcement
-        recoveredCents={k.recoveredRevenueThisMonthCents}
-        planCostEuros={79}
-      />
-
-      {/* KPI cards — each navigates to /appointments */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {visibleKpiCards.map((card) => (
+      <section aria-labelledby="automation-summary-heading">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 id="automation-summary-heading" className="text-base font-semibold text-zinc-950 dark:text-white">
+            Overzicht
+          </h2>
           <Link
-            key={card.label}
-            href={card.href}
-            aria-label={`${card.label} — bekijk afspraken`}
-            className="group block cursor-pointer rounded-xl border border-zinc-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-blue-500"
+            href="/open-slots"
+            className="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-800 dark:text-blue-300"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">{card.label}</span>
-              <card.icon className="h-5 w-5 text-zinc-400 transition group-hover:text-blue-500" />
-            </div>
-            <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">{card.value}</p>
-            {card.subtitle && (
-              <p className="mt-1 text-xs leading-snug text-zinc-500 dark:text-zinc-400">
-                {card.subtitle}
-              </p>
-            )}
+            Alle open plekken
+            <ArrowRight className="h-4 w-4" />
           </Link>
-        ))}
-      </div>
+        </div>
 
-      {/* Activity panels */}
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        {/* High-risk upcoming */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/appointments?riskLevel=HIGH"
-              className="text-lg font-semibold text-zinc-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
-            >
-              Afspraken met hoog risico
-            </Link>
-            <AlertTriangle className="h-5 w-5 text-orange-400" />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {categories.map((category) => {
+            const copy = CATEGORY_COPY[category];
+            const Icon = copy.icon;
+            const count = categoryCount(data, category);
+            return (
+              <article
+                key={category}
+                className={`rounded-lg border p-4 shadow-sm ${copy.cardClass}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      {copy.label}
+                    </h3>
+                    <p className="mt-1 min-h-10 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+                      {copy.description}
+                    </p>
+                  </div>
+                  <span className={`rounded-lg p-2 ${copy.badgeClass}`}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className="mt-3 text-2xl font-semibold tabular-nums text-zinc-950 dark:text-white">
+                  {count}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section aria-labelledby="worklist-heading">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 id="worklist-heading" className="text-base font-semibold text-zinc-950 dark:text-white">
+              Werklijst
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Belangrijkste uitzonderingen staan bovenaan. Technische details staan ingeklapt.
+            </p>
           </div>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Klik om details te zien.
-          </p>
-          {data.highRiskUpcoming.length === 0 ? (
-            <div className="mt-4 flex h-32 items-center justify-center text-zinc-400">
-              Geen risicovolle afspraken in de komende 7 dagen
-            </div>
-          ) : (
-            <ul className="mt-4 space-y-1">
-              {data.highRiskUpcoming.map((apt) => (
-                <li key={apt.id}>
-                  <Link
-                    href={`/appointments/${apt.id}`}
-                    className="flex items-center justify-between gap-2 rounded-lg p-2 transition hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-white">
-                        {apt.client.firstName} {apt.client.lastName}
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        {formatDate(apt.startTime)} {formatTime(apt.startTime)}
-                        {apt.appointmentType ? ` — ${TYPE_LABELS[apt.appointmentType.name] ?? apt.appointmentType.name}` : ""}
-                      </p>
-                    </div>
-                    {riskBadge(apt.riskLevel)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Recent cancellations */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/appointments?status=CANCELLED"
-              className="text-lg font-semibold text-zinc-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
-            >
-              Recente annuleringen
-            </Link>
-            <XCircle className="h-5 w-5 text-red-400" />
-          </div>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Klik om te zien hoe de plek opnieuw is ingevuld.
-          </p>
-          {data.recentCancellations.length === 0 ? (
-            <div className="mt-4 flex h-32 items-center justify-center text-zinc-400">
-              Geen annuleringen in de afgelopen 7 dagen
-            </div>
-          ) : (
-            <ul className="mt-4 space-y-1">
-              {data.recentCancellations.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`/appointments/${c.id}`}
-                    className="flex items-center justify-between gap-2 rounded-lg p-2 transition hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-white">
-                        {c.client.firstName} {c.client.lastName}
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        {c.appointmentType ? (TYPE_LABELS[c.appointmentType.name] ?? c.appointmentType.name) : "Afspraak"} — geannuleerd{" "}
-                        {formatDate(c.updatedAt)}
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-zinc-300 group-hover:text-zinc-500" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Recent open slots */}
-        <div id="recent-open-slots" className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800 lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/open-slots"
-              className="text-lg font-semibold text-zinc-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
-            >
-              Recente open plekken
-            </Link>
-            <CalendarClock className="h-5 w-5 text-blue-400" />
-          </div>
-          {/* Step-1 micro-guidance — points the user at the next node in the
-              guided demo flow (dashboard → CLAIMED row → appointment detail). */}
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Klik op een ingevulde plek om te zien hoe deze omzet is teruggewonnen.
-          </p>
-          {data.recentOpenSlots.length === 0 ? (
-            <div className="mt-4 flex h-32 items-center justify-center px-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-              Geen openstaande plekken — goed teken, er gaat momenteel geen omzet verloren
-            </div>
-          ) : (
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200 text-zinc-500 dark:border-zinc-700">
-                    <th className="pb-2 font-medium">Behandelaar</th>
-                    <th className="pb-2 font-medium">Type</th>
-                    <th className="pb-2 font-medium">Tijd</th>
-                    <th className="pb-2 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                  {data.recentOpenSlots.map((slot) => {
-                    // Route by status — identical logic to OpenSlotsList so
-                    // behaviour is consistent across surfaces.
-                    const target =
-                      slot.status === "CLAIMED" && slot.claimedAppointmentId
-                        ? `/appointments/${slot.claimedAppointmentId}`
-                        : slot.status === "AVAILABLE"
-                          ? `/waitlist?status=WAITING${
-                              slot.appointmentType
-                                ? `&appointmentTypeId=${slot.appointmentType.id}`
-                                : ""
-                            }`
-                          : null;
-                    return (
-                      <tr
-                        key={slot.id}
-                        className={`transition ${
-                          target
-                            ? "cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
-                            : ""
-                        }`}
-                        onClick={target ? () => router.push(target) : undefined}
-                      >
-                        <td className="py-2 text-zinc-900 dark:text-white">
-                          {slot.practitioner.firstName} {slot.practitioner.lastName}
-                        </td>
-                        <td className="py-2 text-zinc-600 dark:text-zinc-400">
-                          {slot.appointmentType ? (TYPE_LABELS[slot.appointmentType.name] ?? slot.appointmentType.name) : "—"}
-                        </td>
-                        <td className="py-2 text-zinc-600 dark:text-zinc-400">
-                          {formatDate(slot.startTime)} {formatTime(slot.startTime)}
-                        </td>
-                        <td className="py-2">{statusBadge(slot.status)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Waitlist / slot-fill metrics + demo + log viewer */}
-      <SlotFillPanel
-        isAdmin={profile?.role === "OWNER" || profile?.role === "ADMIN"}
-        isDemoMode={!!data.demoMode}
-      />
-    </div>
-  );
-}
-
-/**
- * Dashboard pricing reinforcement — frames the monthly subscription as an
- * investment against real recovered revenue. No popup, no new page, no new
- * component surface; rendered inline inside the existing dashboard layout.
- *
- * Uses `recoveredRevenueThisMonthCents` straight from the KPI payload so the
- * numbers are always consistent with the headline banner above.
- */
-function PricingReinforcement({
-  recoveredCents,
-  planCostEuros,
-}: {
-  recoveredCents: number | null | undefined;
-  planCostEuros: number;
-}) {
-  // Guard against null / undefined / NaN so the reinforcement strip never
-  // renders "€NaN". Treat missing data as 0 recovered.
-  const safeRecoveredCents = Number.isFinite(recoveredCents as number)
-    ? (recoveredCents as number)
-    : 0;
-  const recoveredEuros = safeRecoveredCents / 100;
-  const netEuros = recoveredEuros - planCostEuros;
-  const isPositive = netEuros > 0;
-
-  return (
-    <div
-      aria-label="Pricing terugverdien-overzicht"
-      className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/60"
-    >
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-sm">
-        <div>
-          <span className="text-zinc-600 dark:text-zinc-400">Deze maand teruggewonnen:</span>{" "}
-          <span className="text-base font-semibold text-emerald-700 dark:text-emerald-300">
-            {formatCents(safeRecoveredCents)}
-          </span>
-        </div>
-        <div>
-          <span className="text-zinc-600 dark:text-zinc-400">Kosten NoShow Control:</span>{" "}
-          <span className="text-base font-semibold text-zinc-900 dark:text-white">
-            €{planCostEuros}
-          </span>
-        </div>
-        <div>
-          <span className="text-zinc-600 dark:text-zinc-400">Netto winst na herstel:</span>{" "}
-          <span
-            className={`text-base font-semibold ${
-              isPositive
-                ? "text-emerald-700 dark:text-emerald-300"
-                : "text-zinc-900 dark:text-white"
-            }`}
+          <Link
+            href="/waitlist?status=WAITING"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
           >
-            {isPositive ? "+" : ""}
-            {formatCents(Math.round(netEuros * 100))}
-          </span>
+            <Search className="h-4 w-4" />
+            Wachtlijst bekijken
+          </Link>
         </div>
-      </div>
-      <Link
-        href="/pricing"
-        className="inline-flex items-center gap-1 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-blue-400 hover:text-blue-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-      >
-        Bekijk abonnementen
-        <ArrowRight className="h-3 w-3" />
-      </Link>
+
+        {sortedWorklist.length === 0 ? (
+          <WorklistEmptyState />
+        ) : (
+          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {sortedWorklist.map((item) => {
+                const copy = CATEGORY_COPY[item.category];
+                const hasException = item.category === "action_needed";
+                return (
+                  <li key={item.id} className="p-3 sm:p-4">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${copy.badgeClass}`}>
+                            {copy.label}
+                          </span>
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {formatDateTime(item.startTime)}
+                          </span>
+                          {hasException && (
+                            <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                              Controle nodig
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="mt-2 text-sm font-semibold text-zinc-950 dark:text-white">
+                          {item.title}
+                        </h3>
+                        <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                          {item.description}
+                        </p>
+
+                        <dl className="mt-3 grid gap-2 text-xs text-zinc-500 sm:grid-cols-2 lg:grid-cols-4 dark:text-zinc-400">
+                          <div>
+                            <dt className="font-medium text-zinc-700 dark:text-zinc-300">Status</dt>
+                            <dd>{item.statusLabel}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-zinc-700 dark:text-zinc-300">Behandelaar</dt>
+                            <dd>{item.practitionerName}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-zinc-700 dark:text-zinc-300">Type</dt>
+                            <dd>{item.appointmentTypeName ?? "Niet ingesteld"}</dd>
+                          </div>
+                          <div>
+                            <dt className="font-medium text-zinc-700 dark:text-zinc-300">Aanbiedingen</dt>
+                            <dd>
+                              {item.offerSummary.total === 0
+                                ? "Geen"
+                                : `${item.offerSummary.total} totaal`}
+                            </dd>
+                          </div>
+                        </dl>
+
+                        <details className="mt-3">
+                          <summary className="cursor-pointer text-xs font-medium text-blue-700 hover:text-blue-800 dark:text-blue-300">
+                            Details tonen
+                          </summary>
+                          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                            {item.details.map((detail) => (
+                              <li key={detail}>{detail}</li>
+                            ))}
+                            {item.offerSummary.sent > 0 && (
+                              <li>
+                                Verzonden betekent dat verzending is geregistreerd; dit is geen afleverbevestiging.
+                              </li>
+                            )}
+                          </ul>
+                        </details>
+                      </div>
+
+                      <Link
+                        href={item.href}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:min-w-40"
+                      >
+                        {item.primaryActionLabel}
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

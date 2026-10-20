@@ -18,7 +18,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn, devMode, profile, loading: authLoading } = useAuth();
+  const { signIn, profile, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
 
@@ -32,14 +32,6 @@ function LoginForm() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // Demo/bypass mode: skip Firebase entirely. The middleware lets the
-      // request through and getCurrentUser() returns the seeded dev user.
-      if (devMode) {
-        toast.success("Demo-modus — u bent ingelogd");
-        redirectAfterAuth(redirect);
-        return;
-      }
-
       await signIn(email, password);
       toast.success("Welkom terug!");
       redirectAfterAuth(redirect);
@@ -48,8 +40,7 @@ function LoginForm() {
       // instead of a generic "wrong password" toast.
       const code = (err as { code?: string } | null)?.code ?? "";
       if (code === FIREBASE_NOT_CONFIGURED) {
-        toast.success("Demo-modus — u bent ingelogd");
-        redirectAfterAuth(redirect);
+        toast.error("Inloggen is tijdelijk niet beschikbaar: Firebase is niet geconfigureerd.");
         return;
       }
       if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
@@ -79,16 +70,6 @@ function LoginForm() {
         </p>
       </div>
 
-      {devMode && (
-        <div
-          role="status"
-          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200"
-        >
-          <strong className="font-semibold">Demo-modus actief.</strong> Firebase is niet
-          geconfigureerd — klik op &laquo;Inloggen&raquo; om door te gaan naar het demo-dashboard.
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -97,7 +78,7 @@ function LoginForm() {
           <input
             id="email"
             type="email"
-            required={!devMode}
+            required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
@@ -112,7 +93,7 @@ function LoginForm() {
           <input
             id="password"
             type="password"
-            required={!devMode}
+            required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
@@ -125,7 +106,7 @@ function LoginForm() {
           disabled={submitting}
           className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
         >
-          {submitting ? "Inloggen..." : devMode ? "Doorgaan naar demo-dashboard" : "Inloggen"}
+          {submitting ? "Inloggen..." : "Inloggen"}
         </button>
       </form>
 

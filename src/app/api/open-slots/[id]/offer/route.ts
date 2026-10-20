@@ -131,6 +131,7 @@ export async function POST(
   const entryById = new Map(entries.map((e) => [e.id, e]));
 
   const fmt = slot.startTime.toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
     weekday: "long",
     day: "numeric",
     month: "long",

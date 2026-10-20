@@ -38,6 +38,7 @@ function formatDate(d: Date | null | undefined) {
 
 function formatDateTime(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
     day: "numeric",
     month: "short",
     year: "numeric",

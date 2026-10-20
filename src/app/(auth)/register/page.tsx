@@ -20,11 +20,10 @@ function redirectAfterAuth(target: string) {
  * preserved in the post-register redirect URL so a future Stripe checkout
  * step (Phase 3+) can pick it up.
  *
- * REAL registration (vs. demo bypass):
+ * Registration:
  *   - Requires Firebase env vars (NEXT_PUBLIC_FIREBASE_* + FIREBASE_*) to
- *     be set on Vercel. Without them, the form renders a clear "demo-modus"
- *     notice and the submit button is disabled, so users don't see the
- *     misleading toast the prior version produced.
+ *     be set on Vercel. Without them, registration fails closed with a clear
+ *     error instead of creating a local or demo user.
  *   - On submit, signUp() creates a Firebase user → /api/auth/register
  *     creates the Prisma User + Practice + OWNER membership in one
  *     transaction → mints session cookie. Multi-tenancy is bootstrapped
@@ -36,7 +35,7 @@ function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signUp, devMode } = useAuth();
+  const { signUp } = useAuth();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
 
@@ -48,11 +47,6 @@ function RegisterForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (devMode) {
-      // Should never reach this — submit is disabled — but defend in depth.
-      toast.error("Registratie is op deze omgeving niet beschikbaar.");
-      return;
-    }
     if (password.length < 8) {
       toast.error("Wachtwoord moet minimaal 8 tekens zijn.");
       return;
@@ -107,18 +101,6 @@ function RegisterForm() {
         </p>
       </div>
 
-      {devMode && (
-        <div
-          role="status"
-          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200"
-        >
-          <strong className="font-semibold">Registratie niet beschikbaar.</strong>
-          {" "}Op deze omgeving is Firebase-auth nog niet geconfigureerd.
-          Ga via &laquo;Inloggen&raquo; door naar het demo-dashboard, of neem
-          contact op met de beheerder om auth te activeren.
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -127,8 +109,7 @@ function RegisterForm() {
           <input
             id="name"
             type="text"
-            required={!devMode}
-            disabled={devMode}
+            required
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
@@ -144,8 +125,7 @@ function RegisterForm() {
           <input
             id="practiceName"
             type="text"
-            required={!devMode}
-            disabled={devMode}
+            required
             value={practiceName}
             onChange={(e) => setPracticeName(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
@@ -164,8 +144,7 @@ function RegisterForm() {
           <input
             id="email"
             type="email"
-            required={!devMode}
-            disabled={devMode}
+            required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
@@ -181,8 +160,7 @@ function RegisterForm() {
           <input
             id="password"
             type="password"
-            required={!devMode}
-            disabled={devMode}
+            required
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -194,7 +172,7 @@ function RegisterForm() {
 
         <button
           type="submit"
-          disabled={loading || devMode}
+          disabled={loading}
           className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Account aanmaken..." : "Account aanmaken"}

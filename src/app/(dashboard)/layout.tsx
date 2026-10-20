@@ -8,25 +8,21 @@ import {
   LayoutDashboard,
   Calendar,
   Users,
+  Activity,
   Settings,
   LogOut,
-  CreditCard,
-  CalendarClock,
   ClipboardList,
-  HelpCircle,
   Menu,
   X,
 } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
-  { href: "/appointments", label: "Afspraken",    icon: Calendar },
-  { href: "/open-slots",   label: "Open plekken", icon: CalendarClock },
-  { href: "/waitlist",     label: "Wachtlijst",   icon: ClipboardList },
+  { href: "/appointments", label: "Agenda",       icon: Calendar },
   { href: "/patients",     label: "Patiënten",    icon: Users },
-  { href: "/facturatie",   label: "Facturatie",   icon: CreditCard },
+  { href: "/waitlist",     label: "Wachtlijst",   icon: ClipboardList },
+  { href: "/open-slots",   label: "Activiteiten", icon: Activity },
   { href: "/instellingen", label: "Instellingen", icon: Settings },
-  { href: "/help",         label: "Hulp",         icon: HelpCircle },
 ];
 
 /**
@@ -57,8 +53,8 @@ function NavList({
       {sidebarLinks.map((link) => {
         const active = isLinkActive(link.href, pathname);
         const cls = active
-          ? "relative flex items-center gap-3 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 shadow-sm shadow-blue-500/10 ring-1 ring-blue-500/15 dark:bg-blue-900/30 dark:text-blue-200 dark:ring-blue-700/40"
-          : "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800";
+          ? "relative flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 ring-1 ring-blue-100 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700"
+          : "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800";
         return (
           <Link
             key={link.label}
@@ -70,10 +66,10 @@ function NavList({
             {active && (
               <span
                 aria-hidden="true"
-                className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-blue-500"
+                className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-blue-700"
               />
             )}
-            <link.icon className={`h-5 w-5 ${active ? "text-blue-600 dark:text-blue-300" : ""}`} />
+            <link.icon className={`h-4 w-4 ${active ? "text-blue-700 dark:text-blue-300" : ""}`} />
             {link.label}
           </Link>
         );
@@ -100,9 +96,9 @@ function UserFooter({
   signOutError: string | null;
 }) {
   return (
-    <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+    <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-600">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-sm font-medium text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700">
           {firstName?.[0]?.toUpperCase() ?? "U"}
         </div>
         <div className="flex-1 truncate">
@@ -207,8 +203,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {/* ─── Desktop sidebar (lg+) ─────────────────────────────────────── */}
-      <aside className="hidden w-64 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
-        <div className="flex h-16 items-center border-b border-zinc-200 px-6 dark:border-zinc-800">
+      <aside className="hidden w-52 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
+        <div className="flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800">
           <Link href="/" className="text-lg font-bold text-zinc-900 dark:text-white">
             NoShow Control
           </Link>
@@ -239,6 +235,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Drawer itself — always mounted so the slide-out animation works on
           both open and close transitions. translate-x toggles visibility. */}
       <aside
+        id="dashboard-drawer"
         className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85%] flex-col border-r border-zinc-200 bg-white transition-transform duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900 lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
@@ -297,14 +294,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Link>
           <div
             aria-hidden="true"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-600"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700"
           >
             {firstName?.[0]?.toUpperCase() ?? "U"}
           </div>
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-7 lg:px-8">
             {children}
           </div>
         </main>

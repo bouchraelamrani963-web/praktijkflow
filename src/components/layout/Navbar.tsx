@@ -7,15 +7,12 @@ import { useState } from "react";
 
 /**
  * Shared light-theme navbar. The landing page (`src/app/page.tsx`) uses its
- * own inline dark navbar — this one is currently only consumed by /pricing.
+ * own inline marketing navbar — this one is currently consumed by /pricing.
  *
- * Items match the landing nav order so the user sees a consistent menu
- * across pages: Voorbeeld · Prijzen · Inloggen · Start gratis.
- *   - "Voorbeeld" links to /#voorbeeld (cross-page anchor — scrolls into
- *     the landing's preview section after navigating).
- *   - "Start gratis" always goes to /dashboard. The dashboard route handles
- *     redirect-to-login for unauthenticated users via middleware (or admits
- *     the demo bypass user when Firebase isn't configured).
+ * Items match the landing nav order so the user sees a consistent menu.
+ *   - "Naar app" always goes to /login. Authenticated users are redirected
+ *     onward by the app.
+ *   - Protected dashboard routes redirect unauthenticated users to /login.
  *   - Auth-aware twist: when the user is already logged in, swap "Inloggen"
  *     for "Uitloggen" so the menu stays useful instead of pointing at a
  *     login screen they'd be redirected away from.
@@ -34,10 +31,16 @@ export function Navbar() {
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 md:flex">
           <Link
-            href="/#voorbeeld"
+            href="/#how"
             className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
           >
-            Voorbeeld
+            Hoe het werkt
+          </Link>
+          <Link
+            href="/#features"
+            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+          >
+            Functionaliteiten
           </Link>
           <Link
             href="/pricing"
@@ -63,10 +66,10 @@ export function Navbar() {
                 </Link>
               )}
               <Link
-                href="/dashboard"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                href="/login"
+                className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800"
               >
-                Start gratis
+                Naar app
               </Link>
             </>
           )}
@@ -87,11 +90,18 @@ export function Navbar() {
         <div className="border-t border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950 md:hidden">
           <div className="flex flex-col gap-3">
             <Link
-              href="/#voorbeeld"
+              href="/#how"
               className="text-sm text-zinc-600 dark:text-zinc-400"
               onClick={() => setMobileOpen(false)}
             >
-              Voorbeeld
+              Hoe het werkt
+            </Link>
+            <Link
+              href="/#features"
+              className="text-sm text-zinc-600 dark:text-zinc-400"
+              onClick={() => setMobileOpen(false)}
+            >
+              Functionaliteiten
             </Link>
             <Link
               href="/pricing"
@@ -120,11 +130,11 @@ export function Navbar() {
               </Link>
             )}
             <Link
-              href="/dashboard"
+              href="/login"
               className="text-sm font-medium text-blue-600"
               onClick={() => setMobileOpen(false)}
             >
-              Start gratis
+              Naar app
             </Link>
           </div>
         </div>

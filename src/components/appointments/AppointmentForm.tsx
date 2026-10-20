@@ -205,12 +205,19 @@ export function AppointmentForm({
     }));
   }
 
-  // Picker filter — search by code OR description (case-insensitive).
+  // Show the complete catalog when browsing. A code prefix ("V", "V91")
+  // filters on the treatment code; other searches also match descriptions.
   const filteredTypes = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase();
-    if (!q) return types.slice(0, 60); // cap initial render for perf
-    const hits = types.filter((t) => t.name.toLowerCase().includes(q));
-    return hits.slice(0, 60);
+    if (!q) return types;
+
+    const isCodePrefix = /^[a-z]\d*$/.test(q);
+    return types.filter((t) => {
+      const code = codeOf(t.name).toLowerCase();
+      return isCodePrefix
+        ? code.startsWith(q)
+        : code.includes(q) || descOf(t.name).toLowerCase().includes(q);
+    });
   }, [types, pickerQuery]);
 
   async function handleSubmit(e: FormEvent) {
@@ -325,7 +332,7 @@ export function AppointmentForm({
             <ListPlus className="h-4 w-4 text-blue-500" aria-hidden="true" />
             Behandelcodes
             <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
-              — Tarieven 2025
+              — Prijzen uit praktijkcatalogus
             </span>
           </h3>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -397,13 +404,14 @@ export function AppointmentForm({
           {types.length === 0 ? (
             <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
               Geen behandelcodes beschikbaar. Ga naar Instellingen →
-              &laquo;Standaard behandelcodes 2025 laden&raquo; om de KNMT-catalog
+              &laquo;NZa 2026 importeren&raquo; om de behandelcatalog
               te importeren.
             </p>
           ) : (
             <ul
               role="listbox"
-              className="max-h-56 overflow-y-auto rounded-md border border-zinc-200 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              aria-label="Behandelcodes, scroll voor alle codes"
+              className="max-h-96 overflow-y-auto overscroll-contain rounded-md border border-zinc-200 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-800"
             >
               {filteredTypes.length === 0 && (
                 <li className="px-3 py-2 text-xs text-zinc-500">Geen resultaten.</li>
@@ -435,11 +443,6 @@ export function AppointmentForm({
                   </li>
                 );
               })}
-              {!pickerQuery && types.length > 60 && (
-                <li className="border-t border-zinc-200 px-3 py-1.5 text-xs text-zinc-500 dark:border-zinc-700">
-                  Eerste 60 codes — typ om te filteren ({types.length} totaal).
-                </li>
-              )}
             </ul>
           )}
         </div>

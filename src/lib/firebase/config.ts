@@ -4,7 +4,7 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 
 /**
  * Returns true when client-side Firebase env vars are present.
- * In dev mode with no config, the app uses a dev-bypass instead of crashing.
+ * Missing config must fail closed; it must never enable an auth bypass.
  */
 export function isFirebaseConfigured(): boolean {
   return !!(

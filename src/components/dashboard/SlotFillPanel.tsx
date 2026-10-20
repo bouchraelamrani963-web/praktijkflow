@@ -180,9 +180,9 @@ export function SlotFillPanel({
 
   const metricCards = (metrics || isDemoMode)
     ? [
-        { label: "Vrijgekomen plekken",    value: safeData.slotsFreed ?? 0,   icon: CalendarX,  color: "text-red-500",     href: "/open-slots" },
-        { label: "Verstuurde aanbiedingen", value: safeData.offersSent ?? 0,   icon: Send,        color: "text-blue-500",    href: "/waitlist" },
-        { label: "Opnieuw ingevulde plekken", value: safeData.slotsFilled ?? 0,  icon: CheckCheck,  color: "text-emerald-500", href: "/open-slots?status=CLAIMED" },
+        { label: "Vrijgekomen plekken", value: safeData.slotsFreed ?? 0, icon: CalendarX, color: "text-slate-500", href: "/open-slots" },
+        { label: "Aanbiedingen", value: safeData.offersSent ?? 0, icon: Send, color: "text-blue-600", href: "/open-slots?status=OFFERED" },
+        { label: "Opnieuw ingevuld", value: safeData.slotsFilled ?? 0, icon: CheckCheck, color: "text-teal-600", href: "/open-slots?status=CLAIMED" },
         {
           label: "Gemiddelde invultijd",
           value:
@@ -190,14 +190,14 @@ export function SlotFillPanel({
               ? `${safeData.avgMinutesToFill} min`
               : "Nog geen",
           icon: Clock3,
-          color: "text-purple-500",
+          color: "text-slate-500",
           href: "/open-slots",
         },
         {
-          label: "Teruggewonnen omzet",
+          label: "Waarde ingevulde plekken",
           value: formatEuros(safeData.recoveredRevenueCents),
           icon: Euro,
-          color: "text-emerald-600",
+          color: "text-teal-600",
           href: "/open-slots?status=CLAIMED",
         },
       ]
@@ -208,7 +208,7 @@ export function SlotFillPanel({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-white">
           <Activity className="h-5 w-5 text-blue-600" />
-          Omzet-herstel via de wachtlijst
+          Agenda-herstel via de wachtlijst
         </h2>
         <div className="flex items-center gap-2">
           <button
@@ -223,7 +223,7 @@ export function SlotFillPanel({
             <button
               onClick={runDemo}
               disabled={demoState === "loading"}
-              className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-slate-600"
             >
               {demoState === "loading" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -250,11 +250,11 @@ export function SlotFillPanel({
             <Link
               key={card.label}
               href={card.href}
-              className="group block cursor-pointer rounded-xl border border-zinc-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-blue-500"
+            className="group block cursor-pointer rounded-lg border border-zinc-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-blue-500"
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">{card.label}</span>
-                <card.icon className={`h-5 w-5 ${card.color} transition group-hover:scale-110`} />
+                <card.icon className={`h-5 w-5 ${card.color}`} />
               </div>
               <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">{card.value}</p>
             </Link>
@@ -274,7 +274,7 @@ export function SlotFillPanel({
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
             <div
-              className="h-full bg-emerald-500 transition-all"
+              className="h-full bg-teal-600 transition-all"
               style={{
                 width: `${Number.isFinite(safeData.fillRate) ? safeData.fillRate : 0}%`,
               }}

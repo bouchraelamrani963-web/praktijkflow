@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
-import { isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { seedDemoData } from "@/lib/demo-seed";
+import { getCurrentUser, hasRole } from "@/lib/auth/session";
+import type { NextRequest } from "next/server";
 
 /**
  * Trigger the demo-data seed from the dashboard banner button.
  *
  * Guards (any failure → 4xx):
  *   1. DATABASE_URL must be set — there's nothing to seed without a DB.
- *   2. Bypass (demo) mode must be active — i.e. Firebase Admin is NOT
- *      configured. This is the same signal `getCurrentUser()` uses to enable
- *      the FALLBACK_DEV_USER. We refuse to seed demo data into a real auth
- *      tenant by accident.
+ *   2. The caller must be an authenticated OWNER/ADMIN with a practice.
  *
  * The underlying `seedDemoData` is idempotent: clicking the button twice is
  * a no-op the second time. Writes are NOT wrapped in safeQuery — we want a
@@ -22,8 +20,27 @@ import { seedDemoData } from "@/lib/demo-seed";
  *   [SEED] SUCCESS — already-seeded=… durationMs=…
  *   [SEED] FAILED — <message>
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
   console.log("[SEED] STARTED");
+
+  if (process.env.NODE_ENV === "production") {
+    console.warn("[SEED] FAILED — disabled in production");
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const user = await getCurrentUser(req);
+  if (!user) {
+    console.warn("[SEED] FAILED — unauthenticated");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!user.practiceId) {
+    console.warn("[SEED] FAILED — no practice context");
+    return NextResponse.json({ error: "No practice context" }, { status: 403 });
+  }
+  if (!hasRole(user, ["OWNER", "ADMIN"])) {
+    console.warn("[SEED] FAILED — insufficient role");
+    return NextResponse.json({ error: "Admin only" }, { status: 403 });
+  }
 
   if (!isDatabaseConfigured()) {
     console.warn("[SEED] FAILED — DATABASE_URL not set");
@@ -35,18 +52,6 @@ export async function POST() {
         hint: "Voeg een Postgres connection string toe in Vercel → Settings → Environment Variables.",
       },
       { status: 400 },
-    );
-  }
-
-  if (isFirebaseAdminConfigured()) {
-    console.warn("[SEED] FAILED — Firebase auth is configured (demo seed disabled)");
-    return NextResponse.json(
-      {
-        success: false,
-        databaseConfigured: true,
-        error: "Demo seed is uitgeschakeld wanneer Firebase-auth geconfigureerd is.",
-      },
-      { status: 403 },
     );
   }
 

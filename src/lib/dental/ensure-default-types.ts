@@ -1,28 +1,28 @@
 /**
- * Idempotent bootstrap of the KNMT 2025 dental treatment-code catalog
+ * Idempotent bootstrap of the NZa 2026 dental treatment-code catalog
  * onto a single practice.
  *
- * Source-of-truth for the codes/tariffs is `knmt-2025.ts` (auto-generated
- * from the official NZa beleidsregel 41758 PDF). This file owns the
+ * Source-of-truth for the codes/tariffs is `nza-2026.ts` (auto-generated
+ * from the user-supplied official NZa 2026 spreadsheet). This file owns the
  * "given those codes, what AppointmentType rows do we want?" decision:
  *
  *   - name      = "<CODE> — <description>"  (e.g. "C001 — Consult ten behoeve")
  *   - color     = category-based palette (this file)
- *   - price     = KNMT 2025 tariff in cents (verbatim from PDF)
- *   - duration  = KNMT category default (heuristic, practice can override)
+ *   - price     = NZa 2026 tariff in cents (verbatim from PDF)
+ *   - duration  = category default (heuristic, practice can override)
  *   - active    = true on bootstrap
  *
  * The function is safe to call multiple times and from inside a Prisma
  * transaction (the `client` param accepts both PrismaClient and a
  * transaction client).
  *
- * Match-by-name is intentional: practices can rename a row without losing
- * it on next ensure-call. Conversely if a practice deletes one we'll re-add
- * it — that's the right behaviour for a "restore defaults" action.
+ * Match-by-code protects practice-specific descriptions and existing prices.
+ * It only inserts missing codes; it never re-prices existing catalog rows.
  */
 
 import type { PrismaClient } from "@/generated/prisma/client";
-import { KNMT_2025, type KnmtCategory } from "@/lib/dental/knmt-2025";
+import { NZA_2026 } from "@/lib/dental/nza-2026";
+import type { KnmtCategory } from "@/lib/dental/knmt-2025";
 
 /**
  * Color per category. Picked from the design system palette so calendar
@@ -58,7 +58,7 @@ function formatName(code: string, description: string): string {
 }
 
 export interface EnsureResult {
-  /** Total entries in the KNMT 2025 catalog. */
+  /** Total entries with a fixed NZa 2026 tariff. */
   total: number;
   /** Newly inserted rows. */
   added: number;
@@ -74,33 +74,33 @@ type PrismaLike = Pick<PrismaClient, "appointmentType">;
 
 /**
  * Insert any missing default appointment types for `practiceId`. Existing
- * rows with the same `name` are NOT touched (no overwrite of a renamed/
- * re-priced row). New rows are inserted with KNMT 2025 tariff and
+ * rows with the same `code` are NOT touched (no overwrite of a renamed/
+ * re-priced row). New rows are inserted with NZa 2026 tariff and
  * category-derived color.
  */
 export async function ensureDefaultAppointmentTypes(
   client: PrismaLike,
   practiceId: string,
 ): Promise<EnsureResult> {
-  const total = KNMT_2025.length;
+  const total = NZA_2026.length;
 
   const existing = await client.appointmentType.findMany({
     where: { practiceId },
     select: { name: true },
   });
-  const existingNames = new Set(existing.map((t) => t.name));
 
-  const toInsert = KNMT_2025
-    .filter((t) => t.active)
+  const knownCodes = new Set(existing.map((t) => t.name.match(/^([A-Z]\d{2,4}[A-Z]?)\s*[—–-]/)?.[1]).filter(Boolean));
+
+  const toInsert = NZA_2026
+    .filter((t) => !knownCodes.has(t.code))
     .map((t) => ({
-      name: formatName(t.code, t.name),
-      durationMinutes: t.defaultDurationMinutes,
-      color: CATEGORY_COLOR[t.category],
-      price: t.tariefCents,
+      name: formatName(t.code, t.description),
+      durationMinutes: t.category === "C" ? 15 : t.category === "X" ? 10 : 30,
+      color: CATEGORY_COLOR[t.category as KnmtCategory] ?? "#3B82F6",
+      price: t.priceCents,
       isActive: true,
-    }))
-    .filter((row) => !existingNames.has(row.name))
-    .map((row) => ({ ...row, practiceId }));
+      practiceId,
+    }));
 
   if (toInsert.length === 0) {
     return { total, added: 0, skipped: total };

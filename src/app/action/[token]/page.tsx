@@ -4,6 +4,7 @@ import { XCircle } from "lucide-react";
 
 function fmt(d: Date) {
   return d.toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
     weekday: "long",
     day: "numeric",
     month: "long",

@@ -1,7 +1,7 @@
 import type { PricingPlan } from "@/types";
 
 /**
- * NoShow Control 3-tier revenue-engine pricing.
+ * NoShow Control 3-tier SaaS pricing.
  *
  * Internal IDs are kept aligned with the existing Stripe webhook mapping
  * (`starter` / `pro` / `enterprise`) so billing integrations and historical
@@ -13,8 +13,8 @@ import type { PricingPlan } from "@/types";
  *   - id: "pro"         → marketing name "Pro"      · €79  · groeiend (highlighted)
  *   - id: "enterprise"  → marketing name "Growth"   · €119 · meerstoels
  *
- * Every plan MUST include `revenueFrame` — the product is sold as money back,
- * not as software. The line renders immediately under the price.
+ * `revenueFrame` is retained for type compatibility but should not be rendered
+ * as a hard claim on the public pricing page.
  */
 export const plans: PricingPlan[] = [
   {
@@ -26,7 +26,7 @@ export const plans: PricingPlan[] = [
     currency: "EUR",
     interval: "month",
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID ?? "",
-    revenueFrame: "Gemiddeld €150–€500 per maand teruggewonnen",
+    revenueFrame: "Open plekken en wachtlijst overzichtelijk beheren",
     features: [
       "Basis wachtlijst",
       "Handmatig aanbod sturen",
@@ -42,13 +42,13 @@ export const plans: PricingPlan[] = [
     currency: "EUR",
     interval: "month",
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ?? "",
-    revenueFrame: "Gemiddeld €500–€1.500 per maand teruggewonnen",
-    revenueSubNote: "De meeste praktijken verdienen dit plan binnen 1 week terug",
+    revenueFrame: "Aanbiedingen en claim-links gestructureerd opvolgen",
+    revenueSubNote: "Geschikt voor praktijken die de workflow dagelijks gebruiken",
     features: [
       "Volledige automatisering",
-      "SMS/WhatsApp-aanbiedingen",
+      "E-mailaanbiedingen met claim-link",
       "Dashboard inzichten",
-      "Prioriteit in wachtrij",
+      "Overzicht van aanbiedingen",
     ],
     highlighted: true,
   },
@@ -61,7 +61,7 @@ export const plans: PricingPlan[] = [
     currency: "EUR",
     interval: "month",
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID ?? "",
-    revenueFrame: "Gemiddeld €1.500–€4.000+ per maand teruggewonnen",
+    revenueFrame: "Meer behandelaren en open plekken centraal beheren",
     features: [
       "Multi-chair optimalisatie",
       "Geavanceerde rapportage",

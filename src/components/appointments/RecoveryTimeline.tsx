@@ -10,6 +10,7 @@ interface Props {
 
 function fmt(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -30,7 +31,7 @@ export async function RecoveryTimeline({
   sourceAppointmentId,
   currentAppointmentId,
 }: Props) {
-  const [sourceAppt, openSlot, offerLogs, claimLog] = await Promise.all([
+  const [sourceAppt, openSlot, claimLog] = await Promise.all([
     prisma.appointment.findFirst({
       where: { id: sourceAppointmentId, practiceId },
       select: {
@@ -43,15 +44,6 @@ export async function RecoveryTimeline({
     prisma.openSlot.findFirst({
       where: { sourceAppointmentId, practiceId },
       select: { id: true, createdAt: true, status: true, startTime: true, practitionerId: true },
-    }),
-    prisma.actionLog.findMany({
-      where: {
-        practiceId,
-        appointmentId: sourceAppointmentId,
-        action: { in: ["auto_offer_sent", "auto_offer_skipped"] },
-      },
-      orderBy: { createdAt: "asc" },
-      select: { id: true, action: true, outcome: true, createdAt: true, clientId: true },
     }),
     prisma.actionLog.findFirst({
       where: {
@@ -84,7 +76,34 @@ export async function RecoveryTimeline({
 
   if (!sourceAppt && !openSlot) return null;
 
-  const sentOffers = offerLogs.filter((l) => l.action === "auto_offer_sent");
+  // Both automatically and manually created offers are recorded in MessageLog.
+  // Match this slot's claim-link marker so unrelated appointment messages
+  // (such as reminders) cannot appear in its recovery timeline.
+  const sentOffers = openSlot
+    ? await prisma.messageLog.findMany({
+        where: {
+          practiceId,
+          channel: { in: ["email", "sms"] },
+          status: { in: ["mock", "sent"] },
+          body: { contains: `/action/${openSlot.id}.` },
+        },
+        orderBy: { createdAt: "asc" },
+        select: { clientId: true, status: true, createdAt: true },
+      })
+    : [];
+
+  const simulatedCount = sentOffers.filter((offer) => offer.status === "mock").length;
+  const sentCount = sentOffers.filter((offer) => offer.status === "sent").length;
+  const offerDetail = sentOffers.length === 0
+    ? "Nog geen aanbod aangemaakt"
+    : [
+        simulatedCount > 0
+          ? `${simulatedCount} testaanbod${simulatedCount === 1 ? "" : "en"} (geen echt bericht verstuurd)`
+          : null,
+        sentCount > 0
+          ? `${sentCount} verzending${sentCount === 1 ? "" : "en"} geregistreerd`
+          : null,
+      ].filter(Boolean).join(" · ");
   const offerClientIds = [
     ...new Set(sentOffers.map((l) => l.clientId).filter((id): id is string => Boolean(id))),
   ];
@@ -128,17 +147,14 @@ export async function RecoveryTimeline({
     {
       key: "offers",
       icon: Send,
-      title: "Aanbiedingen verstuurd",
+      title: "Aanbod aan wachtlijst",
       done: sentOffers.length > 0,
       tone: "blue" as const,
       time:
         sentOffers.length > 0 && slotCreatedAt
           ? fmtRelative(slotCreatedAt, sentOffers[0]!.createdAt)
           : null,
-      detail:
-        sentOffers.length > 0
-          ? `${sentOffers.length} patiënt${sentOffers.length === 1 ? "" : "en"} aangeschreven`
-          : "Nog geen aanbiedingen verstuurd",
+      detail: offerDetail,
       sublist: sentOffers.slice(0, 3).map((l) => {
         const c = l.clientId ? offerClientById.get(l.clientId) : null;
         return c ? `${c.firstName} ${c.lastName}` : "Onbekende patiënt";
@@ -166,7 +182,7 @@ export async function RecoveryTimeline({
       tone: "emerald" as const,
       time: newAppt && claimedAt ? fmt(claimedAt) : null,
       detail: newAppt
-        ? `€${((Number.isFinite(newAppt.revenueEstimateCents) ? newAppt.revenueEstimateCents : 0) / 100).toFixed(2)} teruggewonnen`
+        ? `Geschatte waarde: €${((Number.isFinite(newAppt.revenueEstimateCents) ? newAppt.revenueEstimateCents : 0) / 100).toFixed(2)}`
         : "Nog niet ingepland",
       isCurrent: currentAppointmentId === newAppt?.id,
     },

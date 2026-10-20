@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Search } from "lucide-react";
 import { DAY_LABELS, TIME_LABELS, STATUS_LABELS, TYPE_LABELS } from "@/lib/labels";
 
 type WaitlistStatus = "WAITING" | "OFFERED" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
@@ -27,9 +27,9 @@ interface ApiResponse {
 }
 
 const statusColors: Record<WaitlistStatus, string> = {
-  WAITING: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  OFFERED: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  ACCEPTED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  WAITING: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  OFFERED: "bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-900/40",
+  ACCEPTED: "bg-teal-50 text-teal-700 ring-1 ring-teal-100 dark:bg-teal-900/20 dark:text-teal-300 dark:ring-teal-900/40",
   EXPIRED: "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
   CANCELLED: "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
 };
@@ -65,6 +65,7 @@ function WaitlistInner() {
   const searchParams = useSearchParams();
 
   const [status, setStatus] = useState(searchParams.get("status") ?? "");
+  const [query, setQuery] = useState("");
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,31 +98,57 @@ function WaitlistInner() {
     return () => clearTimeout(t);
   }, [status, fetchEntries, router]);
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
+  const visibleItems = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return items;
+    return items.filter((entry) =>
+      [
+        entry.client.firstName,
+        entry.client.lastName,
+        entry.appointmentType?.name ?? "",
+        entry.preferredDay ?? "",
+        entry.preferredTime ?? "",
+        entry.notes ?? "",
+      ].some((value) => value.toLowerCase().includes(normalizedQuery)),
+    );
+  }, [items, query]);
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Wachtlijst</h1>
+          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">Wachtlijst</h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {data ? `${data.total} vermelding${data.total === 1 ? "" : "en"}` : "Laden..."}
           </p>
-          {/* Supporting-proof framing — explains WHY this page exists in the
-              revenue story: these patients are the engine behind every filled
-              slot. Inline, no tooltip. */}
           <p className="mt-2 max-w-3xl text-sm text-zinc-700 dark:text-zinc-300">
-            Deze patiënten wachten actief op een plek — zij zorgen ervoor dat
-            annuleringen direct worden opgevuld.
+            Deze patiënten wachten op een passende plek. Gebruik deze lijst om
+            bij annuleringen snel en overzichtelijk een aanbod te sturen.
           </p>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Hoe groter de wachtlijst, hoe hoger het invulpercentage.
+            Tip: vul voorkeuren en e-mailadres zorgvuldig in voor betere matches.
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_14rem]">
+        <div>
+          <label htmlFor="wl-search" className="block text-xs font-medium uppercase text-zinc-500">
+            Zoeken
+          </label>
+          <div className="relative mt-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input
+              id="wl-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Naam, voorkeur of behandeling"
+              className="w-full rounded-lg border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            />
+          </div>
+        </div>
         <div>
           <label htmlFor="wl-status" className="block text-xs font-medium uppercase text-zinc-500">
             Status
@@ -154,10 +181,13 @@ function WaitlistInner() {
           <div className="flex items-center justify-center p-8">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
           </div>
-        ) : items.length === 0 ? (
+        ) : visibleItems.length === 0 ? (
           <div className="p-12 text-center">
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Geen patiënten op de wachtlijst — hierdoor kunnen annuleringen niet automatisch worden opgevuld.
+              Geen patiënten op de wachtlijst.
+            </p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Voeg patiënten toe die eerder beschikbaar zijn, zodat open plekken later makkelijker kunnen worden aangeboden.
             </p>
           </div>
         ) : (
@@ -175,7 +205,7 @@ function WaitlistInner() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {items.map((entry) => (
+                {visibleItems.map((entry) => (
                   <tr
                     key={entry.id}
                     onClick={() => router.push(`/waitlist/${entry.id}`)}
@@ -201,7 +231,7 @@ function WaitlistInner() {
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {entry.isFlexible ? (
-                        <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                           Ja
                         </span>
                       ) : (

@@ -46,9 +46,9 @@ interface ApiResponse {
 }
 
 const statusColors: Record<SlotStatus, string> = {
-  AVAILABLE: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  OFFERED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  CLAIMED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  AVAILABLE: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  OFFERED: "bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-900/40",
+  CLAIMED: "bg-teal-50 text-teal-700 ring-1 ring-teal-100 dark:bg-teal-900/20 dark:text-teal-300 dark:ring-teal-900/40",
   EXPIRED: "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
 };
 
@@ -159,7 +159,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
           {/* Step-2 micro-guidance — tells the user WHAT they're looking at
               and WHERE to click next. Inline text, no tooltip. */}
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Dit gebeurt automatisch — klik op een ingevulde plek om te zien hoe de omzet is teruggewonnen.
+            Bekijk welke plekken beschikbaar zijn, waar een aanbod loopt en welke afspraken opnieuw zijn bevestigd.
           </p>
         </div>
         <Link
@@ -219,8 +219,11 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
           </div>
         ) : items.length === 0 ? (
           <div className="p-12 text-center">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Geen openstaande plekken — goed teken, er gaat momenteel geen omzet verloren.
+            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Geen open plekken gevonden.
+            </p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Zodra een afspraak wordt geannuleerd of handmatig wordt aangemaakt, verschijnt deze hier.
             </p>
           </div>
         ) : (
@@ -283,7 +286,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                       <td className="px-4 py-3 text-sm">
                         {s.sourceAppointmentId ? (
                           <div className="flex flex-col gap-0.5">
-                            <span className="inline-flex w-fit rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                          <span className="inline-flex w-fit rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                               Geannuleerde afspraak
                             </span>
                             {s.cancelledByLabel && (
@@ -331,7 +334,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                             Aanbod verzonden aan {s.offeredCount} patiënt{s.offeredCount === 1 ? "" : "en"}
                           </span>
                         ) : s.status === "AVAILABLE" ? (
-                          <span className="text-xs italic text-amber-600 dark:text-amber-400">
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
                             Nog niet ingevuld
                           </span>
                         ) : (
@@ -343,17 +346,17 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         {s.status === "CLAIMED" ? (
                           s.recoveredRevenueCents !== null ? (
-                            <span className="text-emerald-700 dark:text-emerald-300">
+                            <span className="text-teal-700 dark:text-teal-300">
                               {formatEuros(s.recoveredRevenueCents)}
                             </span>
                           ) : (
                             <span className="text-xs italic text-zinc-400">
-                              Omzet onbekend
+                              Waarde onbekend
                             </span>
                           )
                         ) : (
                           <span className="text-xs italic text-zinc-400">
-                            Geen omzet
+                            Nog geen waarde
                           </span>
                         )}
                       </td>
@@ -364,7 +367,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                         {s.status === "AVAILABLE" || s.status === "OFFERED" ? (
                           <Link
                             href={`/open-slots/${s.id}/matches`}
-                            className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                            className="inline-flex items-center gap-1 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:border-blue-200 hover:bg-blue-100 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40"
                           >
                             <Send className="h-3 w-3" />
                             {s.status === "OFFERED" ? "Bekijk aanbiedingen" : "Vind patiënten"}
@@ -373,7 +376,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                           <div className="flex flex-col items-end gap-1">
                             {s.id === firstClaimedId && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800">
-                                Bekijk hoe deze plek is ingevuld
+                                Opnieuw bevestigd
                               </span>
                             )}
                             <Link

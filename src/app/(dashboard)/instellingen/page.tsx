@@ -218,12 +218,11 @@ export default function InstellingenPage() {
               present in this practice. Useful for older accounts that
               were created before /api/auth/register seeded them, or after
               an accidental delete. */}
-          <RestoreTreatmentTypesPanel />
+          <Nza2026ImportPanel />
+          {false && <RestoreTreatmentTypesPanel />}
 
-          {/* Demo / sample data — moved here from the prior dashboard
-              top-banner. Lives in settings because (a) it's an admin action,
-              not part of normal daily flow, and (b) production users never
-              need to see "Demo-modus actief" splashed across their dashboard. */}
+          {/* Demo / sample data — admin-only sample data action, separate
+              from the public static /demo environment. */}
           <DemoDataPanel />
 
           {/* Opening hours */}
@@ -252,6 +251,67 @@ export default function InstellingenPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+function Nza2026ImportPanel() {
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<null | { total: number; created: number; updated: number; unchanged: number; deactivatedDuplicates: number; oldDentalUnverified: number }>(null);
+
+  async function importFile() {
+    if (!file || busy) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      if (file.size > 400000 || !file.name.toLowerCase().endsWith(".json")) {
+        throw new Error("Selecteer het gecontroleerde NZa 2026 JSON-bestand.");
+      }
+      const input = JSON.parse(await file.text());
+      const res = await fetch("/api/admin/import-nza-2026", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const output = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(output.error || "Import mislukt.");
+      setResult(output);
+      toast.success("NZa 2026-tarieven verwerkt in Preview.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Import mislukt.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-blue-200 bg-white p-6 dark:border-blue-900 dark:bg-zinc-900">
+      <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+        NZa tandheelkundige tarieven 2026 — Preview
+      </h2>
+      <p className="mt-2 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+        Werk 322 vaste NZa-tarieven uit TB/REG-26616-01 bij. De vier codes
+        zonder vast bedrag (A20, R90, J050 en Y02) worden niet ingevoerd.
+        Orthodontie (F-codes) valt buiten deze bron. Bestaande afspraken en
+        hun vastgelegde tarieven worden niet gewijzigd.
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <input type="file" accept=".json,application/json"
+          aria-label="NZa 2026 JSON-bestand"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="max-w-full text-xs text-zinc-700 dark:text-zinc-200" />
+        <button type="button" onClick={importFile} disabled={!file || busy}
+          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          {busy ? "Importeren…" : "NZa 2026 importeren"}
+        </button>
+      </div>
+      {result && <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-400">
+        {result.total} verwerkt: {result.created} toegevoegd, {result.updated} bijgewerkt,
+        {result.unchanged} al actueel en {result.deactivatedDuplicates} dubbele codes verborgen.
+        {result.oldDentalUnverified > 0 ? " Oude codes zonder vastgesteld 2026-tarief blijven apart te controleren." : ""}
+      </p>}
     </div>
   );
 }
