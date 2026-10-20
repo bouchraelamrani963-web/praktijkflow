@@ -1,14 +1,14 @@
 /**
- * Idempotent bootstrap of the KNMT 2025 dental treatment-code catalog
+ * Idempotent bootstrap of the NZa 2026 dental treatment-code catalog
  * onto a single practice.
  *
- * Source-of-truth for the codes/tariffs is `knmt-2025.ts` (auto-generated
+ * Source-of-truth for the codes/tariffs is `nza-2026.ts` (auto-generated
  * from the official NZa beleidsregel 41758 PDF). This file owns the
  * "given those codes, what AppointmentType rows do we want?" decision:
  *
  *   - name      = "<CODE> — <description>"  (e.g. "C001 — Consult ten behoeve")
  *   - color     = category-based palette (this file)
- *   - price     = KNMT 2025 tariff in cents (verbatim from PDF)
+ *   - price     = NZa 2026 tariff in cents (verbatim from PDF)
  *   - duration  = KNMT category default (heuristic, practice can override)
  *   - active    = true on bootstrap
  *
@@ -22,7 +22,8 @@
  */
 
 import type { PrismaClient } from "@/generated/prisma/client";
-import { KNMT_2025, type KnmtCategory } from "@/lib/dental/knmt-2025";
+import { NZA_2026 } from "@/lib/dental/nza-2026";
+import type { KnmtCategory } from "@/lib/dental/knmt-2025";
 
 /**
  * Color per category. Picked from the design system palette so calendar
@@ -82,25 +83,25 @@ export async function ensureDefaultAppointmentTypes(
   client: PrismaLike,
   practiceId: string,
 ): Promise<EnsureResult> {
-  const total = KNMT_2025.length;
+  const total = NZA_2026.length;
 
   const existing = await client.appointmentType.findMany({
     where: { practiceId },
     select: { name: true },
   });
-  const existingNames = new Set(existing.map((t) => t.name));
 
-  const toInsert = KNMT_2025
-    .filter((t) => t.active)
+  const knownCodes = new Set(existing.map((t) => t.name.match(/^([A-Z]\\d{2,4}[A-Z]?)\\s*[—–-]/)?.[1]).filter(Boolean));
+
+  const toInsert = NZA_2026
+    .filter((t) => !knownCodes.has(t.code))
     .map((t) => ({
-      name: formatName(t.code, t.name),
-      durationMinutes: t.defaultDurationMinutes,
-      color: CATEGORY_COLOR[t.category],
-      price: t.tariefCents,
+      name: formatName(t.code, t.description),
+      durationMinutes: t.category === "C" ? 15 : t.category === "X" ? 10 : 30,
+      color: CATEGORY_COLOR[t.category as KnmtCategory] ?? "#3B82F6",
+      price: t.priceCents,
       isActive: true,
-    }))
-    .filter((row) => !existingNames.has(row.name))
-    .map((row) => ({ ...row, practiceId }));
+      practiceId,
+    }));
 
   if (toInsert.length === 0) {
     return { total, added: 0, skipped: total };
