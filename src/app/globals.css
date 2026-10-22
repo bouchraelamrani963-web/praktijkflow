@@ -515,3 +515,51 @@ body {
 @media(max-width:1020px){.ns-demo-hero{gap:26px}.ns-demo-home{padding:0 28px}.ns-demo-flow{padding:20px 15px}}
 @media(max-width:760px){.ns-demo-header-label,.ns-demo-back-site{display:none}.ns-demo-mobile-toggle{display:flex}.ns-demo-layout{display:block}.ns-demo-sidebar{display:none}.ns-demo-mobile-menu{background:#1a4035;padding:10px}.ns-demo-mobile-menu .ns-demo-sidebar-label{display:none}.ns-demo-hero{grid-template-columns:1fr;padding:52px 0}.ns-demo-how{padding:50px 0}.ns-demo-end{flex-direction:column;align-items:flex-start}.ns-demo-footer{flex-direction:column;align-items:flex-start}.ns-demo-header{height:67px}}
 @media(max-width:480px){.ns-demo-home{padding:0 18px}.ns-demo-hero h1{font-size:36px}.ns-demo-steps{grid-template-columns:1fr}.ns-demo-flow-row{grid-template-columns:40px 1fr}.ns-demo-flow-pill{grid-column:2;justify-self:start}.ns-demo-header-inner{padding:0 18px}}
+
+
+/* Pricing page — editorial visual language, without changing registration flows. */
+.ns-pricing{min-height:100vh}
+.ns-pricing-hero{padding:96px 0 66px;border-bottom:1px solid #dfe6dc}
+.ns-pricing-hero h1{font:700 clamp(38px,4.3vw,65px)/1.17 Manrope,sans-serif;letter-spacing:-2.8px;color:#193f33;margin:22px 0}
+.ns-pricing-hero h1 em,.ns-pricing-outro h2 em{font-style:normal;color:#b26a48}
+.ns-pricing-lead{color:#657a6e;font-size:15px;line-height:1.9;max-width:670px}
+.ns-pricing-status{display:inline-flex;margin-top:25px;background:#e9efe7;padding:10px 13px;color:#426650;font-size:11px;font-weight:600}
+.ns-pricing-section{padding:55px 0 95px}
+.ns-pricing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+.ns-pricing-plan{display:flex;flex-direction:column;background:#fff;border:1px solid #d9e3d8;padding:30px 30px 28px;min-height:550px;position:relative}
+.ns-pricing-plan-featured{background:#e9f0e7;border-color:#aac4b2}
+.ns-pricing-card-top{display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:25px}
+.ns-pricing-plan-index{font:700 10px Manrope,sans-serif;letter-spacing:1.1px;color:#a4785f}
+.ns-pricing-plan-label{font:700 9px Manrope,sans-serif;letter-spacing:.7px;color:#32674b;background:#d7e7d9;padding:7px 8px;text-align:center}
+.ns-pricing-plan h2{font:700 23px Manrope,sans-serif;letter-spacing:-.8px;color:#1c4839;margin:29px 0 9px}
+.ns-pricing-tagline{color:#667f6f;font-size:12px;min-height:26px}
+.ns-pricing-price{display:flex;align-items:baseline;gap:8px;margin-top:23px}
+.ns-pricing-price strong{font:700 41px Manrope,sans-serif;color:#1b4035;letter-spacing:-1.9px}
+.ns-pricing-price span{font-size:13px;color:#607769}
+.ns-pricing-tax{font-size:10px;color:#819388;margin-top:4px}
+.ns-pricing-divider{height:1px;background:#dce5da;margin:28px 0 24px}
+.ns-pricing-includes{font:800 10px Manrope,sans-serif;letter-spacing:1.3px;color:#8b9b90;margin-bottom:19px}
+.ns-pricing-plan ul{display:flex;flex-direction:column;gap:16px;margin:0 0 35px}
+.ns-pricing-plan li{display:flex;align-items:flex-start;gap:11px;color:#3a5949;font-size:12px;line-height:1.5}
+.ns-pricing-plan li svg{flex-shrink:0;color:#477d5c}
+.ns-pricing-action{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;background:#1d4938;color:#fff!important;font-weight:700;font-size:12px;padding:15px 17px}
+.ns-pricing-action:hover{background:#2e6550}
+.ns-pricing-plan:not(.ns-pricing-plan-featured) .ns-pricing-action{background:#f0f3ec;color:#24493a!important;border:1px solid #dbe4d9}
+.ns-pricing-plan:not(.ns-pricing-plan-featured) .ns-pricing-action:hover{background:#e2eae0}
+.ns-pricing-smallprint{max-width:810px;margin:25px auto 0;text-align:center;font-size:11px;line-height:1.8;color:#87978b}
+.ns-pricing-outro{padding:84px 0;background:#1c4538}
+.ns-pricing-outro-inner{display:flex;align-items:center;justify-content:space-between;gap:35px}
+.ns-pricing-outro .ns-eyebrow{color:#cfb49f}
+.ns-pricing-outro h2{font:700 clamp(28px,3vw,44px)/1.24 Manrope,sans-serif;letter-spacing:-1.4px;color:#fff;margin:17px 0}
+.ns-pricing-outro h2 em{color:#d5ad91}
+.ns-pricing-outro p:not(.ns-eyebrow){color:#bdd0c0;font-size:12px;line-height:1.8;max-width:540px}
+.ns-pricing-demo-action{display:inline-flex;align-items:center;justify-content:center;gap:15px;background:#f4f5ed;color:#1d4939!important;padding:16px 19px;font-size:12px;font-weight:700;white-space:nowrap}
+.ns-pricing-demo-action:hover{background:#dce9d8}
+@media(max-width:950px){.ns-pricing-grid{grid-template-columns:1fr}.ns-pricing-plan{min-height:0}.ns-pricing-plan h2{margin-top:15px}.ns-pricing-plan ul{margin-bottom:28px}.ns-pricing-outro-inner{flex-direction:column;align-items:flex-start}}
+@media(max-width:600px){.ns-pricing-hero{padding:65px 0 45px}.ns-pricing-hero h1{letter-spacing:-1.6px;font-size:39px}.ns-pricing-section{padding:30px 0 60px}.ns-pricing-plan{padding:24px}.ns-pricing-outro{padding:65px 0}}
+
+/* Signed-in account action in public marketing navigation. */
+.ns-public-account-nav{display:inline-flex;align-items:center;position:relative}
+.ns-public-logout{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;cursor:pointer;font-family:inherit;padding:6px 0}
+.ns-public-logout:disabled{opacity:.6;cursor:wait}
+.ns-public-logout-error{position:absolute;top:100%;right:0;min-width:180px;padding:7px 9px;background:#fff3ed;border:1px solid #e8c9b7;font-size:11px;color:#8b3c22;z-index:3}
