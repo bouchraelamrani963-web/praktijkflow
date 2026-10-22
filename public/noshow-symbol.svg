@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" role="img" aria-label="NoShow Control logo">
+  <title>NoShow Control</title>
+  <!-- Minimal folded shape and a single appointment dot, based on concept 05. -->
+  <path d="M10 28C10 16 19 9 31 9H70C73 9 74 11 72 14L53 39H39C33 39 29 43 28 49L27 68C27 71 25 73 22 73H12C9 73 8 71 8 68V31C8 30 9 29 10 28Z" fill="#285848"/>
+  <path d="M27 68 28 50C29 43 33 39 39 39H53L43 54C40 59 41 63 43 68 39 72 33 73 27 73H21C25 72 27 70 27 68Z" fill="#4F806D"/>
+  <circle cx="62" cy="59" r="12" fill="#CAB394"/>
+</svg>
