@@ -4,6 +4,12 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { PublicAccountNav } from "@/components/brand/PublicAccountNav";
 import { plans } from "@/lib/stripe/plans";
 
+const vatRate = 1.21;
+const euros = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
+// Prices in the plan catalog are customer-facing gross prices, including 21% VAT.
+// No Stripe price IDs or checkout behavior are changed by this display calculation.
+const priceExVat = (gross: number) => euros.format(gross / vatRate);
+
 const benefitText: Record<string, string[]> = {
   starter: [
     "Open plekken overzichtelijk bijhouden",
@@ -72,7 +78,8 @@ export default function PricingPage() {
                   <strong>€{plan.price}</strong>
                   <span>/ maand</span>
                 </p>
-                <p className="ns-pricing-tax">Indicatie, exclusief btw</p>
+                <p className="ns-pricing-tax">Inclusief 21% btw</p>
+                <p className="ns-pricing-net">Excl. btw: {priceExVat(plan.price)} per maand</p>
                 <div className="ns-pricing-divider" />
                 <p className="ns-pricing-includes">BEOGDE MOGELIJKHEDEN</p>
                 <ul>
@@ -91,7 +98,7 @@ export default function PricingPage() {
           </div>
           <div className="ns-container">
             <p className="ns-pricing-smallprint">
-              Dit is een voorlopige pakketindeling. De definitieve functies per
+              De getoonde maandprijzen zijn inclusief 21% btw. De definitieve functies per
               abonnement, de betaalafhandeling en commerciële voorwaarden worden
               nog vastgesteld. Een account aanmaken is nog geen betaalde
               abonnementsovereenkomst.
