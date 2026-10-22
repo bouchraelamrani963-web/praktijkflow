@@ -60,13 +60,13 @@ export default function PricingPage() {
 
         <section className="ns-pricing-section" aria-label="Abonnementen vergelijken">
           <div className="ns-container ns-pricing-grid">
-            {plans.map((plan, index) => (
+            {plans.map((plan) => (
               <article
                 key={plan.id}
                 className={`ns-pricing-plan ${plan.highlighted ? "ns-pricing-plan-featured" : ""}`}
               >
                 <div className="ns-pricing-card-top">
-                  <span className="ns-pricing-plan-index">0{index + 1} / 03</span>
+                  
                   {plan.highlighted && <span className="ns-pricing-plan-label">VOOR DAGELIJKS GEBRUIK</span>}
                 </div>
                 <h2>{plan.name}</h2>
