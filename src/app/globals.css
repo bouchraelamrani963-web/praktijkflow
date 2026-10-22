@@ -410,3 +410,29 @@ body {
 .ns-app .ns-app-slot-trail{line-height:1.7}
 .ns-app .ns-app-slots td:last-child a{font-weight:700}
 @media(max-width:720px){.ns-app :is(.ns-app-patient-filters,.ns-app-slot-filters){padding:12px}.ns-app .ns-app-collection-header{align-items:stretch}}
+
+
+/* New open-slot editor — coherent form hierarchy, unchanged behavior. */
+.ns-app .ns-app-new-slot{max-width:1120px}
+.ns-app .ns-app-new-slot-heading{border-bottom:1px solid #dbe2d9;padding-bottom:24px;margin-bottom:32px}
+.ns-app .ns-app-new-slot-back{color:#577263;font-weight:600;margin-bottom:29px}
+.ns-app .ns-app-new-slot-back:hover{color:#b45e3e}
+.ns-app .ns-app-new-slot h1{font:700 clamp(27px,3vw,39px)/1.17 Manrope,sans-serif;letter-spacing:-1.5px;color:#21483c;margin:10px 0 12px}
+.ns-app .ns-app-new-slot-intro{font-size:14px;line-height:1.75;color:#75897b;max-width:630px}
+.ns-app .ns-app-new-slot-section{max-width:740px;background:#fff;border:1px solid #dbe2d9}
+.ns-app .ns-app-new-slot-section-heading{padding:28px 33px 21px;display:flex;align-items:end;justify-content:space-between;gap:18px;border-bottom:1px solid #e7ece5}
+.ns-app .ns-app-new-slot-section-overline{font:700 10px Manrope,sans-serif;letter-spacing:1.7px;color:#a16a4c;margin-bottom:10px}
+.ns-app .ns-app-new-slot-section h2{font:700 18px Manrope,sans-serif;letter-spacing:-.4px;color:#24493a}
+.ns-app .ns-app-new-slot-required{font-size:11px;color:#85948a;white-space:nowrap}
+.ns-app .ns-app-new-slot-form{max-width:none;background:transparent;padding:30px 33px 34px}
+.ns-app .ns-app-new-slot-form label{display:block;font:700 12px 'DM Sans',sans-serif;color:#4c6757;margin-bottom:9px}
+.ns-app .ns-app-new-slot-form :is(input,select,textarea){width:100%;border:1px solid #d5dfd5!important;border-radius:3px!important;background:#fff!important;color:#203c30!important;padding:12px 13px!important;font-size:13px;min-height:45px;box-shadow:none!important}
+.ns-app .ns-app-new-slot-form textarea{min-height:87px;resize:vertical}
+.ns-app .ns-app-new-slot-form :is(input,select,textarea):focus{outline:2px solid #4c8466;outline-offset:1px}
+.ns-app .ns-app-new-slot-form>div:not(.ns-app-new-slot-actions){margin-bottom:24px}
+.ns-app .ns-app-new-slot-actions{padding-top:10px;flex-wrap:wrap}
+.ns-app .ns-app-new-slot-submit{background:#1e4b3b!important;color:white!important;border-radius:3px!important;padding:13px 22px!important;min-height:46px;font-weight:700}
+.ns-app .ns-app-new-slot-submit:hover{background:#2b634d!important}
+.ns-app .ns-app-new-slot-cancel{border-radius:3px!important;border-color:#d4ded4!important;color:#3f6450!important;padding:12px 22px!important;min-height:46px;display:inline-flex;align-items:center}
+.ns-app .ns-app-new-slot-cancel:hover{background:#f2f6ef!important}
+@media(max-width:640px){.ns-app .ns-app-new-slot-section-heading{padding:22px 19px}.ns-app .ns-app-new-slot-form{padding:22px 19px}.ns-app .ns-app-new-slot-section-heading{align-items:start;flex-direction:column}}
