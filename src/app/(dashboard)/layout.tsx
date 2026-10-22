@@ -53,8 +53,8 @@ function NavList({
       {sidebarLinks.map((link) => {
         const active = isLinkActive(link.href, pathname);
         const cls = active
-          ? "relative flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 ring-1 ring-blue-100 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700"
-          : "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800";
+          ? "ns-app-navlink ns-app-navlink-active relative flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 ring-1 ring-blue-100 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700"
+          : "ns-app-navlink flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800";
         return (
           <Link
             key={link.label}
@@ -201,15 +201,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="ns-app flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {/* ─── Desktop sidebar (lg+) ─────────────────────────────────────── */}
-      <aside className="hidden w-52 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
-        <div className="flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800">
-          <Link href="/" className="text-lg font-bold text-zinc-900 dark:text-white">
-            NoShow Control
+      <aside className="ns-app-sidebar hidden w-52 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
+        <div className="ns-app-brand-row flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800">
+          <Link href="/" className="ns-app-brand text-lg font-bold text-zinc-900 dark:text-white">
+            <span className="ns-app-brand-mark" aria-hidden="true"><span /><span /><span /></span>
+            <span>NoShow <span className="ns-app-brand-light">Control</span></span>
           </Link>
         </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="ns-app-navigation flex-1 space-y-1 px-3 py-4" aria-label="Praktijknavigatie">
           <NavList pathname={pathname} />
         </nav>
         <UserFooter
@@ -236,7 +237,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           both open and close transitions. translate-x toggles visibility. */}
       <aside
         id="dashboard-drawer"
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85%] flex-col border-r border-zinc-200 bg-white transition-transform duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900 lg:hidden ${
+        className={`ns-app-sidebar fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85%] flex-col border-r border-zinc-200 bg-white transition-transform duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900 lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-hidden={!mobileOpen}
@@ -258,7 +259,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <nav className="ns-app-navigation flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Mobiele praktijknavigatie">
           <NavList pathname={pathname} onLinkClick={() => setMobileOpen(false)} />
         </nav>
         <UserFooter
@@ -278,7 +279,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile topbar — only on < lg. Has the hamburger button + brand
             + an avatar mirror of the sidebar identity. */}
-        <header className="flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
+        <header className="ns-app-mobile-header flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
@@ -289,7 +290,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <Link href="/dashboard" className="text-base font-bold text-zinc-900 dark:text-white">
+          <Link href="/dashboard" className="ns-app-brand text-base font-bold text-zinc-900 dark:text-white">
             NoShow Control
           </Link>
           <div
@@ -300,8 +301,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-7 lg:px-8">
+        <main className="ns-app-main flex-1 overflow-y-auto">
+          <div className="ns-app-content mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-7 lg:px-8">
             {children}
           </div>
         </main>
