@@ -1,78 +1,49 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CheckCircle2, CalendarClock, ListChecks, Send } from "lucide-react";
 import { DemoShell } from "./DemoShell";
-import { demoFeatures, demoSummaryCards, demoWorkItems } from "./demo-data";
+
+const steps = [
+  { index: "01", icon: CalendarClock, title: "Er komt een afspraak vrij", text: "De praktijk ziet meteen welke behandeltijd beschikbaar is geworden." },
+  { index: "02", icon: ListChecks, title: "De wachtlijst toont passende patiënten", text: "Op basis van voorkeuren en beschikbaarheid kunt u kandidaten bekijken." },
+  { index: "03", icon: Send, title: "Een uitnodiging wordt klaargezet", text: "De praktijk houdt controle over wie een aanbod krijgt en wanneer." },
+  { index: "04", icon: CheckCircle2, title: "De open plek wordt opnieuw ingevuld", text: "Na acceptatie verschijnt de afspraak als ingevuld in het overzicht." },
+];
 
 export default function DemoHomePage() {
   return (
     <DemoShell>
-      <main>
-        <section className="pf-grad-hero pt-10 pb-10 sm:pt-16 sm:pb-14">
-          <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 lg:grid-cols-[1fr_0.95fr]">
-            <div>
-              <p className="pf-eyebrow">NoShow Control voor zorgpraktijken</p>
-              <h1 className="pf-display mt-4 max-w-2xl text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl">
-                Minder lege plekken in uw agenda.
-              </h1>
-              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
-                Beheer annuleringen, open plekken en wachtlijstpatiënten overzichtelijk vanuit één rustig dashboard.
-              </p>
-              <div className="mt-7">
-                <Link href="/demo/dashboard" className="pf-btn-primary">
-                  Bekijk dashboard demo
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">Automation First Dashboard</p>
-                  <p className="text-xs text-slate-500">Voorbeeldweergave met fictieve situaties</p>
-                </div>
-                <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">DEMO</span>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {demoSummaryCards.map((card) => (
-                  <div key={card.key} className={`rounded-lg border p-3 ${card.className}`}>
-                    <p className="text-xs font-medium text-slate-500">{card.label}</p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-950">{card.value}</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-600">{card.description}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-                Belangrijkste uitzondering: {demoWorkItems[0].title}
-              </div>
+      <main className="ns-demo-home">
+        <section className="ns-demo-hero">
+          <div className="ns-demo-hero-copy">
+            <p className="ns-demo-eyebrow">ZÓ WERKT NOSHOW CONTROL</p>
+            <h1>Van lege stoel naar <em>nieuwe afspraak.</em></h1>
+            <p>Ontdek in een voorbeeldomgeving hoe een geannuleerde afspraak via de wachtlijst opnieuw kan worden ingevuld — zonder te werken met echte patiëntgegevens.</p>
+            <div className="ns-demo-hero-links">
+              <Link href="/demo/dashboard" className="ns-demo-primary">Open het demo-dashboard <ArrowRight className="h-4 w-4" /></Link>
+              <a href="#demo-stappen" className="ns-demo-secondary">Bekijk het proces <ArrowUpRight className="h-4 w-4" /></a>
             </div>
           </div>
-        </section>
-
-        <section className="bg-white py-14 sm:py-16">
-          <div className="mx-auto max-w-6xl px-5">
-            <div className="max-w-2xl">
-              <p className="pf-eyebrow">Voor praktijken met een volle agenda</p>
-              <h2 className="pf-display mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">
-                Slim afsprakenbeheer voor zorgpraktijken
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                NoShow Control helpt teams sneller te zien welke plekken vrij zijn, welke patiënten passen en waar actie nodig is.
-              </p>
-            </div>
-            <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {demoFeatures.map((feature) => (
-                <article key={feature.title} className="pf-card p-5">
-                  <div className="pf-icon-tile">
-                    <feature.icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="mt-4 text-base font-semibold text-slate-950">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{feature.description}</p>
-                </article>
-              ))}
-            </div>
+          <div className="ns-demo-flow" aria-label="Vier stappen van annulering tot ingevulde afspraak">
+            <span className="ns-demo-flow-label">VOORBEELD VAN DE WORKFLOW</span>
+            <div className="ns-demo-flow-row"><span>14:30</span><strong>Afspraak geannuleerd</strong><span className="ns-demo-flow-pill ns-demo-flow-muted">Vrijgekomen</span></div>
+            <div className="ns-demo-flow-row"><span>14:31</span><strong>Passende kandidaten gevonden</strong><span className="ns-demo-flow-pill">Wachtlijst</span></div>
+            <div className="ns-demo-flow-row"><span>14:38</span><strong>Testaanbod aangemaakt</strong><span className="ns-demo-flow-pill">Testmodus</span></div>
+            <div className="ns-demo-flow-row ns-demo-flow-success"><span>14:51</span><strong>Afspraak opnieuw ingevuld</strong><span className="ns-demo-flow-pill">Bevestigd</span></div>
+            <p>Fictieve tijden en situaties. In deze demo worden geen berichten verstuurd.</p>
           </div>
         </section>
+        <section id="demo-stappen" className="ns-demo-how">
+          <div className="ns-demo-section-title"><p className="ns-demo-eyebrow">VAN ANNULERING TOT RESERVERING</p><h2>Vier heldere stappen.<br/><em>Eén overzicht.</em></h2></div>
+          <div className="ns-demo-steps">
+            {steps.map((step) => (
+              <article key={step.index}>
+                <div className="ns-demo-step-top"><span>{step.index}</span><step.icon className="h-5 w-5" strokeWidth={1.6}/></div>
+                <h3>{step.title}</h3><p>{step.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="ns-demo-end"><div><p className="ns-demo-eyebrow">BEKIJK DE SCHERMEN</p><h2>Ontdek de praktijkomgeving.</h2><p>Bekijk hoe het dashboard, de agenda en de wachtlijst samenwerken met fictieve voorbeeldgegevens.</p></div><Link className="ns-demo-primary" href="/demo/dashboard">Naar het dashboard <ArrowRight className="h-4 w-4"/></Link></section>
       </main>
     </DemoShell>
   );
