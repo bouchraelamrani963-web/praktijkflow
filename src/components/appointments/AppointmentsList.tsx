@@ -251,10 +251,10 @@ function Inner({
   );
 
   return (
-    <div>
+    <div className="ns-app-agenda">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Agenda</p>
+          <p className="ns-app-eyebrow">PLANNING & BESCHIKBAARHEID</p>
           <h1 className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-white">
             Beschikbaarheid en afspraken
           </h1>
@@ -285,7 +285,7 @@ function Inner({
         </div>
       </div>
 
-      <div className="mb-4 inline-flex w-full rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900 sm:w-fit">
+      <div className="ns-app-view-toggle mb-4 inline-flex w-full rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900 sm:w-fit">
         {[
           { value: "day", label: "Dag" },
           { value: "week", label: "Week" },
@@ -308,7 +308,7 @@ function Inner({
       </div>
 
       {/* Filters */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="ns-app-filters mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <label className="block text-xs font-medium uppercase text-zinc-500">Van</label>
           {/* Year-spinner bounds — without these, typing a single digit lands
