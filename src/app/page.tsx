@@ -14,19 +14,16 @@ import {
 
 const process = [
   {
-    number: "01",
     title: "Er komt tijd vrij.",
     description:
       "Een geannuleerde afspraak verschijnt direct als open plek, met de duur, behandelaar en behandeling.",
   },
   {
-    number: "02",
     title: "De wachtlijst helpt zoeken.",
     description:
       "Bekijk welke patiënten passen en bepaal zelf aan wie u de beschikbare tijd aanbiedt.",
   },
   {
-    number: "03",
     title: "De agenda wordt weer gevuld.",
     description:
       "Een patiënt bevestigt via een persoonlijke link. De plek wordt gereserveerd en dubbele claims worden voorkomen.",
@@ -144,9 +141,9 @@ export default function HomePage() {
 
         <div className="ns-strap">
           <div className="ns-container ns-strap-grid">
-            <div><span>01</span><strong>Minder zoeken naar passende patiënten</strong></div>
-            <div><span>02</span><strong>Duidelijkheid over iedere open plek</strong></div>
-            <div><span>03</span><strong>Een rustige workflow voor het team</strong></div>
+            <div><strong>Minder zoeken naar passende patiënten</strong></div>
+            <div><strong>Duidelijkheid over iedere open plek</strong></div>
+            <div><strong>Een rustige workflow voor het team</strong></div>
           </div>
         </div>
 
@@ -160,8 +157,7 @@ export default function HomePage() {
             </div>
             <div className="ns-process-list">
               {process.map((item) => (
-                <article className="ns-process-item" key={item.number}>
-                  <span className="ns-process-number">{item.number}</span>
+                <article className="ns-process-item" key={item.title}>
                   <div>
                     <h3>{item.title}</h3>
                     <p>{item.description}</p>
