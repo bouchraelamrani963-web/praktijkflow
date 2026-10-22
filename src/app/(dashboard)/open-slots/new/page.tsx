@@ -13,18 +13,33 @@ export default async function NewOpenSlotPage() {
   const { practitioners, types } = await loadAppointmentFormOptions(user.practiceId);
 
   return (
-    <div>
-      <Link
-        href="/open-slots"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Terug naar open plekken
-      </Link>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-white">
-        Nieuwe open plek
-      </h1>
-      <OpenSlotForm practitioners={practitioners} types={types} />
+    <div className="ns-app-new-slot">
+      <div className="ns-app-new-slot-heading">
+        <Link
+          href="/open-slots"
+          className="ns-app-new-slot-back inline-flex items-center gap-2 text-sm"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Terug naar open plekken
+        </Link>
+        <p className="ns-app-eyebrow">AGENDA &amp; BESCHIKBAARHEID</p>
+        <h1>Nieuwe open plek</h1>
+        <p className="ns-app-new-slot-intro">
+          Voeg beschikbare behandeltijd toe aan uw overzicht. Zo kunt u daarna
+          passende patiënten uit de wachtlijst vinden.
+        </p>
+      </div>
+
+      <section className="ns-app-new-slot-section" aria-labelledby="new-slot-section-title">
+        <div className="ns-app-new-slot-section-heading">
+          <div>
+            <p className="ns-app-new-slot-section-overline">HANDMATIGE INVOER</p>
+            <h2 id="new-slot-section-title">Gegevens van de open plek</h2>
+          </div>
+          <span className="ns-app-new-slot-required">* Verplicht</span>
+        </div>
+        <OpenSlotForm practitioners={practitioners} types={types} />
+      </section>
     </div>
   );
 }
