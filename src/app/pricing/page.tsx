@@ -1,98 +1,130 @@
-"use client";
-
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { plans } from "@/lib/stripe/plans";
-import { Check } from "lucide-react";
 
-/**
- * Pricing page. The Stripe checkout flow + subscription model are out of
- * scope right now (per current sprint scope: no billing). Plan-card CTAs
- * therefore route directly into the app at /dashboard. The Stripe
- * infrastructure (/api/stripe/*, lib/stripe/config) remains in the
- * codebase untouched for when the billing sprint lands.
- */
+const benefitText: Record<string, string[]> = {
+  starter: [
+    "Open plekken overzichtelijk bijhouden",
+    "Wachtlijstpatiënten beheren",
+    "Zelf geschikte kandidaten selecteren",
+  ],
+  pro: [
+    "Persoonlijke claim-links voor aanbiedingen",
+    "Aanbiedingsstatussen en opvolging",
+    "Dashboard met open plekken en uitzonderingen",
+    "Automatische herkenning van annuleringen",
+  ],
+  enterprise: [
+    "Overzicht voor meerdere behandelaren",
+    "Open plekken en wachtlijst op één plaats",
+    "Werkprocessen voor grotere praktijkteams",
+    "Verdere teamfuncties in ontwikkeling",
+  ],
+};
+
 export default function PricingPage() {
   return (
-    <>
-      <Navbar />
-      <main className="flex-1 bg-white dark:bg-zinc-950">
-        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
-              Pakketten voor rustiger agendabeheer
-            </h1>
-            <p className="mt-4 text-base leading-7 text-zinc-600 dark:text-zinc-400">
-              Kies het pakket dat past bij hoe uw praktijk open plekken,
-              wachtlijstpatiënten en aanbiedingen wil beheren.
-            </p>
+    <div className="ns-landing ns-pricing">
+      <header className="ns-header">
+        <div className="ns-container ns-header-content">
+          <Link href="/" className="ns-brand" aria-label="NoShow Control — naar homepage">
+            <BrandLogo />
+          </Link>
+          <nav className="ns-top-nav" aria-label="Hoofdnavigatie">
+            <Link href="/#werkwijze">Werkwijze</Link>
+            <Link href="/#mogelijkheden">Mogelijkheden</Link>
+            <Link href="/pricing" aria-current="page">Tarieven</Link>
+          </nav>
+          <div className="ns-nav-actions">
+            <Link href="/login" className="ns-link-login">Inloggen</Link>
+            <Link href="/demo" className="ns-nav-cta">Bekijk de demo <ArrowUpRight size={15} /></Link>
           </div>
+        </div>
+      </header>
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <div
+      <main>
+        <section className="ns-pricing-hero">
+          <div className="ns-container">
+            <p className="ns-eyebrow">OVERZICHTELIJK ABONNEMENT</p>
+            <h1>Meer ruimte in de agenda.<br/><em>Een pakket dat past.</em></h1>
+            <p className="ns-pricing-lead">
+              Iedere praktijk werkt anders. Van een eenvoudige wachtlijst tot het
+              zorgvuldig opvolgen van vrijgekomen behandeltijd: ontdek welke
+              mogelijkheden bij uw team passen.
+            </p>
+            <p className="ns-pricing-status">Pakketindeling in voorbereiding · Online betaling nog niet actief</p>
+          </div>
+        </section>
+
+        <section className="ns-pricing-section" aria-label="Abonnementen vergelijken">
+          <div className="ns-container ns-pricing-grid">
+            {plans.map((plan, index) => (
+              <article
                 key={plan.id}
-                className={`relative rounded-lg border bg-white p-7 dark:bg-zinc-900 ${
-                  plan.highlighted
-                    ? "border-blue-300 ring-1 ring-blue-100 dark:border-blue-800 dark:ring-blue-900/40"
-                    : "border-zinc-200 dark:border-zinc-700"
-                }`}
+                className={`ns-pricing-plan ${plan.highlighted ? "ns-pricing-plan-featured" : ""}`}
               >
-                {plan.highlighted && (
-                  <span className="absolute -top-3 left-6 rounded-md border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300">
-                    Veel gebruikt
-                  </span>
-                )}
-                <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  {plan.name}
-                </p>
-
-                <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-3xl font-semibold text-zinc-900 dark:text-white">
-                    &euro;{plan.price}
-                  </span>
-                  <span className="text-zinc-600 dark:text-zinc-400">
-                    / {plan.interval === "month" ? "maand" : "jaar"}
-                  </span>
+                <div className="ns-pricing-card-top">
+                  <span className="ns-pricing-plan-index">0{index + 1} / 03</span>
+                  {plan.highlighted && <span className="ns-pricing-plan-label">VOOR DAGELIJKS GEBRUIK</span>}
                 </div>
-
-                <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  {plan.tagline}
+                <h2>{plan.name}</h2>
+                <p className="ns-pricing-tagline">{plan.tagline}</p>
+                <p className="ns-pricing-price">
+                  <strong>€{plan.price}</strong>
+                  <span>/ maand</span>
                 </p>
-
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300"
-                    >
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
-                      {feature}
+                <p className="ns-pricing-tax">Indicatie, exclusief btw</p>
+                <div className="ns-pricing-divider" />
+                <p className="ns-pricing-includes">BEOGDE MOGELIJKHEDEN</p>
+                <ul>
+                  {(benefitText[plan.id] ?? plan.features).map((feature) => (
+                    <li key={feature}>
+                      <Check size={16} aria-hidden="true" strokeWidth={1.8} />
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-
-                <Link
-                  href={`/register?plan=${encodeURIComponent(plan.id)}`}
-                  className={`mt-8 block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-colors ${
-                    plan.highlighted
-                      ? "bg-blue-700 text-white hover:bg-blue-800"
-                      : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  }`}
-                >
-                  Aanmelden
+                <Link className="ns-pricing-action" href={`/register?plan=${encodeURIComponent(plan.id)}`}>
+                  Account aanmaken <ArrowUpRight size={17} aria-hidden="true" />
                 </Link>
-              </div>
+              </article>
             ))}
           </div>
+          <div className="ns-container">
+            <p className="ns-pricing-smallprint">
+              Dit is een voorlopige pakketindeling. De definitieve functies per
+              abonnement, de betaalafhandeling en commerciële voorwaarden worden
+              nog vastgesteld. Een account aanmaken is nog geen betaalde
+              abonnementsovereenkomst.
+            </p>
+          </div>
+        </section>
 
-          <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            Maandelijks opzegbaar · BTW exclusief · Directe activatie na betaling
-          </p>
-        </div>
+        <section className="ns-pricing-outro">
+          <div className="ns-container ns-pricing-outro-inner">
+            <div>
+              <p className="ns-eyebrow">EERST ZELF ERVAREN</p>
+              <h2>Bekijk NoShow Control<br/><em>in de praktijk.</em></h2>
+              <p>Ontdek met fictieve gegevens hoe een annulering via de wachtlijst opnieuw kan worden ingevuld.</p>
+            </div>
+            <Link href="/demo" className="ns-pricing-demo-action">
+              Open de interactieve demo <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+          </div>
+        </section>
       </main>
-      <Footer />
-    </>
+      <footer className="ns-footer">
+        <div className="ns-container ns-footer-inner">
+          <Link href="/" className="ns-brand ns-brand-footer" aria-label="NoShow Control — naar homepage"><BrandLogo /></Link>
+          <span>© {new Date().getFullYear()} NoShow Control</span>
+          <nav aria-label="Voettekst">
+            <Link href="/">Home</Link>
+            <Link href="/demo">Demo</Link>
+            <Link href="/login">Inloggen</Link>
+          </nav>
+        </div>
+      </footer>
+    </div>
   );
 }
