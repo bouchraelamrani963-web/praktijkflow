@@ -115,9 +115,10 @@ function WaitlistInner() {
   }, [items, query]);
 
   return (
-    <div>
+    <div className="ns-app-waitlist">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
+          <p className="ns-app-eyebrow">PATIËNTEN & BESCHIKBAARHEID</p>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">Wachtlijst</h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {data ? `${data.total} vermelding${data.total === 1 ? "" : "en"}` : "Laden..."}
@@ -133,7 +134,7 @@ function WaitlistInner() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_14rem]">
+      <div className="ns-app-filters mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_14rem]">
         <div>
           <label htmlFor="wl-search" className="block text-xs font-medium uppercase text-zinc-500">
             Zoeken
@@ -171,7 +172,7 @@ function WaitlistInner() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="ns-app-table-shell overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         {error ? (
           <div className="flex items-center gap-2 p-8 text-sm text-red-600">
             <AlertTriangle className="h-4 w-4" />

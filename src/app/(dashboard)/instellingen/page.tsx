@@ -129,17 +129,18 @@ export default function InstellingenPage() {
   }
 
   return (
-    <div>
-      <div className="mb-6">
+    <div className="ns-app-settings">
+      <div className="ns-app-settings-heading mb-6">
+        <p className="ns-app-eyebrow">PRAKTIJKBEHEER</p>
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Instellingen</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Beheer uw praktijkgegevens en voorkeuren
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="ns-app-settings-grid grid gap-6 lg:grid-cols-2">
         {/* Practice info */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="ns-app-settings-panel ns-app-settings-practice rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Praktijkgegevens</h2>
           {practice && (
             <form onSubmit={handleSavePractice} className="mt-4 space-y-4">
@@ -168,7 +169,7 @@ export default function InstellingenPage() {
         </div>
 
         {/* Right column */}
-        <div className="space-y-6">
+        <div className="ns-app-settings-aside space-y-6">
           {/* Theme */}
           <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Thema</h2>
@@ -213,17 +214,15 @@ export default function InstellingenPage() {
             </div>
           </div>
 
-          {/* Standard treatment-type catalog restore. Idempotent — only
-              adds the default Dutch dental codes that aren't already
-              present in this practice. Useful for older accounts that
-              were created before /api/auth/register seeded them, or after
-              an accidental delete. */}
-          <Nza2026ImportPanel />
-          {false && <RestoreTreatmentTypesPanel />}
-
-          {/* Demo / sample data — admin-only sample data action, separate
-              from the public static /demo environment. */}
-          <DemoDataPanel />
+          {/* Specialistische beheeracties blijven beschikbaar, maar
+              domineren niet langer de dagelijkse praktijkinstellingen. */}
+          <details className="ns-app-advanced">
+            <summary>Geavanceerd beheer <span>Tariefimport en voorbeelddata</span></summary>
+            <div className="ns-app-advanced-content">
+              <Nza2026ImportPanel />
+              <DemoDataPanel />
+            </div>
+          </details>
 
           {/* Opening hours */}
           <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">

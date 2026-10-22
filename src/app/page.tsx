@@ -1,264 +1,243 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  CalendarClock,
-  ClipboardList,
+  ArrowUpRight,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  Clock3,
+  ListChecks,
   Mail,
-  ShieldCheck,
 } from "lucide-react";
 
-const steps = [
+const process = [
   {
-    title: "Annulering wordt zichtbaar",
+    number: "01",
+    title: "Er komt tijd vrij.",
     description:
-      "Een vrijgekomen afspraak wordt als open plek geregistreerd, inclusief tijd, behandelaar en behandelingstype.",
+      "Een geannuleerde afspraak verschijnt direct als open plek, met de duur, behandelaar en behandeling.",
   },
   {
-    title: "Wachtlijst wordt gematcht",
+    number: "02",
+    title: "De wachtlijst helpt zoeken.",
     description:
-      "De praktijk ziet passende patiënten op de wachtlijst en kan gericht een aanbod sturen.",
+      "Bekijk welke patiënten passen en bepaal zelf aan wie u de beschikbare tijd aanbiedt.",
   },
   {
-    title: "Patiënt bevestigt online",
+    number: "03",
+    title: "De agenda wordt weer gevuld.",
     description:
-      "De eerste patiënt die de plek accepteert, reserveert de afspraak. Andere links worden netjes geblokkeerd.",
+      "Een patiënt bevestigt via een persoonlijke link. De plek wordt gereserveerd en dubbele claims worden voorkomen.",
   },
 ];
 
-const features = [
-  {
-    icon: CalendarClock,
-    title: "Open plekken beheren",
-    description:
-      "Bekijk vrijgekomen afspraken, status, bron en opvolging op één overzichtelijke plek.",
-  },
-  {
-    icon: ClipboardList,
-    title: "Wachtlijst gebruiken",
-    description:
-      "Leg voorkeuren vast en vind patiënten die passen bij de vrijgekomen tijd en behandeling.",
-  },
-  {
-    icon: Mail,
-    title: "Aanbod via e-mail",
-    description:
-      "Stuur een persoonlijke claim-link vanuit de praktijk. Testmodus maakt controleren eenvoudig.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Veilig claimen",
-    description:
-      "Elke link is uniek. Wie als eerste bevestigt, krijgt de plek; dubbele claims worden geblokkeerd.",
-  },
+const detailRows = [
+  { label: "Open plekken", value: "Direct inzicht in vrijgekomen tijd" },
+  { label: "Patiëntvoorkeuren", value: "Match op dag, tijd en behandeling" },
+  { label: "Uitnodigingen", value: "Persoonlijke aanbiedingslink" },
+  { label: "Bevestigingen", value: "Heldere status per afspraak" },
 ];
 
-const demoRows = [
-  { label: "Open plek", value: "Vandaag 14:30", status: "Beschikbaar" },
-  { label: "Wachtlijst", value: "3 passende patiënten", status: "Klaar" },
-  { label: "Aanbod", value: "2 claim-links gemaakt", status: "Testmodus" },
-  { label: "Bevestiging", value: "Nog geen claim", status: "Wachtend" },
-];
-
-const plans = [
-  {
-    name: "Starter",
-    price: "€59",
-    description: "Voor praktijken die open plekken en wachtlijst digitaal willen beheren.",
-  },
-  {
-    name: "Pro",
-    price: "€79",
-    description: "Voor praktijken die aanbiedingen en claim-links structureel willen gebruiken.",
-  },
-  {
-    name: "Growth",
-    price: "€119",
-    description: "Voor grotere praktijken met meerdere behandelaren en meer agendabeheer.",
-  },
-];
-
-function WordMark() {
+function Identity({ footer = false }: { footer?: boolean }) {
   return (
-    <span className="select-none text-lg leading-none" style={{ fontFamily: "var(--pf-font-display)" }}>
-      <span style={{ fontWeight: 700, color: "var(--pf-fg-1)" }}>NoShow</span>
-      <span style={{ fontWeight: 400, color: "var(--pf-fg-3)" }}>{" Control"}</span>
-    </span>
+    <Link href="/" className={footer ? "ns-brand ns-brand-footer" : "ns-brand"} aria-label="NoShow Control – startpagina">
+      <span className="ns-mark" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </span>
+      <span>NoShow<span className="ns-brand-light"> Control</span></span>
+    </Link>
+  );
+}
+
+function AppointmentVisual() {
+  return (
+    <div className="ns-workspace" aria-label="Voorbeeld van een agenda en de opvolging van een vrijgekomen plek">
+      <div className="ns-workspace-header">
+        <div>
+          <span className="ns-small-label">ZO KAN HET WERKEN</span>
+          <h2>Uw agenda, weer in balans.</h2>
+        </div>
+        <span className="ns-demo-tag">Voorbeeld</span>
+      </div>
+
+      <div className="ns-agenda-frame">
+        <div className="ns-agenda-heading">
+          <span className="ns-agenda-kicker"><CalendarDays size={15} strokeWidth={1.7} /> Dagoverzicht</span>
+          <span className="ns-agenda-day">Donderdag · voorbeeldplanning</span>
+        </div>
+        <div className="ns-agenda-row">
+          <span className="ns-agenda-time">14:00</span>
+          <div className="ns-agenda-event">
+            <span className="ns-event-marker ns-marker-green" />
+            <div><strong>Periodieke controle</strong><span>30 minuten · Behandelkamer 1</span></div>
+            <span className="ns-event-status">Gepland</span>
+          </div>
+        </div>
+        <div className="ns-agenda-row">
+          <span className="ns-agenda-time">14:30</span>
+          <div className="ns-agenda-event ns-agenda-recovered">
+            <span className="ns-event-marker ns-marker-terracotta" />
+            <div><strong>Vrijgekomen afspraak</strong><span>15 minuten · Consult</span></div>
+            <span className="ns-event-status ns-status-open">Open plek</span>
+          </div>
+        </div>
+        <div className="ns-agenda-row">
+          <span className="ns-agenda-time">14:45</span>
+          <div className="ns-agenda-event">
+            <span className="ns-event-marker ns-marker-green" />
+            <div><strong>Behandeling</strong><span>45 minuten · Behandelkamer 1</span></div>
+            <span className="ns-event-status">Gepland</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="ns-activity-line">
+        <div className="ns-activity-icon"><Check size={17} strokeWidth={2.1} /></div>
+        <div className="ns-activity-copy"><strong>Open plek opnieuw ingevuld</strong><span>Wachtlijst → aanbieding → bevestiging</span></div>
+        <ArrowUpRight size={18} strokeWidth={1.8} aria-hidden="true" />
+      </div>
+      <p className="ns-visual-note">Illustratieve weergave. Geen echte patiënt- of praktijkgegevens.</p>
+    </div>
   );
 }
 
 export default function HomePage() {
   return (
-    <div className="pf-dark min-h-screen">
-      <header className="pf-nav fixed inset-x-0 top-0 z-50">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <Link href="/" aria-label="NoShow Control home">
-            <WordMark />
-          </Link>
-          <nav className="hidden items-center gap-7 text-sm md:flex" style={{ color: "var(--pf-fg-2)" }}>
-            <a href="#how" className="transition hover:text-blue-700">Hoe het werkt</a>
-            <a href="#features" className="transition hover:text-blue-700">Functionaliteiten</a>
-            <a href="#pricing" className="transition hover:text-blue-700">Prijzen</a>
-            <Link href="/login" className="transition hover:text-blue-700">Inloggen</Link>
+    <div className="ns-landing">
+      <header className="ns-header">
+        <div className="ns-container ns-header-content">
+          <Identity />
+          <nav className="ns-top-nav" aria-label="Hoofdnavigatie">
+            <a href="#werkwijze">Werkwijze</a>
+            <a href="#mogelijkheden">Mogelijkheden</a>
+            <Link href="/pricing">Tarieven</Link>
           </nav>
-          <Link href="/login" className="pf-btn-primary text-sm" style={{ padding: "10px 18px" }}>
-            Naar app
-          </Link>
+          <div className="ns-nav-actions">
+            <Link href="/login" className="ns-link-login">Inloggen</Link>
+            <Link href="/demo" className="ns-nav-cta">Bekijk de demo <ArrowUpRight size={15} /></Link>
+          </div>
         </div>
       </header>
 
       <main>
-        <section className="pf-grad-hero pt-28 pb-16 sm:pt-36 sm:pb-20">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 lg:grid-cols-[1fr_0.9fr]">
-            <div>
-              <p className="pf-eyebrow">Agenda- en wachtlijstsoftware voor tandartspraktijken</p>
-              <h1 className="pf-display mt-4 max-w-2xl text-4xl font-bold leading-tight text-zinc-950 sm:text-5xl">
-                Minder lege plekken in uw agenda.
-              </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                NoShow Control helpt uw praktijk om annuleringen, open plekken
-                en wachtlijstpatiënten overzichtelijk te beheren. Rustig,
-                controleerbaar en zonder onnodige handmatige opvolging.
+        <section className="ns-hero">
+          <div className="ns-container ns-hero-grid">
+            <div className="ns-hero-copy">
+              <div className="ns-overline"><span className="ns-overline-dot" /> AGENDA & WACHTLIJST VOOR DE MONDZORG</div>
+              <h1>Een annulering hoeft geen <em>lege stoel</em> te betekenen.</h1>
+              <p className="ns-lead">
+                Maak van vrijgekomen tijd weer een afspraak. NoShow Control helpt uw praktijk
+                om open plekken te herkennen, passende wachtlijstpatiënten te vinden en
+                afspraken zorgvuldig opnieuw in te vullen.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link href="/login" className="pf-btn-primary">
-                  Inloggen
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-                <Link href="#how" className="pf-btn-secondary">
-                  Bekijk hoe het werkt
-                </Link>
+              <div className="ns-hero-actions">
+                <Link href="/demo" className="ns-btn ns-btn-dark">Bekijk hoe het werkt <ArrowRight size={18} /></Link>
+                <Link href="/login" className="ns-text-link">Naar uw praktijkomgeving <ArrowUpRight size={17} /></Link>
+              </div>
+              <div className="ns-hero-facts">
+                <span><CheckCircle2 size={16} /> Gericht uitnodigen</span>
+                <span><CheckCircle2 size={16} /> Praktijk houdt controle</span>
               </div>
             </div>
+            <AppointmentVisual />
+          </div>
+        </section>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" aria-label="Demo dashboard voorbeeld">
-              <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">Dashboard demo</p>
-                  <p className="text-xs text-slate-500">Voorbeeldweergave, geen echte praktijkdata</p>
-                </div>
-                <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                  Demo
-                </span>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {demoRows.map((row) => (
-                  <div key={row.label} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs font-medium text-slate-500">{row.label}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-950">{row.value}</p>
-                    <p className="mt-2 text-xs text-slate-600">{row.status}</p>
+        <div className="ns-strap">
+          <div className="ns-container ns-strap-grid">
+            <div><span>01</span><strong>Minder zoeken naar passende patiënten</strong></div>
+            <div><span>02</span><strong>Duidelijkheid over iedere open plek</strong></div>
+            <div><span>03</span><strong>Een rustige workflow voor het team</strong></div>
+          </div>
+        </div>
+
+        <section id="werkwijze" className="ns-section ns-process-section">
+          <div className="ns-container ns-process-grid">
+            <div className="ns-section-intro">
+              <p className="ns-eyebrow">VAN AFZEGGING TOT NIEUWE AFSPRAAK</p>
+              <h2>De dagelijkse praktijk, <em>maar dan eenvoudiger.</em></h2>
+              <p>Geen extra systeem waar u op moet letten. Wel één duidelijk overzicht voor de momenten waarop de planning verandert.</p>
+              <Link href="/demo" className="ns-inline-action">Bekijk de interactieve demo <ArrowUpRight size={17} /></Link>
+            </div>
+            <div className="ns-process-list">
+              {process.map((item) => (
+                <article className="ns-process-item" key={item.number}>
+                  <span className="ns-process-number">{item.number}</span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.description}</p>
                   </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="mogelijkheden" className="ns-section ns-features-section">
+          <div className="ns-container ns-feature-grid">
+            <div className="ns-feature-surface">
+              <div className="ns-feature-top">
+                <span className="ns-small-label">PRAKTIJKOVERZICHT</span>
+                <span className="ns-feature-indicator"><span /> Wachtlijst actief</span>
+              </div>
+              <div className="ns-feature-summary">
+                <span className="ns-feature-summary-icon"><ListChecks size={24} strokeWidth={1.65}/></span>
+                <div>
+                  <p>Vrijgekomen tijd</p>
+                  <strong>Wie past in deze plek?</strong>
+                </div>
+              </div>
+              <div className="ns-patient-line"><span className="ns-patient-avatar">A</span><span><strong>Patiënt A</strong><small>Flexibel beschikbaar</small></span><span className="ns-match">Passend</span></div>
+              <div className="ns-patient-line"><span className="ns-patient-avatar">B</span><span><strong>Patiënt B</strong><small>Voorkeur: middag</small></span><span className="ns-match">Passend</span></div>
+              <div className="ns-patient-line"><span className="ns-patient-avatar">C</span><span><strong>Patiënt C</strong><small>Voorkeur: andere dag</small></span><span className="ns-muted-match">Niet passend</span></div>
+              <div className="ns-feature-footer"><Mail size={16}/><span>Bepaal zelf wie u een aanbod stuurt.</span></div>
+            </div>
+            <div className="ns-feature-copy">
+              <p className="ns-eyebrow">WAT U ERMEE KUNT</p>
+              <h2>Overzicht dat uw team <em>echt helpt.</em></h2>
+              <p className="ns-feature-intro">Geen overdaad aan grafieken. Alleen de informatie die belangrijk is voor de volgende stap in de agenda.</p>
+              <div className="ns-detail-list">
+                {detailRows.map((row) => (
+                  <div key={row.label}><strong>{row.label}</strong><span>{row.value}</span><ArrowUpRight size={16} aria-hidden="true"/></div>
                 ))}
               </div>
-              <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-950">
-                Patiënten ontvangen een duidelijke claim-link. De praktijk houdt
-                controle over wat wordt aangeboden.
-              </div>
+              <p className="ns-feature-disclaimer">Voorbeeldschermen tonen fictieve informatie. Echte uitnodigingen en herinneringen hangen af van de ingestelde verzendfuncties.</p>
             </div>
           </div>
         </section>
 
-        <section id="how" className="pf-section bg-white">
-          <div className="mx-auto max-w-6xl px-5">
-            <div className="max-w-2xl">
-              <p className="pf-eyebrow">Hoe het werkt</p>
-              <h2 className="pf-display mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">
-                Van vrijgekomen afspraak naar bevestigde plek.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
-                De flow is ontworpen voor de dagelijkse praktijk: snel inzicht,
-                begrijpelijke acties en duidelijke statussen.
-              </p>
-            </div>
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {steps.map((step, index) => (
-                <article key={step.title} className="pf-card p-5">
-                  <span className="text-sm font-semibold text-blue-700">Stap {index + 1}</span>
-                  <h3 className="mt-3 text-lg font-semibold text-slate-950">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
-                </article>
-              ))}
-            </div>
+        <section className="ns-section ns-perspective">
+          <div className="ns-container ns-perspective-inner">
+            <span className="ns-quote-symbol" aria-hidden="true">“</span>
+            <p>De agenda verandert elke dag. De manier waarop uw praktijk daarop reageert, hoeft niet ingewikkeld te zijn.</p>
+            <div className="ns-perspective-end"><span>GEMAAKT VOOR HET RITME VAN EEN TANDARTSPRAKTIJK</span><Clock3 size={22} strokeWidth={1.3}/></div>
           </div>
         </section>
 
-        <section id="features" className="pf-section" style={{ background: "var(--pf-bg-deep)" }}>
-          <div className="mx-auto max-w-6xl px-5">
-            <div className="max-w-2xl">
-              <p className="pf-eyebrow">Functionaliteiten</p>
-              <h2 className="pf-display mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">
-                Alles rond open plekken op één plek.
-              </h2>
-            </div>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {features.map((feature) => (
-                <article key={feature.title} className="pf-card p-5">
-                  <div className="pf-icon-tile">
-                    <feature.icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="mt-4 text-base font-semibold text-slate-950">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{feature.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="pricing" className="pf-section bg-white">
-          <div className="mx-auto max-w-6xl px-5">
-            <div className="max-w-2xl">
-              <p className="pf-eyebrow">Prijzen</p>
-              <h2 className="pf-display mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">
-                Eenvoudige pakketten voor praktijksoftware.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
-                Kies een pakket dat past bij hoe uw praktijk wachtlijst en
-                agenda wil beheren.
-              </p>
-            </div>
-            <div className="mt-10 grid gap-4 lg:grid-cols-3">
-              {plans.map((plan) => (
-                <article key={plan.name} className="pf-card p-6">
-                  <h3 className="text-base font-semibold text-slate-950">{plan.name}</h3>
-                  <p className="mt-4 text-3xl font-semibold text-slate-950">
-                    {plan.price}
-                    <span className="text-sm font-normal text-slate-500"> / maand</span>
-                  </p>
-                  <p className="mt-4 text-sm leading-6 text-slate-600">{plan.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="border-t border-slate-200 bg-slate-50 py-12">
-          <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 sm:flex-row sm:items-center sm:justify-between">
+        <section className="ns-bottom-cta">
+          <div className="ns-container ns-bottom-grid">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">
-                Klaar om de workflow rustiger te beheren?
-              </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Log in en bekijk uw dashboard, open plekken en wachtlijst.
-              </p>
+              <p className="ns-eyebrow">ONTDEK NOSHOW CONTROL</p>
+              <h2>Meer grip op de dag. <em>Meer rust aan de balie.</em></h2>
             </div>
-            <Link href="/login" className="pf-btn-primary">
-              Inloggen
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            <div className="ns-bottom-actions">
+              <Link href="/demo" className="ns-btn ns-btn-light">Bekijk de demo <ArrowUpRight size={18}/></Link>
+              <Link href="/pricing" className="ns-bottom-link">Bekijk de tarieven <ArrowRight size={17}/></Link>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <WordMark />
-            <span>© {new Date().getFullYear()} NoShow Control</span>
-          </div>
-          <nav className="flex flex-wrap gap-5">
-            <a href="#how" className="hover:text-blue-700">Hoe het werkt</a>
-            <a href="#features" className="hover:text-blue-700">Functionaliteiten</a>
-            <a href="#pricing" className="hover:text-blue-700">Prijzen</a>
-            <Link href="/login" className="hover:text-blue-700">Inloggen</Link>
+      <footer className="ns-footer">
+        <div className="ns-container ns-footer-inner">
+          <Identity footer />
+          <span>© {new Date().getFullYear()} NoShow Control</span>
+          <nav aria-label="Voettekst">
+            <Link href="/pricing">Tarieven</Link>
+            <Link href="/demo">Demo</Link>
+            <Link href="/login">Inloggen</Link>
           </nav>
         </div>
       </footer>

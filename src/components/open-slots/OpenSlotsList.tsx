@@ -149,9 +149,10 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
   }, [loading, items, status]);
 
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="ns-app-slots">
+      <div className="ns-app-collection-header mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
+          <p className="ns-app-eyebrow">AGENDA & VRIJGEKOMEN TIJD</p>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Open plekken</h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {data ? `${data.total} plek${data.total === 1 ? "" : "ken"}` : "Laden…"}
@@ -172,7 +173,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="ns-app-slot-filters mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <label className="block text-xs font-medium uppercase text-zinc-500">Status</label>
           <select
@@ -207,7 +208,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="ns-app-collection-table overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         {error ? (
           <div className="flex items-center gap-2 p-8 text-sm text-red-600">
             <AlertTriangle className="h-4 w-4" />
@@ -235,8 +236,8 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Behandelaar</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Bron</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Audit</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500">Teruggewonnen omzet</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Opvolging</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500">Geschatte afspraakwaarde</th>
                   <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500">Actie</th>
                 </tr>
               </thead>
@@ -311,7 +312,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {s.status === "CLAIMED" ? (
-                          <div className="flex flex-col gap-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+                          <div className="ns-app-slot-trail flex flex-col gap-0.5 text-xs text-zinc-600 dark:text-zinc-400">
                             <span>
                               Opnieuw ingevuld door:{" "}
                               <span className="font-medium text-zinc-800 dark:text-zinc-200">
