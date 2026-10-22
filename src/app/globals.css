@@ -557,3 +557,9 @@ body {
 .ns-pricing-demo-action:hover{background:#dce9d8}
 @media(max-width:950px){.ns-pricing-grid{grid-template-columns:1fr}.ns-pricing-plan{min-height:0}.ns-pricing-plan h2{margin-top:15px}.ns-pricing-plan ul{margin-bottom:28px}.ns-pricing-outro-inner{flex-direction:column;align-items:flex-start}}
 @media(max-width:600px){.ns-pricing-hero{padding:65px 0 45px}.ns-pricing-hero h1{letter-spacing:-1.6px;font-size:39px}.ns-pricing-section{padding:30px 0 60px}.ns-pricing-plan{padding:24px}.ns-pricing-outro{padding:65px 0}}
+
+/* Signed-in account action in public marketing navigation. */
+.ns-public-account-nav{display:inline-flex;align-items:center;position:relative}
+.ns-public-logout{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;cursor:pointer;font-family:inherit;padding:6px 0}
+.ns-public-logout:disabled{opacity:.6;cursor:wait}
+.ns-public-logout-error{position:absolute;top:100%;right:0;min-width:180px;padding:7px 9px;background:#fff3ed;border:1px solid #e8c9b7;font-size:11px;color:#8b3c22;z-index:3}
