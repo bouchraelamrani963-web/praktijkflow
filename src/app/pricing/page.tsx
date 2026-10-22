@@ -65,10 +65,7 @@ export default function PricingPage() {
                 key={plan.id}
                 className={`ns-pricing-plan ${plan.highlighted ? "ns-pricing-plan-featured" : ""}`}
               >
-                <div className="ns-pricing-card-top">
-                  
-                  {plan.highlighted && <span className="ns-pricing-plan-label">VOOR DAGELIJKS GEBRUIK</span>}
-                </div>
+                {plan.highlighted && <span className="ns-pricing-plan-label">VOOR DAGELIJKS GEBRUIK</span>}
                 <h2>{plan.name}</h2>
                 <p className="ns-pricing-tagline">{plan.tagline}</p>
                 <p className="ns-pricing-price">
