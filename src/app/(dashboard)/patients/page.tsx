@@ -93,9 +93,10 @@ function PatientsList() {
   const items = data?.items ?? [];
 
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="ns-app-patients">
+      <div className="ns-app-collection-header mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
+          <p className="ns-app-eyebrow">PATIËNTENADMINISTRATIE</p>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Patiënten</h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {data ? `${data.total} patiënt${data.total === 1 ? "" : "en"}` : "Laden…"}
@@ -111,7 +112,7 @@ function PatientsList() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 flex flex-wrap gap-3">
+      <div className="ns-app-patient-filters mb-6 flex flex-wrap gap-3">
         <div className="relative min-w-[240px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
           <input
@@ -158,7 +159,7 @@ function PatientsList() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="ns-app-collection-table overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         {error ? (
           <div className="flex items-center gap-2 p-8 text-sm text-red-600">
             <AlertTriangle className="h-4 w-4" />
