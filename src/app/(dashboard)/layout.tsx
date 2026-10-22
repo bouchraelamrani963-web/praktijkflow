@@ -21,7 +21,7 @@ const sidebarLinks = [
   { href: "/appointments", label: "Agenda",       icon: Calendar },
   { href: "/patients",     label: "Patiënten",    icon: Users },
   { href: "/waitlist",     label: "Wachtlijst",   icon: ClipboardList },
-  { href: "/open-slots",   label: "Activiteiten", icon: Activity },
+  { href: "/open-slots",   label: "Open plekken", icon: Activity },
   { href: "/instellingen", label: "Instellingen", icon: Settings },
 ];
 
