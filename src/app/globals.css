@@ -6,6 +6,7 @@
    branding — kept to avoid a global CSS-class rename in this sprint.) */
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -251,7 +252,7 @@ body {
 
 
 /* NoShow Control editorial dental identity — Preview landing only. */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
 .ns-landing{--ns-ink:#183b35;--ns-muted:#657973;--ns-cream:#f8f7f2;--ns-green:#183b35;--ns-line:#dbe2d9;--ns-orange:#b45e3e;background:var(--ns-cream);color:var(--ns-ink);font-family:'DM Sans',Arial,sans-serif;overflow:hidden}
 .ns-landing *{box-sizing:border-box}
 .ns-landing a{text-decoration:none}
