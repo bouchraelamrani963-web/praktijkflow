@@ -563,3 +563,11 @@ body {
 .ns-public-logout{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;cursor:pointer;font-family:inherit;padding:6px 0}
 .ns-public-logout:disabled{opacity:.6;cursor:wait}
 .ns-public-logout-error{position:absolute;top:100%;right:0;min-width:180px;padding:7px 9px;background:#fff3ed;border:1px solid #e8c9b7;font-size:11px;color:#8b3c22;z-index:3}
+
+/* Numberless homepage and subscription cards: preserve alignment without blank number columns. */
+.ns-landing .ns-process-item{display:block}
+.ns-landing .ns-strap-grid>div{gap:0}
+.ns-pricing .ns-pricing-plan{position:relative}
+.ns-pricing .ns-pricing-plan-label{position:absolute;top:22px;right:22px}
+.ns-pricing .ns-pricing-plan h2{margin-top:33px}
+@media(max-width:950px){.ns-pricing .ns-pricing-plan h2{margin-top:24px}}
