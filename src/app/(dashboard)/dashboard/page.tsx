@@ -194,12 +194,12 @@ export default function DashboardPage() {
   const categories: AutomationCategory[] = ["action_needed", "open", "in_progress", "filled"];
 
   return (
-    <div className="space-y-6">
+    <div className="ns-app-dashboard space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Automation First</p>
+          <p className="ns-app-eyebrow">PRAKTIJKOVERZICHT · NOSHOW CONTROL</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-white">
-            Goedemorgen, {greetingName}
+            Welkom, {greetingName}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
             Zie direct welke plekken automatisch worden opgevolgd en waar de praktijk moet ingrijpen.
@@ -223,7 +223,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <section aria-labelledby="automation-summary-heading">
+      <section className="ns-app-overview" aria-labelledby="automation-summary-heading">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 id="automation-summary-heading" className="text-base font-semibold text-zinc-950 dark:text-white">
             Overzicht
@@ -237,7 +237,7 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="ns-app-stats grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {categories.map((category) => {
             const copy = CATEGORY_COPY[category];
             const Icon = copy.icon;
@@ -245,7 +245,7 @@ export default function DashboardPage() {
             return (
               <article
                 key={category}
-                className={`rounded-lg border p-4 shadow-sm ${copy.cardClass}`}
+                className={`ns-app-stat ns-app-stat-${category} rounded-lg border p-4 shadow-sm ${copy.cardClass}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -269,7 +269,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section aria-labelledby="worklist-heading">
+      <section className="ns-app-worklist" aria-labelledby="worklist-heading">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 id="worklist-heading" className="text-base font-semibold text-zinc-950 dark:text-white">
@@ -291,13 +291,13 @@ export default function DashboardPage() {
         {sortedWorklist.length === 0 ? (
           <WorklistEmptyState />
         ) : (
-          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="ns-app-worklist-panel overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {sortedWorklist.map((item) => {
                 const copy = CATEGORY_COPY[item.category];
                 const hasException = item.category === "action_needed";
                 return (
-                  <li key={item.id} className="p-3 sm:p-4">
+                  <li key={item.id} className="ns-app-worklist-item p-3 sm:p-4">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
