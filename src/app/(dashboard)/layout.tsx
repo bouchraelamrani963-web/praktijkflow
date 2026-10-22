@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -206,8 +207,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <aside className="ns-app-sidebar hidden w-52 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
         <div className="ns-app-brand-row flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800">
           <Link href="/" className="ns-app-brand text-lg font-bold text-zinc-900 dark:text-white">
-            <span className="ns-app-brand-mark" aria-hidden="true"><span /><span /><span /></span>
-            <span>NoShow <span className="ns-app-brand-light">Control</span></span>
+            <BrandLogo inverse compact />
           </Link>
         </div>
         <nav className="ns-app-navigation flex-1 space-y-1 px-3 py-4" aria-label="Praktijknavigatie">
@@ -248,7 +248,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             className="text-base font-bold text-zinc-900 dark:text-white"
             onClick={() => setMobileOpen(false)}
           >
-            NoShow Control
+            <BrandLogo inverse compact />
           </Link>
           <button
             type="button"

@@ -436,3 +436,18 @@ body {
 .ns-app .ns-app-new-slot-cancel{border-radius:3px!important;border-color:#d4ded4!important;color:#3f6450!important;padding:12px 22px!important;min-height:46px;display:inline-flex;align-items:center}
 .ns-app .ns-app-new-slot-cancel:hover{background:#f2f6ef!important}
 @media(max-width:640px){.ns-app .ns-app-new-slot-section-heading{padding:22px 19px}.ns-app .ns-app-new-slot-form{padding:22px 19px}.ns-app .ns-app-new-slot-section-heading{align-items:start;flex-direction:column}}
+
+
+/* NoShow Control logo concept 05: folded slot and appointment dot. */
+.ns-identity{display:inline-flex;align-items:center;gap:10px;line-height:1;white-space:nowrap;color:#1a4135}
+.ns-identity-symbol{width:38px;height:38px;object-fit:contain;flex-shrink:0}
+.ns-identity-words{display:flex;flex-direction:column;gap:3px;align-items:flex-start;font:400 13px/1.05 Manrope,sans-serif;letter-spacing:-.35px}
+.ns-identity-words strong{font-size:19px;font-weight:800;letter-spacing:-.7px}
+.ns-identity-inverse{color:#f8f7f2}
+.ns-identity-compact{gap:8px}
+.ns-identity-compact .ns-identity-symbol{width:30px;height:30px}
+.ns-identity-compact .ns-identity-words{font-size:10px;gap:2px}
+.ns-identity-compact .ns-identity-words strong{font-size:16px}
+.ns-landing .ns-brand{gap:0;letter-spacing:normal}
+.ns-app .ns-app-brand{letter-spacing:normal}
+@media(max-width:430px){.ns-landing .ns-identity-symbol{width:29px;height:29px}.ns-landing .ns-identity-words strong{font-size:15px}.ns-landing .ns-identity-words{font-size:11px}}
