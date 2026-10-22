@@ -72,7 +72,7 @@ export function OpenSlotForm({ practitioners, types }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 space-y-5">
+    <form onSubmit={handleSubmit} className="ns-app-new-slot-form space-y-5">
       <div>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Behandelaar *
@@ -162,17 +162,17 @@ export function OpenSlotForm({ practitioners, types }: Props) {
         />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="ns-app-new-slot-actions flex items-center gap-3">
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="ns-app-new-slot-submit rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {submitting ? "Aanmaken…" : "Open plek aanmaken"}
         </button>
         <Link
           href="/open-slots"
-          className="rounded-lg border border-zinc-300 px-6 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="ns-app-new-slot-cancel rounded-lg border border-zinc-300 px-6 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           Annuleren
         </Link>
