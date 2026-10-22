@@ -2,106 +2,95 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { FlaskConical, Menu, X } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, FlaskConical, Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { demoNavItems } from "./demo-data";
 
-function DemoWordMark() {
+function DemoNavigation({ close }: { close?: () => void }) {
+  const pathname = usePathname();
   return (
-    <span className="select-none text-lg leading-none" style={{ fontFamily: "var(--pf-font-display)" }}>
-      <span style={{ fontWeight: 700, color: "var(--pf-fg-1)" }}>NoShow</span>
-      <span style={{ fontWeight: 400, color: "var(--pf-fg-3)" }}>{" Control"}</span>
-    </span>
+    <nav className="ns-demo-navigation" aria-label="Demonavigatie">
+      <span className="ns-demo-sidebar-label">ONTDEK DE APPLICATIE</span>
+      {demoNavItems.map((item) => {
+        const active = pathname === item.href;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={close}
+            aria-current={active ? "page" : undefined}
+            className={`ns-demo-nav-item${active ? " ns-demo-nav-item-current" : ""}`}
+          >
+            <item.icon className="h-4 w-4" aria-hidden="true" />
+            <span>{item.label}</span>
+          </Link>
+        );
+      })}
+      <Link href="/demo" onClick={close} className="ns-demo-nav-start">
+        Hoe werkt het? <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
+    </nav>
   );
 }
 
 export function DemoShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="pf-dark min-h-screen bg-slate-50">
-      <div className="sticky top-0 z-50 border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-amber-900">
-        DEMO-OMGEVING - fictieve gegevens, geen database, geen betalingen, geen echte berichten
+    <div className="ns-demo pf-dark min-h-screen">
+      <div className="ns-demo-notice" role="note">
+        <FlaskConical className="h-4 w-4" aria-hidden="true" />
+        Demonstratie met fictieve gegevens · Geen echte patiëntgegevens, berichten of betalingen
       </div>
-      <header className="pf-nav sticky top-8 z-40 border-b border-slate-200">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <Link href="/demo" aria-label="NoShow Control demo home" className="shrink-0">
-            <DemoWordMark />
+
+      <header className="ns-demo-header">
+        <div className="ns-demo-header-inner">
+          <Link href="/" aria-label="NoShow Control startpagina" className="ns-demo-home-logo">
+            <BrandLogo compact />
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="hidden items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 sm:inline-flex">
-              <FlaskConical className="h-4 w-4" />
-              Lokale demo
-            </span>
+          <div className="ns-demo-header-actions">
+            <span className="ns-demo-header-label">INTERACTIEVE DEMO</span>
+            <Link href="/" className="ns-demo-back-site">
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Naar de website
+            </Link>
             <button
               type="button"
               onClick={() => setMobileOpen((open) => !open)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 md:hidden"
+              className="ns-demo-mobile-toggle"
+              aria-label={mobileOpen ? "Demonavigatie sluiten" : "Demonavigatie openen"}
               aria-expanded={mobileOpen}
-              aria-controls="demo-mobile-nav"
-              aria-label="Demo navigatie openen"
+              aria-controls="ns-demo-mobile-menu"
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
-        {mobileOpen && (
-          <nav id="demo-mobile-nav" className="border-t border-slate-200 bg-white px-4 py-3 md:hidden">
-            <div className="grid gap-1">
-              {demoNavItems.map((item) => {
-                const active = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                      active ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
-        )}
       </header>
 
-      <div className="mx-auto grid max-w-7xl md:grid-cols-[13rem_1fr]">
-        <aside className="sticky top-[6.5rem] hidden h-[calc(100vh-6.5rem)] border-r border-slate-200 bg-white px-3 py-4 md:block">
-          <nav className="space-y-1" aria-label="Demo navigatie">
-            {demoNavItems.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                    active ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
-        <div className="min-w-0">{children}</div>
-      </div>
-
-      <footer className="border-t border-slate-200 bg-white md:ml-[13rem]">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <span>Visuele demo, geen productieomgeving</span>
-          <Link href="/demo" className="font-medium text-blue-700 hover:text-blue-800">
-            Naar demo-homepage
-          </Link>
+      {mobileOpen && (
+        <div id="ns-demo-mobile-menu" className="ns-demo-mobile-menu">
+          <DemoNavigation close={() => setMobileOpen(false)} />
         </div>
-      </footer>
+      )}
+
+      <div className="ns-demo-layout">
+        <aside className="ns-demo-sidebar">
+          <DemoNavigation />
+          <div className="ns-demo-sidebar-footer">
+            <span className="ns-demo-sidebar-dot" />
+            <span>Veilige voorbeeldomgeving</span>
+          </div>
+        </aside>
+        <div className="ns-demo-content">
+          {children}
+          <footer className="ns-demo-footer">
+            <span>Dit is een demonstratie. Wijzigingen worden niet opgeslagen.</span>
+            <Link href="/" className="ns-demo-footer-link">Terug naar NoShow Control <ArrowUpRight className="h-4 w-4" /></Link>
+          </footer>
+        </div>
+      </div>
     </div>
   );
 }
