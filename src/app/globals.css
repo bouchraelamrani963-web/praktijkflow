@@ -385,3 +385,28 @@ body {
 .ns-app .ns-app-dashboard a.text-blue-700:hover,.ns-app .ns-app-dashboard summary.text-blue-700:hover{color:#b45e3e!important}
 .ns-app .ns-app-dashboard span.bg-teal-100{background:#e2eee6!important;color:#2b7055!important}
 @media(max-width:640px){.ns-app .ns-app-settings-heading h1{font-size:28px}.ns-app .ns-app-advanced>summary{flex-wrap:wrap}.ns-app .ns-app-advanced>summary span{flex-basis:100%;text-align:left;padding-left:25px}}
+
+
+/* Patient and open-slot operational lists — design only. */
+.ns-app :is(.ns-app-patients,.ns-app-slots) .ns-app-collection-header{padding-bottom:22px;border-bottom:1px solid #dbe2d9}
+.ns-app :is(.ns-app-patients,.ns-app-slots) h1{font:700 clamp(26px,2.4vw,35px)/1.25 Manrope,sans-serif;letter-spacing:-1.2px;color:#21483c;margin-top:7px}
+.ns-app .ns-app-collection-header p:not(.ns-app-eyebrow){color:#738579}
+.ns-app :is(.ns-app-patients,.ns-app-slots) a.bg-blue-600{background:#1e4b3b!important;border-radius:3px!important}
+.ns-app :is(.ns-app-patients,.ns-app-slots) a.bg-blue-600:hover{background:#31654e!important}
+.ns-app :is(.ns-app-patient-filters,.ns-app-slot-filters){padding:17px 18px;background:#f1f4ee;border:1px solid #dce4d9;gap:13px}
+.ns-app :is(.ns-app-patient-filters,.ns-app-slot-filters) :is(input,select){border-color:#d5dfd4!important;border-radius:3px!important;background:#fff;color:#254a3a}
+.ns-app :is(.ns-app-patient-filters,.ns-app-slot-filters) :is(input,select):focus{outline:2px solid #4d8168;outline-offset:1px;box-shadow:none}
+.ns-app :is(.ns-app-patient-filters,.ns-app-slot-filters) label{letter-spacing:.9px;color:#64786c;font-size:10px}
+.ns-app .ns-app-collection-table{border-radius:3px!important;border-color:#d9e2d8!important;box-shadow:none}
+.ns-app .ns-app-collection-table thead{background:#eef3ed!important}
+.ns-app .ns-app-collection-table th{color:#667d6e!important;letter-spacing:.8px;font-weight:700;font-size:10px}
+.ns-app .ns-app-collection-table td{border-color:#e6ebe5;vertical-align:middle}
+.ns-app .ns-app-collection-table tr:hover{background:#f4f7f2!important}
+.ns-app .ns-app-collection-table td:first-child{font-weight:600;color:#244738}
+.ns-app .ns-app-collection-table a.text-blue-600,.ns-app .ns-app-collection-table span.text-blue-600{color:#2d644f!important}
+.ns-app .ns-app-collection-table a.text-blue-600:hover{color:#af6b4c!important}
+.ns-app .ns-app-collection-table .bg-teal-50{background:#e7f1e9!important;color:#276b50!important}
+.ns-app .ns-app-collection-table .bg-blue-50{background:#edf2ed!important;color:#285b46!important;border-color:#d2e3d6!important}
+.ns-app .ns-app-slot-trail{line-height:1.7}
+.ns-app .ns-app-slots td:last-child a{font-weight:700}
+@media(max-width:720px){.ns-app :is(.ns-app-patient-filters,.ns-app-slot-filters){padding:12px}.ns-app .ns-app-collection-header{align-items:stretch}}
