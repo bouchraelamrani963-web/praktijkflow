@@ -280,3 +280,79 @@ body {
 @media(max-width:1100px){.ns-hero-grid{gap:40px}.ns-process-grid,.ns-feature-grid{gap:65px}.ns-top-nav{gap:16px}}
 @media(max-width:820px){.ns-container{width:min(100% - 38px,640px)}.ns-top-nav{display:none}.ns-hero{padding:60px 0 75px}.ns-hero-grid,.ns-process-grid,.ns-feature-grid{grid-template-columns:1fr;gap:50px}.ns-workspace{max-width:100%}.ns-section{padding:76px 0}.ns-strap-grid{grid-template-columns:1fr}.ns-strap-grid>div,.ns-strap-grid>div:first-child{border:0;border-bottom:1px solid #496d5e;padding:18px 0}.ns-bottom-grid{display:block}.ns-bottom-actions{margin-top:28px;align-items:start}.ns-footer-inner{flex-wrap:wrap}.ns-header-content{min-height:80px}}
 @media(max-width:520px){.ns-brand{font-size:15px}.ns-nav-actions{gap:9px}.ns-link-login{display:none}.ns-nav-cta{padding:11px;font-size:11px}.ns-hero h1{letter-spacing:-1.9px;font-size:42px}.ns-workspace{padding:20px 14px;box-shadow:10px 12px 0 #dce5dc}.ns-agenda-day{display:none}.ns-agenda-event{gap:4px;padding:9px 8px}.ns-event-status{font-size:9px}.ns-hero-actions{align-items:stretch;flex-direction:column}.ns-process-item{gap:8px;grid-template-columns:45px 1fr}.ns-feature-surface{padding:21px 16px}.ns-detail-list>div{grid-template-columns:105px 1fr 13px;gap:6px}.ns-bottom-cta{padding:70px 0}.ns-footer nav{gap:13px}}
+
+
+/* === NoShow Control editorial application — scoped behind authentication ===
+   Visual-only overrides: no change to patient, appointment or API behavior. */
+.ns-app {
+  --ns-ui-ink:#1e4539; --ns-ui-soft:#667c70; --ns-ui-line:#dbe2d9;
+  --ns-ui-paper:#fafaf7; --ns-ui-accent:#b45e3e;
+  background:var(--ns-ui-paper)!important;
+  color:var(--ns-ui-ink);
+  font-family:'DM Sans',Arial,sans-serif;
+}
+.ns-app .ns-app-sidebar{background:#193e34!important;border-color:#35594b!important;width:236px}
+.ns-app .ns-app-brand-row{height:88px;border-color:#35594b!important;padding-left:22px}
+.ns-app .ns-app-brand{color:#f7f5ec!important;font-family:Manrope,sans-serif;font-size:16px;font-weight:800;display:inline-flex;gap:11px;align-items:center;letter-spacing:-.6px}
+.ns-app .ns-app-brand-light{font-weight:400;color:#c8d8c9}
+.ns-app .ns-app-brand-mark{display:flex;align-items:center;gap:3px;width:22px;height:26px}
+.ns-app .ns-app-brand-mark span{display:block;width:4px;border-radius:5px;background:#dfb293;transform:rotate(22deg)}
+.ns-app .ns-app-brand-mark span:nth-child(1){height:13px}
+.ns-app .ns-app-brand-mark span:nth-child(2){height:23px}
+.ns-app .ns-app-brand-mark span:nth-child(3){height:16px}
+.ns-app .ns-app-navigation{padding:27px 12px!important}
+.ns-app .ns-app-navlink{border-radius:3px!important;padding:12px 14px!important;color:#d1ddd2!important;font-weight:500;gap:13px;transition:background .18s,color .18s}
+.ns-app .ns-app-navlink:hover{background:#285546!important;color:white!important}
+.ns-app .ns-app-navlink-active{background:#edf1e9!important;color:#204639!important;box-shadow:none!important;outline:0!important;--tw-ring-color:transparent!important}
+.ns-app .ns-app-navlink-active svg{color:#285a48!important}
+.ns-app .ns-app-navlink-active>span[aria-hidden="true"]{background:#b66f50!important;height:24px;border-radius:0}
+.ns-app .ns-app-sidebar>div:last-child{background:#173a31;border-color:#35594b!important;color:#e7eee7}
+.ns-app .ns-app-sidebar>div:last-child p{color:#e7eee7}
+.ns-app .ns-app-sidebar>div:last-child p.text-xs{color:#b8c8bb}
+.ns-app .ns-app-sidebar>div:last-child button{background:#275246!important;color:white!important;border-color:#456959!important;border-radius:3px}
+.ns-app .ns-app-main{background:#fafaf7}
+.ns-app .ns-app-content{max-width:1370px!important;padding-top:37px!important}
+.ns-app .ns-app-eyebrow{font-family:Manrope,sans-serif;color:#9a674f;letter-spacing:2px;font-weight:800;font-size:10px;text-transform:uppercase}
+.ns-app :is(.ns-app-dashboard,.ns-app-agenda,.ns-app-waitlist) h1{font-family:Manrope,sans-serif;font-size:clamp(25px,2.4vw,35px);font-weight:700;letter-spacing:-1.3px;color:#21483c;line-height:1.25}
+.ns-app :is(.ns-app-dashboard,.ns-app-agenda,.ns-app-waitlist)>header{padding-bottom:19px;border-bottom:1px solid var(--ns-ui-line)}
+.ns-app .ns-app-dashboard header p.text-sm:last-child{max-width:660px;color:#75867a}
+.ns-app .ns-app-dashboard header button,.ns-app .ns-app-worklist a[href^="/waitlist"]{border-radius:3px}
+.ns-app .ns-app-overview{margin-top:29px}
+.ns-app .ns-app-overview h2,.ns-app .ns-app-worklist h2{font-family:Manrope,sans-serif;font-weight:700;color:#244c3d}
+.ns-app .ns-app-stats{gap:0!important;border:1px solid #dce4da;background:#fff}
+.ns-app .ns-app-stat{border:0!important;border-right:1px solid #e4e9e2!important;background:#fff!important;border-radius:0!important;box-shadow:none!important;padding:24px!important;min-height:150px}
+.ns-app .ns-app-stat:last-child{border-right:0!important}
+.ns-app .ns-app-stat h3{font-family:Manrope,sans-serif;color:#284c3e;font-size:12px;font-weight:700}
+.ns-app .ns-app-stat p.text-2xl{font:700 37px Manrope,sans-serif;color:#1d4739}
+.ns-app .ns-app-stat p.text-xs{color:#819187;min-height:45px}
+.ns-app .ns-app-stat>div span{border-radius:2px;background:#eff2ec;color:#2c5847}
+.ns-app .ns-app-stat-action_needed{border-top:3px solid #b77753!important}
+.ns-app .ns-app-stat-open{border-top:3px solid #446c55!important}
+.ns-app .ns-app-stat-in_progress{border-top:3px solid #a0aa91!important}
+.ns-app .ns-app-stat-filled{border-top:3px solid #2d8060!important}
+.ns-app .ns-app-worklist{margin-top:32px}
+.ns-app .ns-app-worklist-panel{border-radius:3px!important;box-shadow:none!important;border-color:#dce4da!important}
+.ns-app .ns-app-worklist-item{padding:25px!important;background:white}
+.ns-app .ns-app-worklist-item h3{font-family:Manrope,sans-serif;font-size:15px;color:#214b3c}
+.ns-app .ns-app-worklist-item a[href^="/"]{border-radius:3px}
+.ns-app .ns-app-worklist-item a.bg-blue-600,
+.ns-app .ns-app-agenda a.bg-blue-600{background:#1e4b3b!important}
+.ns-app .ns-app-worklist-item a.bg-blue-600:hover,
+.ns-app .ns-app-agenda a.bg-blue-600:hover{background:#2e6650!important}
+.ns-app .ns-app-filters{background:#f1f3ee;border:1px solid #dce4d9;padding:17px 19px;gap:15px}
+.ns-app .ns-app-filters :is(input,select){border-radius:2px!important;border-color:#d5e0d4;background:#fff;color:#244438}
+.ns-app .ns-app-filters label{color:#697d6e;letter-spacing:1px;font-weight:700;font-size:10px}
+.ns-app .ns-app-view-toggle{border-radius:3px!important;background:#edf1ea!important;border:1px solid #d5ddd3!important}
+.ns-app .ns-app-view-toggle button{border-radius:2px!important}
+.ns-app .ns-app-table-shell{border-radius:3px!important;box-shadow:none;border-color:#d5dfd5!important}
+.ns-app .ns-app-table-shell thead{background:#f0f4ed!important}
+.ns-app .ns-app-table-shell th{color:#627b6d!important;letter-spacing:.75px;font-weight:700}
+.ns-app .ns-app-table-shell tbody tr:hover{background:#f5f8f3!important}
+.ns-app .ns-app-table-shell td{border-color:#e6ebe2}
+.ns-app .ns-app-agenda h1{margin-top:8px}
+.ns-app .ns-app-waitlist h1{margin-top:8px}
+.ns-app :is(.ns-app-agenda,.ns-app-waitlist) p.text-sm{line-height:1.75}
+@media(max-width:1270px){.ns-app .ns-app-stat{padding:17px!important}}
+@media(max-width:950px){.ns-app .ns-app-stat{border-right:0!important;border-bottom:1px solid #e4e9e2!important}.ns-app .ns-app-stat:last-child{border-bottom:0!important}}
+@media(max-width:1023px){.ns-app .ns-app-mobile-header{background:#193e34!important;color:white!important}.ns-app .ns-app-mobile-header>a,.ns-app .ns-app-mobile-header button{color:white!important}.ns-app .ns-app-content{padding-top:26px!important}}
+@media(max-width:640px){.ns-app .ns-app-content{padding-left:16px!important;padding-right:16px!important}.ns-app .ns-app-stats{border:0;background:transparent;gap:8px!important}.ns-app .ns-app-stat{border:1px solid #dce4da!important;border-top-width:3px!important}.ns-app .ns-app-worklist-item{padding:17px!important}}
