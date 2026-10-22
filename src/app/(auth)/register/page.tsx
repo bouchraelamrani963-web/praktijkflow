@@ -62,7 +62,7 @@ function RegisterForm() {
       await signUp(email, password, name, practiceName.trim());
       toast.success("Account aangemaakt!");
       const dest = plan
-        ? `/dashboard?plan=${encodeURIComponent(plan)}`
+        ? `/abonnement?plan=${encodeURIComponent(plan)}`
         : "/dashboard";
       redirectAfterAuth(dest);
     } catch (err) {
