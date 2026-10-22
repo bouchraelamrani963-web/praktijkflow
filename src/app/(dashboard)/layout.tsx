@@ -11,6 +11,7 @@ import {
   Users,
   Activity,
   Settings,
+  CreditCard,
   LogOut,
   ClipboardList,
   Menu,
@@ -24,6 +25,7 @@ const sidebarLinks = [
   { href: "/waitlist",     label: "Wachtlijst",   icon: ClipboardList },
   { href: "/open-slots",   label: "Open plekken", icon: Activity },
   { href: "/instellingen", label: "Instellingen", icon: Settings },
+  { href: "/abonnement",  label: "Abonnement", icon: CreditCard },
 ];
 
 /**
