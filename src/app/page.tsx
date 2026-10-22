@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { PublicAccountNav } from "@/components/brand/PublicAccountNav";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -111,7 +112,7 @@ export default function HomePage() {
             <Link href="/pricing">Tarieven</Link>
           </nav>
           <div className="ns-nav-actions">
-            <Link href="/login" className="ns-link-login">Inloggen</Link>
+            <PublicAccountNav />
             <Link href="/demo" className="ns-nav-cta">Bekijk de demo <ArrowUpRight size={15} /></Link>
           </div>
         </div>
