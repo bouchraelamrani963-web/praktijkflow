@@ -571,3 +571,6 @@ body {
 .ns-pricing .ns-pricing-plan-label{position:absolute;top:22px;right:22px}
 .ns-pricing .ns-pricing-plan h2{margin-top:33px}
 @media(max-width:950px){.ns-pricing .ns-pricing-plan h2{margin-top:24px}}
+
+/* Gross package prices are primary; ex-VAT equivalents remain visible below. */
+.ns-pricing-net{font-size:11px;line-height:1.6;color:#768c7e;margin-top:5px}
