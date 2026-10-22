@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { PublicAccountNav } from "@/components/brand/PublicAccountNav";
 import { plans } from "@/lib/stripe/plans";
 
 const benefitText: Record<string, string[]> = {
@@ -37,7 +38,7 @@ export default function PricingPage() {
             <Link href="/pricing" aria-current="page">Tarieven</Link>
           </nav>
           <div className="ns-nav-actions">
-            <Link href="/login" className="ns-link-login">Inloggen</Link>
+            <PublicAccountNav />
             <Link href="/demo" className="ns-nav-cta">Bekijk de demo <ArrowUpRight size={15} /></Link>
           </div>
         </div>
