@@ -356,3 +356,32 @@ body {
 @media(max-width:950px){.ns-app .ns-app-stat{border-right:0!important;border-bottom:1px solid #e4e9e2!important}.ns-app .ns-app-stat:last-child{border-bottom:0!important}}
 @media(max-width:1023px){.ns-app .ns-app-mobile-header{background:#193e34!important;color:white!important}.ns-app .ns-app-mobile-header>a,.ns-app .ns-app-mobile-header button{color:white!important}.ns-app .ns-app-content{padding-top:26px!important}}
 @media(max-width:640px){.ns-app .ns-app-content{padding-left:16px!important;padding-right:16px!important}.ns-app .ns-app-stats{border:0;background:transparent;gap:8px!important}.ns-app .ns-app-stat{border:1px solid #dce4da!important;border-top-width:3px!important}.ns-app .ns-app-worklist-item{padding:17px!important}}
+
+
+/* Settings and remaining high-visibility accents, Preview only. */
+.ns-app .ns-app-settings-heading{border-bottom:1px solid #dbe2d9;padding-bottom:21px}
+.ns-app .ns-app-settings-heading h1{font:700 34px/1.25 Manrope,sans-serif;letter-spacing:-1.3px;color:#21483c;margin-top:7px}
+.ns-app .ns-app-settings-heading>p:last-child{color:#647b6e}
+.ns-app .ns-app-settings-panel,.ns-app .ns-app-settings-aside>div:not(.ns-app-advanced){border-radius:3px!important;border-color:#dbe2d9!important;box-shadow:none!important}
+.ns-app .ns-app-settings-panel h2,.ns-app .ns-app-settings-aside h2{font:700 14px Manrope,sans-serif;color:#285041}
+.ns-app .ns-app-settings :is(input:not([type="checkbox"]):not([type="file"]),select){border-radius:3px!important;border-color:#d9e0d8!important;box-shadow:none!important}
+.ns-app .ns-app-settings :is(input,select):focus-visible{outline:2px solid #588c73;outline-offset:1px}
+.ns-app .ns-app-settings button.bg-blue-600{background:#1e4b3b!important;border-radius:3px!important}
+.ns-app .ns-app-settings button.bg-blue-600:hover{background:#31654e!important}
+.ns-app .ns-app-settings .border-blue-600{border-color:#315f4d!important}
+.ns-app .ns-app-settings .bg-blue-50{background:#e9f0e9!important}
+.ns-app .ns-app-settings .text-blue-700{color:#285945!important}
+.ns-app .ns-app-settings button[role="switch"][aria-checked="true"]{background:#285c49!important}
+.ns-app .ns-app-settings label{color:#61776b}
+.ns-app .ns-app-advanced{border:1px solid #dbe2d9;background:#f1f4ee;border-radius:3px;overflow:hidden}
+.ns-app .ns-app-advanced>summary{cursor:pointer;list-style:none;padding:19px 24px;font:700 13px Manrope,sans-serif;color:#2d5544;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ns-app .ns-app-advanced>summary::-webkit-details-marker{display:none}
+.ns-app .ns-app-advanced>summary:before{content:"＋";font:500 16px Manrope,sans-serif;color:#a66c50;margin-right:6px}
+.ns-app .ns-app-advanced[open]>summary:before{content:"−"}
+.ns-app .ns-app-advanced>summary span{font:400 11px 'DM Sans',sans-serif;color:#76887b;margin-left:auto;text-align:right}
+.ns-app .ns-app-advanced-content{padding:0 16px 16px;display:grid;gap:15px}
+.ns-app .ns-app-advanced-content>div{border-radius:3px!important}
+.ns-app .ns-app-dashboard a.text-blue-700,.ns-app .ns-app-dashboard summary.text-blue-700{color:#285e49!important}
+.ns-app .ns-app-dashboard a.text-blue-700:hover,.ns-app .ns-app-dashboard summary.text-blue-700:hover{color:#b45e3e!important}
+.ns-app .ns-app-dashboard span.bg-teal-100{background:#e2eee6!important;color:#2b7055!important}
+@media(max-width:640px){.ns-app .ns-app-settings-heading h1{font-size:28px}.ns-app .ns-app-advanced>summary{flex-wrap:wrap}.ns-app .ns-app-advanced>summary span{flex-basis:100%;text-align:left;padding-left:25px}}
