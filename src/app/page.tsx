@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -41,12 +42,7 @@ const detailRows = [
 function Identity({ footer = false }: { footer?: boolean }) {
   return (
     <Link href="/" className={footer ? "ns-brand ns-brand-footer" : "ns-brand"} aria-label="NoShow Control – startpagina">
-      <span className="ns-mark" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </span>
-      <span>NoShow<span className="ns-brand-light"> Control</span></span>
+      <BrandLogo />
     </Link>
   );
 }
