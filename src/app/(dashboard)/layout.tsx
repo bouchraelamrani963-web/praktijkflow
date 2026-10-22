@@ -277,9 +277,25 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* ─── Main column ───────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
+        {/* Directly accessible account control on desktop; remains visible while scrolling. */}
+        <header className="sticky top-0 z-30 hidden min-h-16 items-center justify-end gap-5 border-b border-[#D8E2D8] bg-[#F8F7F2]/95 px-6 backdrop-blur-sm lg:flex">
+          <span className="truncate text-xs font-medium text-[#64806E]">
+            Ingelogd als <strong className="text-[#234B3B]">{fullName}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="inline-flex items-center justify-center gap-2 rounded-sm border border-[#C9D8CB] bg-white px-4 py-2.5 text-xs font-bold text-[#234B3B] transition-colors hover:border-[#AEC7B4] hover:bg-[#ECF3EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F7556] disabled:cursor-wait disabled:opacity-50"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            {signingOut ? "Uitloggen…" : "Uitloggen"}
+          </button>
+          {signOutError && <p role="alert" className="text-xs text-red-700">{signOutError}</p>}
+        </header>
         {/* Mobile topbar — only on < lg. Has the hamburger button + brand
             + an avatar mirror of the sidebar identity. */}
-        <header className="ns-app-mobile-header flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
+        <header className="ns-app-mobile-header sticky top-0 z-30 flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
@@ -293,12 +309,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <Link href="/dashboard" className="ns-app-brand text-base font-bold text-zinc-900 dark:text-white">
             NoShow Control
           </Link>
-          <div
-            aria-hidden="true"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700"
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-[#C5D8C8] px-2.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#2F5C4B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8D9C9] disabled:opacity-50"
+            aria-label={signingOut ? "Bezig met uitloggen" : "Uitloggen"}
           >
-            {firstName?.[0]?.toUpperCase() ?? "U"}
-          </div>
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <span>{signingOut ? "Bezig…" : "Uitloggen"}</span>
+          </button>
         </header>
 
         <main className="ns-app-main flex-1 overflow-y-auto">
