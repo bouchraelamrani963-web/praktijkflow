@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
+import { PLANNED_APPOINTMENT_STATUSES } from "@/lib/dashboard/appointment-statuses";
 import { prisma, safeQuery } from "@/lib/db";
 import { appointmentQuerySchema } from "@/lib/validations/appointment";
 import { AppointmentsList } from "@/components/appointments/AppointmentsList";
@@ -78,14 +79,7 @@ export default async function AppointmentsPage({
         claimed: undefined,
       };
 
-  const { status, dateFrom, claimed } = filters;
-  let { dateTo } = filters;
-
-  // When dateTo comes from a KPI card it's a date-only string (YYYY-MM-DD, 10 chars).
-  // Extend it to end-of-UTC-day so the full day is included — matching client behaviour.
-  if (dateTo && raw.dateTo?.length === 10) {
-    dateTo = new Date(`${raw.dateTo}T23:59:59.999Z`);
-  }
+  const { status, dateFrom, dateTo, claimed } = filters;
 
   const page     = filters.page     ?? 1;
   const pageSize = filters.pageSize ?? 50;
@@ -123,7 +117,7 @@ export default async function AppointmentsPage({
 
   const where: Prisma.AppointmentWhereInput = {
     practiceId: user.practiceId,
-    ...(status   && { status }),
+    ...(status && { status: status === "PLANNED" ? { in: [...PLANNED_APPOINTMENT_STATUSES] } : status }),
     ...((dateFrom || dateTo) && {
       startTime: {
         ...(dateFrom && { gte: dateFrom }),

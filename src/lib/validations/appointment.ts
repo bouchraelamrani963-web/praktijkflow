@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { amsterdamDateRange } from "@/lib/dashboard/amsterdam-day";
 import { UuidSchema } from "@/lib/validations/uuid";
 
 export const AppointmentStatusSchema = z.enum([
@@ -94,16 +95,20 @@ export const appointmentStatusSchema = z.object({
   status: AppointmentStatusSchema,
 });
 
+function parseAppointmentDate(value: string | undefined, boundary: "start" | "end") {
+  if (!value) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const range = amsterdamDateRange(value);
+    if (!range) return undefined;
+    return boundary === "start" ? range.start : new Date(range.end.getTime() - 1);
+  }
+  return Number.isNaN(Date.parse(value)) ? undefined : new Date(value);
+}
+
 export const appointmentQuerySchema = z.object({
-  dateFrom: z
-    .string()
-    .optional()
-    .transform((s) => (s && !Number.isNaN(Date.parse(s)) ? new Date(s) : undefined)),
-  dateTo: z
-    .string()
-    .optional()
-    .transform((s) => (s && !Number.isNaN(Date.parse(s)) ? new Date(s) : undefined)),
-  status: AppointmentStatusSchema.optional(),
+  dateFrom: z.string().optional().transform((value) => parseAppointmentDate(value, "start")),
+  dateTo: z.string().optional().transform((value) => parseAppointmentDate(value, "end")),
+  status: AppointmentStatusSchema.or(z.literal("PLANNED")).optional(),
   riskLevel: RiskLevelSchema.optional(),
   practitionerId: uuid.optional(),
   clientId: uuid.optional(),

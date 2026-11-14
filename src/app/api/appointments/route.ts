@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
+import { PLANNED_APPOINTMENT_STATUSES } from "@/lib/dashboard/appointment-statuses";
 import { prisma, safeQuery } from "@/lib/db";
 import {
   appointmentCreateSchema,
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   let where: Prisma.AppointmentWhereInput = {
     practiceId: user.practiceId,
-    ...(status && { status }),
+    ...(status && { status: status === "PLANNED" ? { in: [...PLANNED_APPOINTMENT_STATUSES] } : status }),
     ...(practitionerId && { practitionerId }),
     ...(clientId && { clientId }),
     ...(riskLevel && { riskLevel }),

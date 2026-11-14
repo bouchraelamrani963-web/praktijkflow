@@ -189,12 +189,8 @@ function Inner({
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
-    if (dateFrom) params.set("dateFrom", new Date(dateFrom).toISOString());
-    if (dateTo) {
-      const end = new Date(dateTo);
-      end.setHours(23, 59, 59, 999);
-      params.set("dateTo", end.toISOString());
-    }
+    if (dateFrom) params.set("dateFrom", dateFrom);
+    if (dateTo) params.set("dateTo", dateTo);
     if (status) params.set("status", status);
     if (risk) params.set("riskLevel", risk);
     if (practitionerId) params.set("practitionerId", practitionerId);
@@ -344,6 +340,7 @@ function Inner({
             className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
           >
             <option value="">Alle statussen</option>
+            <option value="PLANNED">Afspraken zonder no-show of annulering</option>
             <option value="SCHEDULED">Gepland</option>
             <option value="CONFIRMED">Bevestigd</option>
             <option value="IN_PROGRESS">Bezig</option>

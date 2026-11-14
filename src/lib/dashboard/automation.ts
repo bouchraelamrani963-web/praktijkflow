@@ -1,305 +1,144 @@
-import type { OpenSlotStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
+import { hashToken } from "@/lib/tokens/crypto";
 import { findMatchesForSlot } from "@/lib/waitlist/matching";
+import { DASHBOARD_PAGE_SIZE, type DashboardSlot, type DashboardSlotPage } from "./types";
 
-type MessageStatus = "pending" | "sent" | "failed" | "mock" | string;
+const pageSize = DASHBOARD_PAGE_SIZE;
+const slotSelect = {
+  id: true, startTime: true, durationMinutes: true, status: true, claimedAppointmentId: true,
+  practitioner: { select: { firstName: true, lastName: true, memberships: { select: { practiceId: true } } } },
+  appointmentType: { select: { name: true, practiceId: true } },
+} satisfies Prisma.OpenSlotSelect;
+type Slot = Prisma.OpenSlotGetPayload<{ select: typeof slotSelect }>;
 
-export type AutomationCategory = "open" | "in_progress" | "filled" | "action_needed";
-
-export interface AutomationSummary {
-  open: number;
-  inProgress: number;
-  filled: number;
-  actionNeeded: number;
-}
-
-export interface AutomationDashboardItem {
-  id: string;
-  category: AutomationCategory;
-  priority: "high" | "normal" | "low";
-  title: string;
-  description: string;
-  statusLabel: string;
-  slotStatus: OpenSlotStatus;
-  startTime: string;
-  practitionerName: string;
-  appointmentTypeName: string | null;
-  sourceLabel: string;
-  href: string;
-  primaryActionLabel: string;
-  matchCount: number | null;
-  offerSummary: {
-    total: number;
-    pending: number;
-    sent: number;
-    mock: number;
-    failed: number;
-  };
-  details: string[];
-}
-
-export interface AutomationDashboardModel {
-  summary: AutomationSummary;
-  worklist: AutomationDashboardItem[];
-}
-
-const EMPTY_SUMMARY: AutomationSummary = {
-  open: 0,
-  inProgress: 0,
-  filled: 0,
-  actionNeeded: 0,
-};
-
-export const EMPTY_AUTOMATION_DASHBOARD: AutomationDashboardModel = {
-  summary: EMPTY_SUMMARY,
-  worklist: [],
-};
-
-function openSlotLogMarker(slotId: string): string {
-  return `open-slot:${slotId}`;
-}
-
-function formatShortDateTime(date: Date): string {
-  return date.toLocaleString("nl-NL", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function statusText(status: OpenSlotStatus): string {
-  if (status === "AVAILABLE") return "Beschikbaar";
-  if (status === "OFFERED") return "Aanbod loopt";
-  if (status === "CLAIMED") return "Ingevuld in NoShow Control";
-  return "Niet meer beschikbaar";
-}
-
-function sourceText(hasSourceAppointment: boolean): string {
-  return hasSourceAppointment ? "Vrijgekomen door annulering/no-show" : "Handmatig aangemaakt";
-}
-
-function countStatuses(logs: { status: MessageStatus }[]) {
+function slotItem(slot: Slot, practiceId: string) {
   return {
-    total: logs.length,
-    pending: logs.filter((log) => log.status === "pending").length,
-    sent: logs.filter((log) => log.status === "sent").length,
-    mock: logs.filter((log) => log.status === "mock").length,
-    failed: logs.filter((log) => log.status === "failed").length,
+    id: slot.id,
+    startTime: slot.startTime.toISOString(),
+    durationMinutes: slot.durationMinutes,
+    appointmentType: slot.appointmentType?.practiceId === practiceId ? slot.appointmentType.name : null,
+    practitioner: slot.practitioner.memberships.some((membership) => membership.practiceId === practiceId)
+      ? `${slot.practitioner.firstName} ${slot.practitioner.lastName}`
+      : "Zorgverlener onbekend",
+    status: slot.status,
+    href: `/open-slots/${slot.id}/matches`,
   };
 }
 
-function activeOfferCount(summary: ReturnType<typeof countStatuses>): number {
-  return summary.pending + summary.sent + summary.mock;
-}
-
-function categorySortValue(category: AutomationCategory): number {
-  if (category === "action_needed") return 0;
-  if (category === "in_progress") return 1;
-  if (category === "open") return 2;
-  return 3;
-}
-
-export async function buildAutomationDashboardModel(
+export async function loadDashboardActions(
   practiceId: string,
-): Promise<AutomationDashboardModel> {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
+  now: Date,
+  dayEnd: Date,
+  page: number,
+): Promise<DashboardSlotPage> {
   const slots = await prisma.openSlot.findMany({
-    where: {
-      practiceId,
-      OR: [
-        { status: { in: ["AVAILABLE", "OFFERED"] } },
-        { status: "CLAIMED", claimedAt: { gte: monthStart, not: null } },
-        { status: "EXPIRED", updatedAt: { gte: monthStart } },
-      ],
-    },
-    orderBy: [{ status: "asc" }, { startTime: "asc" }],
-    take: 60,
-    include: {
-      practitioner: { select: { firstName: true, lastName: true } },
-      appointmentType: { select: { name: true } },
-    },
+    where: { practiceId, startTime: { gt: now }, status: { in: ["AVAILABLE", "OFFERED"] } },
+    orderBy: [{ startTime: "asc" }, { id: "asc" }],
+    select: slotSelect,
   });
+  if (!slots.length) return { items: [], total: 0 };
 
-  if (slots.length === 0) return EMPTY_AUTOMATION_DASHBOARD;
-
-  const sourceAppointmentIds = slots
-    .map((slot) => slot.sourceAppointmentId)
-    .filter((id): id is string => Boolean(id));
-
-  const logFilters = slots.flatMap((slot) => [
-    { body: { contains: `/action/${slot.id}.` } },
-    { body: { contains: openSlotLogMarker(slot.id) } },
-  ]);
-
-  const logs = await prisma.messageLog.findMany({
-    where: {
-      practiceId,
-      channel: "email",
-      OR: [
-        ...(sourceAppointmentIds.length > 0
-          ? [{ appointmentId: { in: sourceAppointmentIds } }]
-          : []),
-        ...logFilters,
-      ],
-    },
-    select: {
-      id: true,
-      appointmentId: true,
-      body: true,
-      status: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const logsBySlotId = new Map<string, typeof logs>();
-  for (const slot of slots) {
-    const relatedLogs = logs.filter((log) => {
-      if (slot.sourceAppointmentId && log.appointmentId === slot.sourceAppointmentId) {
-        return true;
-      }
-      return (
-        log.body.includes(`/action/${slot.id}.`) ||
-        log.body.includes(openSlotLogMarker(slot.id))
-      );
+  // Offer links and failure markers identify the slot explicitly. An appointment ID alone
+  // also matches reminders and other messages, so it is insufficient for attribution.
+  const offers = new Map(slots.map((slot) => [
+    slot.id, { sent: new Set<string>(), simulated: new Set<string>(), failed: false },
+  ]));
+  const sent = new Map<string, { slotId: string; clientId: string }>();
+  for (let index = 0; index < slots.length; index += 100) {
+    const logs = await prisma.messageLog.findMany({
+      where: {
+        practiceId,
+        channel: { in: ["email", "sms"] },
+        status: { in: ["sent", "mock", "failed"] },
+        OR: slots.slice(index, index + 100).flatMap(({ id }) => [
+          { body: { contains: `/action/${id}.` } },
+          { body: { equals: `open-slot:${id}` } },
+        ]),
+      },
+      select: { body: true, status: true, clientId: true },
     });
-    logsBySlotId.set(slot.id, relatedLogs);
+    for (const log of logs) {
+      const link = log.body.match(/\/action\/([\da-f-]{36})\.([\w-]+)/i);
+      const slotId = link?.[1] ?? log.body.match(/^open-slot:([\da-f-]{36})$/i)?.[1];
+      const offer = slotId ? offers.get(slotId) : undefined;
+      if (!offer || !slotId) continue;
+      if (log.status === "failed") offer.failed = true;
+      if (!link) continue;
+      const hash = hashToken(`${slotId}.${link[2]}`);
+      if (log.status === "mock") offer.simulated.add(hash);
+      if (log.status === "sent") sent.set(hash, { slotId, clientId: log.clientId });
+    }
   }
 
-  const matchCountBySlotId = new Map<string, number>();
-  const matchableSlots = slots.filter((slot) => slot.status === "AVAILABLE");
-  for (const slot of matchableSlots) {
-    const matches = await findMatchesForSlot(slot.id, practiceId);
-    matchCountBySlotId.set(slot.id, matches.length);
+  if (sent.size) {
+    const hashes = [...sent.keys()];
+    // Bound the number of SQL parameters per query even for large practices.
+    for (let index = 0; index < hashes.length; index += 1000) {
+      const tokens = await prisma.patientActionToken.findMany({
+        where: {
+          practiceId, action: "claim_open_slot", usedAt: null, expiresAt: { gt: now },
+          tokenHash: { in: hashes.slice(index, index + 1000) },
+        },
+        select: { tokenHash: true, clientId: true },
+      });
+      for (const token of tokens) {
+        const log = sent.get(token.tokenHash);
+        if (log?.clientId === token.clientId) offers.get(log.slotId)?.sent.add(token.tokenHash);
+      }
+    }
   }
 
-  const worklist = slots.map<AutomationDashboardItem>((slot) => {
-    const relatedLogs = logsBySlotId.get(slot.id) ?? [];
-    const offerSummary = countStatuses(relatedLogs);
-    const matchCount = matchCountBySlotId.get(slot.id) ?? null;
-    const practitionerName = `${slot.practitioner.firstName} ${slot.practitioner.lastName}`;
-    const slotTime = formatShortDateTime(slot.startTime);
-    const sourceLabel = sourceText(Boolean(slot.sourceAppointmentId));
-    const details = [
-      `${sourceLabel}.`,
-      `Tijd: ${slotTime}.`,
-      `Behandelaar: ${practitionerName}.`,
-    ];
-
-    if (slot.appointmentType?.name) {
-      details.push(`Behandeling: ${slot.appointmentType.name}.`);
-    }
-
-    if (offerSummary.total > 0) {
-      details.push(
-        `Aanbiedingen: ${offerSummary.mock} test, ${offerSummary.sent} verzonden, ${offerSummary.pending} bezig, ${offerSummary.failed} mislukt.`,
-      );
-    }
-
-    if (matchCount !== null) {
-      details.push(`${matchCount} passende wachtlijstkandidaat${matchCount === 1 ? "" : "en"} gevonden.`);
-    }
-
-    let category: AutomationCategory;
-    let priority: AutomationDashboardItem["priority"] = "normal";
-    let title: string;
-    let description: string;
-    let primaryActionLabel = "Bekijk details";
-    let href = `/open-slots/${slot.id}/matches`;
-
-    const activeOffers = activeOfferCount(offerSummary);
-
-    if (slot.status === "CLAIMED") {
-      category = "filled";
-      priority = "low";
-      title = "Plek opnieuw ingevuld";
-      description = "Deze afspraak is ingevuld binnen NoShow Control.";
-      primaryActionLabel = slot.claimedAppointmentId ? "Bekijk afspraak" : "Bekijk open plek";
-      href = slot.claimedAppointmentId ? `/appointments/${slot.claimedAppointmentId}` : "/open-slots?status=CLAIMED";
-    } else if (slot.status === "EXPIRED") {
-      category = "action_needed";
-      priority = "high";
-      title = "Open plek is verlopen";
-      description = "Deze plek is niet opnieuw ingevuld. Controleer of opvolging nodig is.";
-      primaryActionLabel = "Bekijk open plek";
-      href = "/open-slots?status=EXPIRED";
-    } else if (activeOffers > 0) {
-      category = "in_progress";
-      title = "Reactie op aanbod wordt afgewacht";
-      description =
-        offerSummary.mock > 0
-          ? "Testaanbod aangemaakt. Er is geen echt bericht verstuurd."
-          : "Aanbod geregistreerd. Dit betekent verzending, niet gegarandeerde aflevering.";
-      primaryActionLabel = "Bekijk aanbiedingen";
-    } else if (slot.status === "OFFERED") {
-      category = "action_needed";
-      priority = "high";
-      title = "Geen actieve aanbieding gevonden";
-      description = "Deze plek staat als aangeboden, maar er is geen actieve aanbieding gevonden.";
-      primaryActionLabel = "Bekijk aanbod";
-    } else if (offerSummary.failed > 0) {
-      category = "action_needed";
-      priority = "high";
-      title = "Aanbod kon niet worden verstuurd";
-      description = "Er is een mislukte berichtpoging gevonden en er loopt geen actief aanbod.";
-      primaryActionLabel = "Bekijk aanbod";
-    } else if (slot.status === "AVAILABLE" && matchCount === 0) {
-      category = "action_needed";
-      priority = "high";
-      title = "Geen passende wachtlijstkandidaten";
-      description = "De plek is beschikbaar, maar er zijn nu geen passende wachtlijstpatiënten gevonden.";
-      primaryActionLabel = "Bekijk wachtlijst";
-    } else {
-      category = "open";
-      title = "Open plek klaar voor aanbod";
-      description = "Er is een beschikbare plek waarvoor nog geen actief aanbod loopt.";
-      primaryActionLabel = "Vind patiënten";
-    }
-
+  const items = slots.map((slot): DashboardSlot => {
+    const offer = offers.get(slot.id)!;
+    const action = offer.sent.size > 0 ? "waiting"
+      : offer.failed ? "failed"
+      : slot.status === "OFFERED" ? "review-offer"
+      : "candidates";
     return {
-      id: slot.id,
-      category,
-      priority,
-      title,
-      description,
-      statusLabel: statusText(slot.status),
-      slotStatus: slot.status,
-      startTime: slot.startTime.toISOString(),
-      practitionerName,
-      appointmentTypeName: slot.appointmentType?.name ?? null,
-      sourceLabel,
-      href,
-      primaryActionLabel,
-      matchCount,
-      offerSummary,
-      details,
+      ...slotItem(slot, practiceId),
+      action,
+      urgent: action !== "waiting" && slot.startTime < dayEnd,
+      sent: offer.sent.size,
+      simulated: offer.simulated.size,
     };
   });
+  const order = (item: DashboardSlot) => item.urgent ? 0 : item.action === "waiting" ? 2 : 1;
+  items.sort((a, b) => order(a) - order(b));
 
-  worklist.sort((a, b) => {
-    const categoryDiff = categorySortValue(a.category) - categorySortValue(b.category);
-    if (categoryDiff !== 0) return categoryDiff;
-    if (a.priority !== b.priority) return a.priority === "high" ? -1 : 1;
-    return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-  });
+  const visible = items.slice((page - 1) * pageSize, page * pageSize);
+  const withCandidates = await Promise.all(visible.map(async (item) => {
+    if (item.action !== "candidates") return item;
+    const matches = await findMatchesForSlot(item.id, practiceId);
+    return matches.length > 0 ? item : { ...item, action: "no-candidates" as const };
+  }));
+  return { items: withCandidates, total: items.length };
+}
 
-  const summary = worklist.reduce<AutomationSummary>(
-    (acc, item) => {
-      if (item.category === "open") acc.open += 1;
-      if (item.category === "in_progress") acc.inProgress += 1;
-      if (item.category === "filled") acc.filled += 1;
-      if (item.category === "action_needed") acc.actionNeeded += 1;
-      return acc;
-    },
-    { ...EMPTY_SUMMARY },
-  );
-
+export async function loadDashboardHistory(
+  practiceId: string,
+  now: Date,
+  page: number,
+): Promise<DashboardSlotPage> {
+  const where: Prisma.OpenSlotWhereInput = {
+    practiceId,
+    OR: [{ startTime: { lte: now } }, { status: { in: ["CLAIMED", "EXPIRED"] } }],
+  };
+  const [total, slots] = await prisma.$transaction([
+    prisma.openSlot.count({ where }),
+    prisma.openSlot.findMany({
+      where, orderBy: [{ startTime: "desc" }, { id: "desc" }],
+      skip: (page - 1) * pageSize, take: pageSize, select: slotSelect,
+    }),
+  ]);
   return {
-    summary,
-    worklist: worklist.slice(0, 12),
+    total,
+    items: slots.map((slot) => ({
+      ...slotItem(slot, practiceId),
+      href: slot.status === "CLAIMED" && slot.claimedAppointmentId
+        ? `/appointments/${slot.claimedAppointmentId}`
+        : `/open-slots/${slot.id}/matches`,
+      action: "history", urgent: false, sent: 0, simulated: 0,
+    })),
   };
 }

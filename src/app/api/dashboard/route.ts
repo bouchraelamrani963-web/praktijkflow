@@ -1,290 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
-import {
-  buildAutomationDashboardModel,
-  EMPTY_AUTOMATION_DASHBOARD,
-} from "@/lib/dashboard/automation";
+import { amsterdamToday } from "@/lib/dashboard/amsterdam-day";
+import { loadDashboardActions, loadDashboardHistory } from "@/lib/dashboard/automation";
+import { loadDashboardCounts } from "@/lib/dashboard/counts";
+import type { DashboardData } from "@/lib/dashboard/types";
 
-/**
- * Dashboard KPI endpoint — production-hardened.
- *
- * All aggregate queries are executed inside a single try/catch. If ANY query
- * fails (DB offline, schema drift, bad cast, etc.) we log the real error and
- * return a zero-valued fallback payload so the UI never crashes on a null
- * reference. Callers must assume every monetary field may be 0 but never
- * undefined.
- *
- * Monthly CLAIMED queries are scoped with `claimedAt: { not: null }` as a
- * belt-and-suspenders guard — a CLAIMED row without a claim timestamp is a
- * data-integrity bug and must never leak into revenue totals.
- */
+const privateHeaders = { "Cache-Control": "private, no-store" };
+
+function pageNumber(value: string | null): number {
+  const page = Number(value ?? 1);
+  return Number.isSafeInteger(page) && page >= 1 && page <= 100_000 ? page : 1;
+}
+
+async function dashboardSection<T>(name: string, query: Promise<T>): Promise<T | null> {
+  try {
+    return await query;
+  } catch {
+    console.error(`[dashboard] Could not load ${name}`);
+    return null;
+  }
+}
+
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser(req);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!user.practiceId) return NextResponse.json({ error: "No practice context" }, { status: 403 });
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: privateHeaders });
+  }
+  if (!user.practiceId) {
+    return NextResponse.json({ error: "No practice context" }, { status: 403, headers: privateHeaders });
+  }
 
   const practiceId = user.practiceId;
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const next7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const today = amsterdamToday(now);
+  const search = req.nextUrl.searchParams;
+  const [counts, actions, history] = await Promise.all([
+    dashboardSection("counts", loadDashboardCounts(practiceId, now, today)),
+    dashboardSection("actions", loadDashboardActions(practiceId, now, today.end, pageNumber(search.get("actions")))),
+    dashboardSection("history", loadDashboardHistory(practiceId, now, pageNumber(search.get("history")))),
+  ]);
 
-  // Fallback payload — shape matches the success payload so the client never
-  // has to branch on "did the API work today?". Zeroes everywhere, empty
-  // arrays everywhere. Subscriber-visible surface degrades gracefully.
-  const fallback = {
-    kpis: {
-      appointmentsToday: 0,
-      totalClients: 0,
-      scheduled: 0,
-      confirmed: 0,
-      cancelled: 0,
-      noShow: 0,
-      completed: 0,
-      openSlotsCreated: 0,
-      openSlotsClaimed: 0,
-      revenueThisMonthCents: 0,
-      recoveredRevenueCents: 0,
-      recoveredRevenueThisMonthCents: 0,
-      missedRevenueThisMonthCents: 0,
-      netLossThisMonthCents: 0,
-      // "Vandaag in je praktijk" — today-scoped KPIs
-      noShowsToday: 0,
-      revenueTodayCents: 0,
-    },
-    highRiskUpcoming: [],
-    recentCancellations: [],
-    recentOpenSlots: [],
-    automation: EMPTY_AUTOMATION_DASHBOARD,
-    userName: user.firstName,
-    demoMode: false,
-    degraded: true as const,
-  };
-
-  try {
-    const [
-      appointmentsToday,
-      noShowsToday,
-      revenueTodayAgg,
-      totalClients,
-      statusCounts,
-      openSlotsCreated,
-      openSlotsClaimed,
-      revenueThisMonth,
-      recoveredAggAll,
-      recoveredAggMonth,
-      missedRevenueAggMonth,
-      highRiskUpcoming,
-      recentCancellations,
-      recentOpenSlots,
-      automation,
-    ] = await Promise.all([
-      // Appointments today
-      prisma.appointment.count({
-        where: { practiceId, startTime: { gte: todayStart, lt: todayEnd } },
-      }),
-
-      // No-shows today — drives the "Vandaag in je praktijk" panel
-      prisma.appointment.count({
-        where: {
-          practiceId,
-          startTime: { gte: todayStart, lt: todayEnd },
-          status: "NO_SHOW",
-        },
-      }),
-
-      // Revenue earned today — only COMPLETED appointments count toward
-      // realized revenue; SCHEDULED/CONFIRMED are still pending.
-      prisma.appointment.aggregate({
-        where: {
-          practiceId,
-          startTime: { gte: todayStart, lt: todayEnd },
-          status: "COMPLETED",
-        },
-        _sum: { revenueEstimateCents: true },
-      }),
-
-      // Total active clients
-      prisma.client.count({ where: { practiceId, isActive: true } }),
-
-      // Status counts (this month)
-      prisma.appointment.groupBy({
-        by: ["status"],
-        where: { practiceId, startTime: { gte: monthStart } },
-        _count: true,
-      }),
-
-      // Open slots created (all time)
-      prisma.openSlot.count({ where: { practiceId } }),
-
-      // Open slots claimed (all time) — only count rows with a claim timestamp,
-      // otherwise a half-written CLAIMED row would inflate the numerator of
-      // the fill-rate KPI.
-      prisma.openSlot.count({
-        where: { practiceId, status: "CLAIMED", claimedAt: { not: null } },
-      }),
-
-      // Revenue this month (from all non-cancelled/no-show appointments)
-      prisma.appointment.aggregate({
-        where: {
-          practiceId,
-          startTime: { gte: monthStart },
-          status: { notIn: ["CANCELLED", "NO_SHOW"] },
-        },
-        _sum: { revenueEstimateCents: true },
-      }),
-
-      // ─── Recovered revenue is read STRAIGHT from the OpenSlot snapshot —
-      // never recomputed from the downstream Appointment. The slot row is the
-      // immutable source of truth. Require claimedAt != null so orphaned
-      // CLAIMED rows (without a claim moment) cannot leak into totals.
-      prisma.openSlot.aggregate({
-        where: { practiceId, status: "CLAIMED", claimedAt: { not: null } },
-        _sum: { recoveredRevenueCents: true },
-      }),
-
-      // Recovered revenue THIS MONTH uses claimedAt (the actual claim moment),
-      // NOT updatedAt — so later edits to the row don't leak revenue into or
-      // out of the month. `claimedAt: { gte: monthStart }` implicitly excludes
-      // nulls, but we keep the query shape symmetric with recoveredAggAll.
-      prisma.openSlot.aggregate({
-        where: {
-          practiceId,
-          status: "CLAIMED",
-          claimedAt: { gte: monthStart, not: null },
-        },
-        _sum: { recoveredRevenueCents: true },
-      }),
-
-      // Missed revenue = sum of revenueEstimateCents on CANCELLED + NO_SHOW
-      // appointments scheduled this month. Bucketed by startTime so it aligns
-      // with the rest of the month's figures.
-      prisma.appointment.aggregate({
-        where: {
-          practiceId,
-          startTime: { gte: monthStart },
-          status: { in: ["CANCELLED", "NO_SHOW"] },
-        },
-        _sum: { revenueEstimateCents: true },
-      }),
-
-      // Upcoming high-risk appointments (next 7 days, HIGH or CRITICAL)
-      prisma.appointment.findMany({
-        where: {
-          practiceId,
-          startTime: { gte: now, lte: next7d },
-          status: { notIn: ["CANCELLED", "COMPLETED", "NO_SHOW"] },
-          riskLevel: { in: ["HIGH", "CRITICAL"] },
-        },
-        orderBy: { startTime: "asc" },
-        take: 5,
-        include: {
-          client: { select: { id: true, firstName: true, lastName: true } },
-          practitioner: { select: { id: true, firstName: true, lastName: true } },
-          appointmentType: { select: { name: true } },
-        },
-      }),
-
-      // Recent cancellations (last 7 days)
-      prisma.appointment.findMany({
-        where: {
-          practiceId,
-          status: "CANCELLED",
-          updatedAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
-        },
-        orderBy: { updatedAt: "desc" },
-        take: 5,
-        include: {
-          client: { select: { firstName: true, lastName: true } },
-          appointmentType: { select: { name: true } },
-        },
-      }),
-
-      // Recent open slots — reads the claim snapshot directly from the slot
-      // row. The dashboard table links each CLAIMED row to its stored
-      // claimedAppointmentId, AVAILABLE rows to the filtered waitlist.
-      prisma.openSlot.findMany({
-        where: { practiceId },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        include: {
-          practitioner: { select: { firstName: true, lastName: true } },
-          appointmentType: { select: { id: true, name: true } },
-        },
-      }),
-
-      buildAutomationDashboardModel(practiceId),
-    ]);
-
-    // Orphan detection — warn if any CLAIMED recentOpenSlots lack claimedAppointmentId.
-    const orphans = recentOpenSlots.filter(
-      (s) => s.status === "CLAIMED" && !s.claimedAppointmentId,
-    );
-    if (orphans.length > 0) {
-      console.warn(
-        `[DASHBOARD] ORPHAN CLAIMED slot(s) in practice ${practiceId}:`,
-        orphans.map((s) => s.id),
-      );
-    }
-
-    // Build status count map
-    const counts: Record<string, number> = {};
-    for (const row of statusCounts) {
-      counts[row.status] = row._count;
-    }
-
-    const recoveredRevenueCents = recoveredAggAll._sum.recoveredRevenueCents ?? 0;
-    const recoveredRevenueThisMonthCents =
-      recoveredAggMonth._sum.recoveredRevenueCents ?? 0;
-    const missedRevenueThisMonthCents =
-      missedRevenueAggMonth._sum.revenueEstimateCents ?? 0;
-    const netLossThisMonthCents = Math.max(
-      0,
-      missedRevenueThisMonthCents - recoveredRevenueThisMonthCents,
-    );
-
-    const isDemoMode =
-      process.env.NODE_ENV === "development" ||
-      process.env.NEXT_PUBLIC_DEMO_MODE === "true";
-
-    const kpis = {
-      appointmentsToday,
-      totalClients,
-      scheduled: counts["SCHEDULED"] ?? 0,
-      confirmed: counts["CONFIRMED"] ?? 0,
-      cancelled: counts["CANCELLED"] ?? 0,
-      noShow: counts["NO_SHOW"] ?? 0,
-      completed: counts["COMPLETED"] ?? 0,
-      openSlotsCreated,
-      openSlotsClaimed,
-      revenueThisMonthCents: revenueThisMonth._sum.revenueEstimateCents ?? 0,
-      recoveredRevenueCents,
-      recoveredRevenueThisMonthCents,
-      missedRevenueThisMonthCents,
-      netLossThisMonthCents,
-      // "Vandaag in je praktijk"
-      noShowsToday,
-      revenueTodayCents: revenueTodayAgg._sum.revenueEstimateCents ?? 0,
-    };
-
-    return NextResponse.json({
-      kpis,
-      highRiskUpcoming,
-      recentCancellations,
-      recentOpenSlots,
-      automation,
-      userName: user.firstName,
-      demoMode: isDemoMode,
-    });
-  } catch (err) {
-    // Log the REAL error server-side. The client only sees the degraded
-    // fallback payload — never a raw Prisma stack trace or PII.
-    console.error(
-      `[DASHBOARD] Aggregate query failed for practice ${practiceId}:`,
-      err,
-    );
-    return NextResponse.json(fallback);
-  }
+  const data: DashboardData = { day: today.day, counts, actions, history };
+  return NextResponse.json(data, { headers: privateHeaders });
 }
