@@ -14,7 +14,7 @@ import { ensureDefaultAppointmentTypes } from "@/lib/dental/ensure-default-types
  *      owns the Firebase account).
  *   2. Upserts the User row in Prisma (idempotent — a re-call just refreshes
  *      firstName/lastName/email).
- *   3. If the user has no active practice membership yet, creates a fresh
+ *   3. If the user has no practice membership history, creates a fresh
  *      Practice + OWNER membership in a single transaction. This is the
  *      tenant-bootstrap step — without it, the new user lands on the dashboard
  *      with practiceId=null and every multi-tenant query 403's.
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     // Either everything is created or nothing — prevents the half-state
     // where a User exists but no Practice (which is what the *old* version
     // of this route produced and which made the dashboard unreachable).
-    await prisma.$transaction(async (tx) => {
+    const hasAccess = await prisma.$transaction(async (tx) => {
       // 1. User — upsert by firebaseUid
       const user = await tx.user.upsert({
         where: { firebaseUid: decoded.uid },
@@ -68,13 +68,13 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // 2. If they already have an active membership, skip practice creation —
-      //    this happens on re-call (e.g. user closed the page and re-submitted).
-      const existing = await tx.practiceMember.findFirst({
-        where: { userId: user.id, isActive: true },
-        select: { id: true },
+      // Inactive memberships also count as history. Registration cannot replace
+      // a revoked membership with a new owner account.
+      const memberships = await tx.practiceMember.findMany({
+        where: { userId: user.id },
+        select: { isActive: true },
       });
-      if (existing) return;
+      if (memberships.length) return memberships.some(({ isActive }) => isActive);
 
       // 3. New tenant. Slug is name-derived + 6-char hex suffix to guarantee
       //    uniqueness even if two users pick the same practice name.
@@ -101,7 +101,13 @@ export async function POST(req: NextRequest) {
       //    later under Instellingen → Behandeltypes; the same list is
       //    restorable via POST /api/admin/restore-treatment-types.
       await ensureDefaultAppointmentTypes(tx, practice.id);
+      return true;
     });
+    if (!hasAccess) {
+      const denied = NextResponse.json({ error: "Geen actief praktijklidmaatschap." }, { status: 403 });
+      denied.cookies.delete("session");
+      return denied;
+    }
 
     // ─── Mint HttpOnly session cookie ─────────────────────────────────────
     const SESSION_EXPIRES_IN = 60 * 60 * 24 * 7 * 1000;

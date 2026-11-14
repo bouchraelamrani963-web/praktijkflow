@@ -40,22 +40,9 @@ export async function getCurrentUser(req?: NextRequest): Promise<SessionUser | n
 
     const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
 
-    let user = await prisma.user.findUnique({
-      where: { firebaseUid: decoded.uid },
-      include: {
-        memberships: {
-          where: { isActive: true },
-          include: { practice: { select: { id: true, name: true } } },
-          take: 1, // MVP: use first active membership
-        },
-      },
-    });
-
-    if (!user || user.memberships.length === 0) {
-      user = await ensureUserHasPractice(decoded);
-    }
-
-    const membership = user.memberships[0] ?? null;
+    const user = await resolvePracticeUser(decoded);
+    const membership = user?.memberships[0];
+    if (!user || !membership) return null;
 
     return {
       uid: user.id,
@@ -65,81 +52,68 @@ export async function getCurrentUser(req?: NextRequest): Promise<SessionUser | n
       lastName: user.lastName,
       fullName: `${user.firstName} ${user.lastName}`,
       avatarUrl: user.avatarUrl,
-      practiceId: membership?.practice.id ?? null,
-      practiceName: membership?.practice.name ?? null,
-      role: membership?.role ?? null,
+      practiceId: membership.practice.id,
+      practiceName: membership.practice.name,
+      role: membership.role,
     };
   } catch {
     return null;
   }
 }
 
-/**
- * Repairs legacy or manually-created Firebase accounts that can authenticate
- * but do not yet have the required local User + PracticeMember rows.
- *
- * This keeps login idempotent: once a user has any active membership, it is
- * reused. Otherwise we create a deterministic personal practice and OWNER
- * membership so protected dashboard APIs have a valid practice scope.
- */
-async function ensureUserHasPractice(decoded: DecodedIdToken) {
+const activeMembership = {
+  where: { isActive: true },
+  include: { practice: { select: { id: true, name: true } } },
+  orderBy: [{ createdAt: "asc" as const }, { id: "asc" as const }],
+  take: 1,
+};
+
+function findPracticeUser(db: Pick<typeof prisma, "user">, firebaseUid: string) {
+  return db.user.findUnique({
+    where: { firebaseUid },
+    include: { memberships: activeMembership, _count: { select: { memberships: true } } },
+  });
+}
+
+export async function resolvePracticeUser(decoded: DecodedIdToken) {
+  const user = await findPracticeUser(prisma, decoded.uid);
+
+  if (user?.memberships.length) return user;
+  // Keep the inactive row as a permanent record of access removal.
+  if (user?._count.memberships) return null;
+  return bootstrapLegacyPractice(decoded);
+}
+
+/** Repair existing accounts without membership history, including IAM-created users. */
+async function bootstrapLegacyPractice(decoded: DecodedIdToken) {
   const email = decoded.email ?? `${decoded.uid}@firebase.local`;
   const { firstName, lastName } = nameParts(decoded.name, email);
-  const practiceName = `${firstName}'s praktijk`;
-  const practiceSlug = `praktijk-${slugPart(decoded.uid)}`;
 
   return prisma.$transaction(async (tx) => {
-    const user = await tx.user.upsert({
+    // The upsert serializes concurrent bootstraps for this Firebase user.
+    await tx.user.upsert({
       where: { firebaseUid: decoded.uid },
       update: { email, firstName, lastName },
-      create: {
-        firebaseUid: decoded.uid,
-        email,
-        firstName,
-        lastName,
-      },
+      create: { firebaseUid: decoded.uid, email, firstName, lastName },
     });
+    const user = await findPracticeUser(tx, decoded.uid);
+    if (!user) return null;
+    if (user.memberships.length) return user;
+    if (user._count.memberships) return null;
 
-    const existing = await tx.practiceMember.findFirst({
-      where: { userId: user.id, isActive: true },
-      include: { practice: { select: { id: true, name: true } } },
-      take: 1,
-    });
-
-    if (existing) {
-      return { ...user, memberships: [existing] };
-    }
-
-    const practice = await tx.practice.upsert({
-      where: { slug: practiceSlug },
-      update: { email },
-      create: {
-        name: practiceName,
-        slug: practiceSlug,
+    const practice = await tx.practice.create({
+      data: {
+        name: `${firstName}'s praktijk`,
+        slug: `praktijk-${slugPart(decoded.uid)}-${user.id}`,
         email,
       },
       select: { id: true, name: true },
     });
-
-    const membership = await tx.practiceMember.upsert({
-      where: {
-        practiceId_userId: {
-          practiceId: practice.id,
-          userId: user.id,
-        },
-      },
-      update: { isActive: true, role: "OWNER" },
-      create: {
-        practiceId: practice.id,
-        userId: user.id,
-        role: "OWNER",
-        isActive: true,
-      },
+    const membership = await tx.practiceMember.create({
+      data: { practiceId: practice.id, userId: user.id, role: "OWNER" },
       include: { practice: { select: { id: true, name: true } } },
     });
-
     await ensureDefaultAppointmentTypes(tx, practice.id);
-
     return { ...user, memberships: [membership] };
   });
 }
@@ -166,11 +140,4 @@ export async function requireUser(req?: NextRequest): Promise<SessionUser> {
     throw new Error("Unauthorized");
   }
   return user;
-}
-
-/**
- * Check if the user has one of the required roles.
- */
-export function hasRole(user: SessionUser, roles: Role[]): boolean {
-  return user.role !== null && roles.includes(user.role);
 }

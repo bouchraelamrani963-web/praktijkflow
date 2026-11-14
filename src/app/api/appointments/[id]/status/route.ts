@@ -42,6 +42,7 @@ export async function POST(
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const risk = await calculateRiskForClient(
+    user.practiceId,
     existing.clientId,
     existing.startTime,
     parsed.data.status,
@@ -49,7 +50,7 @@ export async function POST(
   );
 
   const updated = await prisma.appointment.update({
-    where: { id },
+    where: { id, practiceId: user.practiceId! },
     data: {
       status: parsed.data.status,
       riskScore: risk.riskScore,

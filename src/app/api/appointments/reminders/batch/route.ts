@@ -1,3 +1,4 @@
+import { can } from "@/lib/auth/permissions";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { reminderBatchSchema } from "@/lib/validations/reminder";
@@ -9,6 +10,7 @@ export async function POST(req: NextRequest) {
   if (!user.practiceId) {
     return NextResponse.json({ error: "No practice context" }, { status: 403 });
   }
+  if (!can(user.role, "batchOperations")) return NextResponse.json({ error: "Onvoldoende bevoegdheden." }, { status: 403 });
 
   let body: unknown;
   try {

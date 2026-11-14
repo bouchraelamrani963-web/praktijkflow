@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolvePracticeUser } from "@/lib/auth/session";
 import { adminAuth } from "@/lib/firebase/admin";
 
 const SESSION_EXPIRES_IN = 60 * 60 * 24 * 7 * 1000; // 7 days
@@ -11,7 +12,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify the Firebase ID token server-side before minting a cookie.
-    await adminAuth.verifyIdToken(idToken, true);
+    const decoded = await adminAuth.verifyIdToken(idToken, true);
+    if (!(await resolvePracticeUser(decoded))) {
+      const denied = NextResponse.json({ error: "Geen actief praktijklidmaatschap." }, { status: 403 });
+      denied.cookies.delete("session");
+      return denied;
+    }
 
     // Create a long-lived session cookie after verification succeeds.
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {

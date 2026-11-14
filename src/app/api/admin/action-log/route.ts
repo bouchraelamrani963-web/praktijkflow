@@ -1,5 +1,6 @@
+import { can } from "@/lib/auth/permissions";
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser, hasRole } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
 /**
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.practiceId) return NextResponse.json({ error: "No practice context" }, { status: 403 });
-  if (!hasRole(user, ["OWNER", "ADMIN"])) {
+  if (!can(user.role, "practiceAudit")) {
     return NextResponse.json({ error: "Admin only" }, { status: 403 });
   }
 

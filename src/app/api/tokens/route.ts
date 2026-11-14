@@ -39,7 +39,12 @@ export async function POST(req: NextRequest) {
   // Verify appointment belongs to practice (if provided)
   if (appointmentId) {
     const appt = await prisma.appointment.findFirst({
-      where: { id: appointmentId, practiceId: user.practiceId },
+      where: {
+        id: appointmentId,
+        practiceId: user.practiceId,
+        // A slot invitation can legitimately target a different patient.
+        ...(action !== "claim_open_slot" && { clientId }),
+      },
       select: { id: true },
     });
     if (!appt) {

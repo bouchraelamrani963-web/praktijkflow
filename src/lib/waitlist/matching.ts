@@ -71,7 +71,7 @@ export async function findMatchesForSlot(
 
   // Load all WAITING entries for this practice
   const entries = await prisma.waitlistEntry.findMany({
-    where: { practiceId, status: "WAITING" },
+    where: { practiceId, status: "WAITING", client: { practiceId }, OR: [{ appointmentTypeId: null }, { appointmentType: { practiceId } }] },
     include: {
       client: { select: { id: true, firstName: true, lastName: true, phone: true, email: true } },
       appointmentType: { select: { id: true, name: true } },

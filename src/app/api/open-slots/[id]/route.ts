@@ -61,7 +61,7 @@ export async function PATCH(
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const updated = await prisma.openSlot.update({
-    where: { id },
+    where: { id, practiceId: user.practiceId! },
     data: {
       ...(parsed.data.status && { status: parsed.data.status }),
       ...(parsed.data.notes !== undefined && { notes: parsed.data.notes }),

@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
 
   const where: Prisma.WaitlistEntryWhereInput = {
     practiceId: user.practiceId,
+    client: { practiceId: user.practiceId },
+    OR: [{ appointmentTypeId: null }, { appointmentType: { practiceId: user.practiceId } }],
     ...(status && { status }),
     ...(clientId && { clientId }),
     ...(appointmentTypeId && { appointmentTypeId }),

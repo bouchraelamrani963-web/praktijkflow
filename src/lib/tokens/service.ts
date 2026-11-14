@@ -84,15 +84,20 @@ export async function lookupToken(rawToken: string) {
           practitionerId: true,
           appointmentTypeId: true,
           practiceId: true,
+          clientId: true,
           revenueEstimateCents: true,
         },
       },
-      client: { select: { id: true, firstName: true, lastName: true } },
+      client: { select: { id: true, firstName: true, lastName: true, practiceId: true } },
       practice: { select: { id: true, name: true } },
     },
   });
 
-  if (!token) return null;
+  if (!token || token.client.practiceId !== token.practiceId) return null;
+  if (token.appointment && (
+    token.appointment.practiceId !== token.practiceId ||
+    (token.action !== "claim_open_slot" && token.appointment.clientId !== token.clientId)
+  )) return null;
 
   const openSlotId = token.action === "claim_open_slot" ? extractOpenSlotId(rawToken) : null;
   const openSlot = openSlotId
@@ -206,11 +211,11 @@ async function confirmAppointment(token: TokenWithRelations): Promise<ExecuteRes
   }
 
   await prisma.appointment.update({
-    where: { id: token.appointment.id },
+    where: { id: token.appointment.id, practiceId: token.practiceId },
     data: { status: "CONFIRMED" },
   });
 
-  await recalcAndSave(token.appointment.id);
+  await recalcAndSave(token.appointment.id, token.practiceId);
 
   return {
     outcome: "success",
@@ -228,11 +233,11 @@ async function cancelAppointment(token: TokenWithRelations): Promise<ExecuteResu
   }
 
   await prisma.appointment.update({
-    where: { id: token.appointment.id },
+    where: { id: token.appointment.id, practiceId: token.practiceId },
     data: { status: "CANCELLED" },
   });
 
-  await recalcAndSave(token.appointment.id);
+  await recalcAndSave(token.appointment.id, token.practiceId);
   await maybeCreateOpenSlot(token.appointment.id);
 
   return {
@@ -246,7 +251,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
   const slot = token.openSlot ?? (
     token.appointment
       ? await prisma.openSlot.findFirst({
-          where: { sourceAppointmentId: token.appointment.id },
+          where: { sourceAppointmentId: token.appointment.id, practiceId: token.practiceId },
           select: {
             id: true,
             practiceId: true,
@@ -287,10 +292,10 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
   // the transaction only needs their already-resolved values.
   const [client, risk] = await Promise.all([
     prisma.client.findUnique({
-      where: { id: token.clientId },
+      where: { id: token.clientId, practiceId: token.practiceId },
       select: { firstName: true, lastName: true },
     }),
-    calculateRiskForClient(token.clientId, startTime, "CONFIRMED"),
+    calculateRiskForClient(token.practiceId, token.clientId, startTime, "CONFIRMED"),
   ]);
 
   if (!client) {
@@ -335,7 +340,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
       // in the same write that flips status. If another tx claimed it first,
       // updated.count === 0 and we throw to roll back the appointment.
       const updated = await tx.openSlot.updateMany({
-        where: { id: slot.id, status: { in: ["AVAILABLE", "OFFERED"] } },
+        where: { id: slot.id, practiceId: token.practiceId, status: { in: ["AVAILABLE", "OFFERED"] } },
         data: {
           status: "CLAIMED",
           claimedAppointmentId: newAppt.id,

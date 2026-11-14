@@ -4,6 +4,93 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Save, Sun, Moon, Monitor, Sparkles, ListPlus } from "lucide-react";
 import toast from "react-hot-toast";
+import { can } from "@/lib/auth/permissions";
+import type { Role } from "@/generated/prisma/client";
+import { useAuth } from "@/lib/hooks/useAuth";
+
+interface Member {
+  id: string;
+  role: Role;
+  isActive: boolean;
+  user: { firstName: string; lastName: string };
+}
+
+const memberRoles: Record<Role, string> = {
+  OWNER: "Eigenaar", ADMIN: "Beheerder", PRACTITIONER: "Zorgverlener", ASSISTANT: "Assistent",
+};
+
+function PracticeMembers() {
+  const [members, setMembers] = useState<Member[] | null>(null);
+  const [error, setError] = useState("");
+  const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async (signal?: AbortSignal) => {
+    setError("");
+    try {
+      const response = await fetch("/api/settings/members", { cache: "no-store", signal });
+      if (!response.ok) throw new Error();
+      const result = await response.json() as { members: Member[] };
+      if (!signal?.aborted) setMembers(result.members);
+    } catch {
+      if (!signal?.aborted) setError("Medewerkers konden niet worden geladen.");
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
+
+  async function revoke(id: string) {
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/settings/members/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error();
+      setMembers((current) => current?.map((member) => member.id === id
+        ? { ...member, isActive: false } : member) ?? null);
+      setConfirmation(null);
+    } catch {
+      setError("Toegang intrekken is mislukt.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="mt-5 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="text-sm font-semibold">Medewerkers en toegang</h2>
+      {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
+      {!members && (error
+        ? <button type="button" onClick={() => void load()} className="mt-2 text-sm underline">Opnieuw proberen</button>
+        : <p role="status" className="mt-2 text-sm">Medewerkers laden…</p>)}
+      {members && (
+        <ul className="mt-2 divide-y divide-zinc-200 dark:divide-zinc-700">
+          {members.map((member) => (
+            <li key={member.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+              <div className="min-w-0 break-words">
+                <p className="font-medium">{member.user.firstName} {member.user.lastName}</p>
+                <p>{memberRoles[member.role]}{!member.isActive && " · Toegang ingetrokken"}</p>
+              </div>
+              {member.isActive && member.role !== "OWNER" && (
+                confirmation === member.id ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button type="button" disabled={saving} onClick={() => setConfirmation(null)} className="min-h-10 px-2">Annuleren</button>
+                    <button type="button" disabled={saving} onClick={() => void revoke(member.id)} className="min-h-10 rounded bg-red-700 px-2 text-white">Intrekken bevestigen</button>
+                  </div>
+                ) : (
+                  <button type="button" disabled={saving} onClick={() => setConfirmation(member.id)} className="min-h-10 rounded border border-zinc-300 px-2">Toegang intrekken</button>
+                )
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 interface PracticeData {
   name: string;
@@ -58,6 +145,8 @@ function getLocalSettings(): LocalSettings {
 }
 
 export default function InstellingenPage() {
+  const { profile } = useAuth();
+  const canEditPractice = can(profile?.role ?? null, "practiceSettings");
   const [practice, setPractice] = useState<PracticeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,7 +192,7 @@ export default function InstellingenPage() {
 
   async function handleSavePractice(e: React.FormEvent) {
     e.preventDefault();
-    if (!practice) return;
+    if (!practice || !canEditPractice) return;
     setSaving(true);
     try {
       const res = await fetch("/api/settings", {
@@ -143,29 +232,33 @@ export default function InstellingenPage() {
         <div className="ns-app-settings-panel ns-app-settings-practice rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Praktijkgegevens</h2>
           {practice && (
-            <form onSubmit={handleSavePractice} className="mt-4 space-y-4">
-              <Field label="Naam" value={practice.name} onChange={(v) => setPractice({ ...practice, name: v })} />
-              <Field label="E-mail" value={practice.email ?? ""} onChange={(v) => setPractice({ ...practice, email: v || null })} type="email" />
-              <Field label="Telefoon" value={practice.phone ?? ""} onChange={(v) => setPractice({ ...practice, phone: v || null })} />
-              <Field label="Adres" value={practice.address ?? ""} onChange={(v) => setPractice({ ...practice, address: v || null })} />
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Postcode" value={practice.zipCode ?? ""} onChange={(v) => setPractice({ ...practice, zipCode: v || null })} />
-                <Field label="Plaats" value={practice.city ?? ""} onChange={(v) => setPractice({ ...practice, city: v || null })} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="KVK-nummer" value={practice.kvkNumber ?? ""} onChange={(v) => setPractice({ ...practice, kvkNumber: v || null })} />
-                <Field label="AGB-code" value={practice.agbCode ?? ""} onChange={(v) => setPractice({ ...practice, agbCode: v || null })} />
-              </div>
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                {saving ? "Opslaan…" : "Opslaan"}
-              </button>
+            <form onSubmit={handleSavePractice} className="mt-4">
+              {!canEditPractice && <p className="mb-3 text-sm text-zinc-600">Alleen de praktijkeigenaar kan deze gegevens wijzigen.</p>}
+              <fieldset disabled={!canEditPractice || saving} className="min-w-0 space-y-4">
+                <Field label="Naam" value={practice.name} onChange={(v) => setPractice({ ...practice, name: v })} />
+                <Field label="E-mail" value={practice.email ?? ""} onChange={(v) => setPractice({ ...practice, email: v || null })} type="email" />
+                <Field label="Telefoon" value={practice.phone ?? ""} onChange={(v) => setPractice({ ...practice, phone: v || null })} />
+                <Field label="Adres" value={practice.address ?? ""} onChange={(v) => setPractice({ ...practice, address: v || null })} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Postcode" value={practice.zipCode ?? ""} onChange={(v) => setPractice({ ...practice, zipCode: v || null })} />
+                  <Field label="Plaats" value={practice.city ?? ""} onChange={(v) => setPractice({ ...practice, city: v || null })} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="KVK-nummer" value={practice.kvkNumber ?? ""} onChange={(v) => setPractice({ ...practice, kvkNumber: v || null })} />
+                  <Field label="AGB-code" value={practice.agbCode ?? ""} onChange={(v) => setPractice({ ...practice, agbCode: v || null })} />
+                </div>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? "Opslaan…" : "Opslaan"}
+                </button>
+              </fieldset>
             </form>
           )}
+          {canEditPractice && <PracticeMembers />}
         </div>
 
         {/* Right column */}
@@ -216,13 +309,15 @@ export default function InstellingenPage() {
 
           {/* Specialistische beheeracties blijven beschikbaar, maar
               domineren niet langer de dagelijkse praktijkinstellingen. */}
-          <details className="ns-app-advanced">
-            <summary>Geavanceerd beheer <span>Tariefimport en voorbeelddata</span></summary>
-            <div className="ns-app-advanced-content">
-              <Nza2026ImportPanel />
-              <DemoDataPanel />
-            </div>
-          </details>
+          {can(profile?.role ?? null, "demoData") && (
+            <details className="ns-app-advanced">
+              <summary>Geavanceerd beheer</summary>
+              <div className="ns-app-advanced-content">
+                {canEditPractice && <Nza2026ImportPanel />}
+                <DemoDataPanel />
+              </div>
+            </details>
+          )}
 
           {/* Opening hours */}
           <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">

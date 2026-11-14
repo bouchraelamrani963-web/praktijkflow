@@ -211,7 +211,7 @@ export async function POST(req: NextRequest) {
     ? new Date(data.endTime)
     : new Date(startTime.getTime() + durationMinutes * 60_000);
 
-  const risk = await calculateRiskForClient(data.clientId, startTime, data.status);
+  const risk = await calculateRiskForClient(user.practiceId, data.clientId, startTime, data.status);
 
   // Legacy single-id field — first treatment for backward-compat with
   // readers (lists, calendar colour helpers, older webhooks) that still

@@ -21,7 +21,7 @@ export async function POST(
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const result = await recalcAndSave(id);
+  const result = await recalcAndSave(id, user.practiceId);
 
   return NextResponse.json({
     appointment: { id, riskScore: result.riskScore, riskLevel: result.riskLevel },

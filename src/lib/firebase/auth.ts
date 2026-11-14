@@ -74,7 +74,12 @@ export async function signIn(email: string, password: string): Promise<User> {
   }
 
   const { user } = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
-  await createServerSession(user);
+  try {
+    await createServerSession(user);
+  } catch (error) {
+    await firebaseSignOut(getFirebaseAuth()).catch(() => undefined);
+    throw error;
+  }
   return user;
 }
 
@@ -133,6 +138,7 @@ async function createServerSession(user: User) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken }),
   });
+  if (res.status === 403) throw new Error("Je hebt geen actief praktijklidmaatschap.");
   if (!res.ok) {
     throw new Error("Sessie aanmaken mislukt");
   }

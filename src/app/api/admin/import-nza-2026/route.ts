@@ -1,3 +1,4 @@
+import { can } from "@/lib/auth/permissions";
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Import is uitsluitend toegestaan op Preview." }, { status: 403 });
   }
   const user = await getCurrentUser(req);
-  if (!user?.practiceId || user.role !== "OWNER") {
+  if (!user?.practiceId || !can(user.role, "manageCatalog")) {
     return NextResponse.json({ error: "Alleen de praktijkeigenaar mag tarieven importeren." }, { status: 403 });
   }
   let body: unknown;

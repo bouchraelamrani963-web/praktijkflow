@@ -63,12 +63,12 @@ export default async function PatientDetailPage({
     where: { id, practiceId: user.practiceId },
     include: {
       appointments: {
+        where: { practiceId: user.practiceId },
         orderBy: { startTime: "desc" },
         take: 10,
         include: { appointmentType: { select: { name: true, color: true } } },
       },
-      waitlistEntries: { orderBy: { createdAt: "desc" }, take: 5 },
-    },
+      },
   });
 
   if (!patient) notFound();

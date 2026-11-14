@@ -1,3 +1,4 @@
+import { can } from "@/lib/auth/permissions";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
@@ -16,7 +17,8 @@ export async function GET(
   if (!user.practiceId) return NextResponse.json({ error: "No practice context" }, { status: 403 });
 
   const entry = await prisma.waitlistEntry.findFirst({
-    where: { id, practiceId: user.practiceId },
+    where: { id, practiceId: user.practiceId, client: { practiceId: user.practiceId },
+      OR: [{ appointmentTypeId: null }, { appointmentType: { practiceId: user.practiceId } }] },
     include: {
       client: { select: { id: true, firstName: true, lastName: true, phone: true, email: true } },
       appointmentType: { select: { id: true, name: true } },
@@ -60,8 +62,16 @@ export async function PATCH(
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const data = parsed.data;
+  if (data.appointmentTypeId) {
+    const type = await prisma.appointmentType.findFirst({
+      where: { id: data.appointmentTypeId, practiceId: user.practiceId },
+      select: { id: true },
+    });
+    if (!type) return NextResponse.json({ error: "Appointment type not found" }, { status: 404 });
+  }
+
   const updated = await prisma.waitlistEntry.update({
-    where: { id },
+    where: { id, practiceId: user.practiceId },
     data: {
       ...(data.status && { status: data.status }),
       ...(data.appointmentTypeId !== undefined && { appointmentTypeId: data.appointmentTypeId }),
@@ -84,6 +94,7 @@ export async function DELETE(
   const user = await getCurrentUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.practiceId) return NextResponse.json({ error: "No practice context" }, { status: 403 });
+  if (!can(user.role, "deleteRecords")) return NextResponse.json({ error: "Onvoldoende bevoegdheden." }, { status: 403 });
 
   const existing = await prisma.waitlistEntry.findFirst({
     where: { id, practiceId: user.practiceId },

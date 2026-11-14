@@ -1,7 +1,8 @@
+import { can } from "@/lib/auth/permissions";
 import { NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { seedDemoData } from "@/lib/demo-seed";
-import { getCurrentUser, hasRole } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session";
 import type { NextRequest } from "next/server";
 
 /**
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     console.warn("[SEED] FAILED — no practice context");
     return NextResponse.json({ error: "No practice context" }, { status: 403 });
   }
-  if (!hasRole(user, ["OWNER", "ADMIN"])) {
+  if (!can(user.role, "demoData")) {
     console.warn("[SEED] FAILED — insufficient role");
     return NextResponse.json({ error: "Admin only" }, { status: 403 });
   }

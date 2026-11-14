@@ -121,7 +121,7 @@ export async function POST(
   }
 
   const entries = await prisma.waitlistEntry.findMany({
-    where: { id: { in: entryIds }, practiceId: user.practiceId },
+    where: { id: { in: entryIds }, practiceId: user.practiceId, client: { practiceId: user.practiceId } },
     include: {
       client: {
         select: { id: true, firstName: true, lastName: true, email: true, phone: true },

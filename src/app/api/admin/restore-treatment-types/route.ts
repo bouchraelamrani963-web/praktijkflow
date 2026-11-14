@@ -1,3 +1,4 @@
+import { can } from "@/lib/auth/permissions";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
@@ -19,8 +20,7 @@ import { ensureDefaultAppointmentTypes } from "@/lib/dental/ensure-default-types
  *   - One-shot recovery for older practices created before
  *     /api/auth/register seeded the catalog at signup.
  *
- * Auth: requires a logged-in user with a practice context. No special
- * role gate yet — any active practice member can restore.
+ * Auth: the practice owner can restore the catalog.
  */
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser(req);
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
   if (!user.practiceId) {
     return NextResponse.json({ error: "No practice context" }, { status: 403 });
   }
+  if (!can(user.role, "manageCatalog")) return NextResponse.json({ error: "Onvoldoende bevoegdheden." }, { status: 403 });
 
   try {
     const result = await ensureDefaultAppointmentTypes(prisma, user.practiceId);

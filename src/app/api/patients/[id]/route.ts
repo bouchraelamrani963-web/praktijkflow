@@ -1,3 +1,4 @@
+import { can } from "@/lib/auth/permissions";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
@@ -27,11 +28,12 @@ export async function GET(
     where: { id, practiceId: user.practiceId! },
     include: {
       appointments: {
+        where: { practiceId: user.practiceId! },
         orderBy: { startTime: "desc" },
         take: 10,
         include: { appointmentType: { select: { name: true, color: true } } },
       },
-      waitlistEntries: { orderBy: { createdAt: "desc" }, take: 5 },
+      waitlistEntries: { where: { practiceId: user.practiceId! }, orderBy: { createdAt: "desc" }, take: 5 },
     },
   });
 
@@ -63,13 +65,17 @@ export async function PATCH(
 
   const existing = await prisma.client.findFirst({
     where: { id, practiceId: user.practiceId! },
-    select: { id: true },
+    select: { id: true, isActive: true },
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const { isActive, ...fields } = parsed.data;
+  if (isActive !== undefined && isActive !== existing.isActive && !can(user.role, "deleteRecords")) {
+    return NextResponse.json({ error: "Onvoldoende bevoegdheden." }, { status: 403 });
+  }
   const patient = await prisma.client.update({
-    where: { id },
-    data: parsed.data,
+    where: { id, practiceId: user.practiceId! },
+    data: can(user.role, "deleteRecords") ? parsed.data : fields,
   });
 
   return NextResponse.json({ patient });
@@ -84,6 +90,7 @@ export async function DELETE(
 
   const { error, user } = await authorize(req);
   if (error) return error;
+  if (!can(user.role, "deleteRecords")) return NextResponse.json({ error: "Onvoldoende bevoegdheden." }, { status: 403 });
 
   const existing = await prisma.client.findFirst({
     where: { id, practiceId: user.practiceId! },
@@ -93,7 +100,7 @@ export async function DELETE(
 
   // Soft-delete: deactivate instead of cascading
   await prisma.client.update({
-    where: { id },
+    where: { id, practiceId: user.practiceId! },
     data: { isActive: false },
   });
 

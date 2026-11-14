@@ -1,3 +1,4 @@
+import { can } from "@/lib/auth/permissions";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
@@ -181,7 +182,7 @@ export async function PATCH(
 
   const clientId = data.clientId ?? existing.clientId;
   const statusForRisk = data.status ?? existing.status;
-  const risk = await calculateRiskForClient(clientId, startTime, statusForRisk, id);
+  const risk = await calculateRiskForClient(user.practiceId!, clientId, startTime, statusForRisk, id);
 
   // Legacy single-id field kept in sync with first treatment (when present).
   const legacyTypeIdUpdate =
@@ -194,7 +195,7 @@ export async function PATCH(
   // ─── Update appointment + replace treatments atomically ────────────────
   const updated = await prisma.$transaction(async (tx) => {
     const u = await tx.appointment.update({
-      where: { id },
+      where: { id, practiceId: user.practiceId! },
       data: {
         ...(data.clientId && { clientId: data.clientId }),
         ...(data.practitionerId && { practitionerId: data.practitionerId }),
@@ -258,6 +259,7 @@ export async function DELETE(
 
   const { error, user } = await authorize(req);
   if (error) return error;
+  if (!can(user.role, "deleteRecords")) return NextResponse.json({ error: "Onvoldoende bevoegdheden." }, { status: 403 });
 
   const existing = await prisma.appointment.findFirst({
     where: { id, practiceId: user.practiceId! },
@@ -265,6 +267,6 @@ export async function DELETE(
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.appointment.delete({ where: { id } });
+  await prisma.appointment.delete({ where: { id, practiceId: user.practiceId! } });
   return NextResponse.json({ status: "ok" });
 }
