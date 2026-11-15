@@ -1,3 +1,4 @@
+import { amsterdamDateKey, amsterdamDayRange, amsterdamMonthRange } from "@/lib/practice-time";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
@@ -26,9 +27,8 @@ export async function GET(req: NextRequest) {
 
   const practiceId = user.practiceId;
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const { start: todayStart, end: todayEnd } = amsterdamDayRange(amsterdamDateKey(now))!;
+  const { start: monthStart, end: monthEnd } = amsterdamMonthRange(now);
   const next7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   // Fallback payload — shape matches the success payload so the client never
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       // Status counts (this month)
       prisma.appointment.groupBy({
         by: ["status"],
-        where: { practiceId, startTime: { gte: monthStart } },
+        where: { practiceId, startTime: { gte: monthStart, lt: monthEnd } },
         _count: true,
       }),
 
@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
       prisma.appointment.aggregate({
         where: {
           practiceId,
-          startTime: { gte: monthStart },
+          startTime: { gte: monthStart, lt: monthEnd },
           status: { notIn: ["CANCELLED", "NO_SHOW"] },
         },
         _sum: { revenueEstimateCents: true },
@@ -147,13 +147,13 @@ export async function GET(req: NextRequest) {
 
       // Recovered revenue THIS MONTH uses claimedAt (the actual claim moment),
       // NOT updatedAt — so later edits to the row don't leak revenue into or
-      // out of the month. `claimedAt: { gte: monthStart }` implicitly excludes
+      // out of the month. `claimedAt: { gte: monthStart, lt: monthEnd }` implicitly excludes
       // nulls, but we keep the query shape symmetric with recoveredAggAll.
       prisma.openSlot.aggregate({
         where: {
           practiceId,
           status: "CLAIMED",
-          claimedAt: { gte: monthStart, not: null },
+          claimedAt: { gte: monthStart, lt: monthEnd },
         },
         _sum: { recoveredRevenueCents: true },
       }),
@@ -164,7 +164,7 @@ export async function GET(req: NextRequest) {
       prisma.appointment.aggregate({
         where: {
           practiceId,
-          startTime: { gte: monthStart },
+          startTime: { gte: monthStart, lt: monthEnd },
           status: { in: ["CANCELLED", "NO_SHOW"] },
         },
         _sum: { revenueEstimateCents: true },

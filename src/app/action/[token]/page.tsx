@@ -1,18 +1,7 @@
 import { lookupToken } from "@/lib/tokens/service";
 import { ActionExecutor } from "@/components/tokens/ActionExecutor";
+import { formatActionDateTime } from "@/lib/practice-time";
 import { XCircle } from "lucide-react";
-
-function fmt(d: Date) {
-  return d.toLocaleString("nl-NL", {
-    timeZone: "Europe/Amsterdam",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default async function ActionPage({
   params,
@@ -22,12 +11,13 @@ export default async function ActionPage({
   const { token: rawToken } = await params;
 
   const tokenRecord = await lookupToken(rawToken);
-  const appointmentStart = tokenRecord?.appointment?.startTime ?? tokenRecord?.openSlot?.startTime;
+  const appointmentStart = tokenRecord?.action === "claim_open_slot"
+    ? tokenRecord.openSlot?.startTime
+    : tokenRecord?.appointment?.startTime;
   const claimSlotUnavailable =
     tokenRecord?.action === "claim_open_slot" &&
-    tokenRecord.openSlot != null &&
-    tokenRecord.openSlot.status !== "AVAILABLE" &&
-    tokenRecord.openSlot.status !== "OFFERED";
+    (!tokenRecord.openSlot ||
+      (tokenRecord.openSlot.status !== "AVAILABLE" && tokenRecord.openSlot.status !== "OFFERED"));
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
@@ -79,7 +69,7 @@ export default async function ActionPage({
             practiceName={tokenRecord.practice.name}
             clientName={`${tokenRecord.client.firstName} ${tokenRecord.client.lastName}`}
             appointmentTime={
-              appointmentStart ? fmt(appointmentStart) : undefined
+              appointmentStart ? formatActionDateTime(appointmentStart) : undefined
             }
           />
         )}

@@ -1,5 +1,7 @@
 "use client";
 
+import { amsterdamDateTimeInput, parseAmsterdamDateTime } from "@/lib/practice-time";
+import { formatEuroCents } from "@/lib/currency";
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -79,6 +81,7 @@ interface Props {
   initial: AppointmentFormValues;
   mode: "create" | "edit";
   appointmentId?: string;
+  originalStartTime?: string;
   clients: ClientOption[];
   practitioners: PractitionerOption[];
   types: TypeOption[];
@@ -88,20 +91,6 @@ const inputCls =
   "mt-1 block w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading placeholder-practice-subtle focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20 ";
 const labelCls = "block text-sm font-medium text-practice-ink ";
 
-/** Format Date as `YYYY-MM-DDTHH:mm` in local timezone for datetime-local. */
-function localDateTime(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
-  );
-}
-
-/** Format cents → "€12,34" Dutch locale. */
-function formatEuros(cents: number): string {
-  const safe = Number.isFinite(cents) ? cents : 0;
-  return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(safe / 100);
-}
 
 /** Pull the leading code (e.g. "C001") from a catalog name; fallback to name. */
 function codeOf(name: string): string {
@@ -118,6 +107,7 @@ export function AppointmentForm({
   initial,
   mode,
   appointmentId,
+  originalStartTime,
   clients,
   practitioners,
   types,
@@ -224,6 +214,10 @@ export function AppointmentForm({
     e.preventDefault();
     setSaving(true);
     try {
+      const startTime = v.startTime === initial.startTime && originalStartTime
+        ? new Date(originalStartTime)
+        : parseAmsterdamDateTime(v.startTime);
+      if (!startTime) throw new Error("Deze starttijd bestaat niet in de Nederlandse tijdzone. Kies een andere starttijd.");
       const payload = {
         clientId: v.clientId,
         practitionerId: v.practitionerId,
@@ -237,7 +231,7 @@ export function AppointmentForm({
         // Legacy single id — server keeps it in sync with treatments[0].
         appointmentTypeId:
           v.treatments[0]?.appointmentTypeId ?? v.appointmentTypeId ?? undefined,
-        startTime: new Date(v.startTime).toISOString(),
+        startTime: startTime.toISOString(),
         durationMinutes: Number(v.durationMinutes),
         status: v.status,
         notes: v.notes || undefined,
@@ -313,8 +307,8 @@ export function AppointmentForm({
             className={inputCls}
             value={v.startTime}
             onChange={(e) => set("startTime", e.target.value)}
-            min={(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return localDateTime(d); })()}
-            max={(() => { const d = new Date(); d.setFullYear(d.getFullYear() + 5); return localDateTime(d); })()}
+            min={`${amsterdamDateTimeInput(new Date()).slice(0, 10)}T00:00`}
+            max={(() => { const d = new Date(); d.setUTCFullYear(d.getUTCFullYear() + 5); return amsterdamDateTimeInput(d).slice(0, 16); })()}
           />
         </div>
       </div>
@@ -336,7 +330,7 @@ export function AppointmentForm({
             </span>
           </h3>
           <span className="text-xs text-practice-subtle">
-            {v.treatments.length} {v.treatments.length === 1 ? "code" : "codes"} · totaal {formatEuros(totals.cents)}
+            {v.treatments.length} {v.treatments.length === 1 ? "code" : "codes"} · totaal {formatEuroCents(totals.cents)}
           </span>
         </div>
 
@@ -359,7 +353,7 @@ export function AppointmentForm({
                     {descOf(TYPE_LABELS[t.name] ?? t.name)}
                   </span>
                   <span className="tabular-nums text-xs text-practice-subtle">
-                    {formatEuros(t.price)}
+                    {formatEuroCents(t.price)}
                   </span>
                   <input
                     type="number"
@@ -371,7 +365,7 @@ export function AppointmentForm({
                     className="w-14 rounded border border-practice-field px-2 py-1 text-right text-xs tabular-nums"
                   />
                   <span className="w-20 text-right tabular-nums text-sm font-medium text-practice-heading">
-                    {formatEuros(subtotal)}
+                    {formatEuroCents(subtotal)}
                   </span>
                   <button
                     type="button"
@@ -432,7 +426,7 @@ export function AppointmentForm({
                         {descOf(TYPE_LABELS[t.name] ?? t.name)}
                       </span>
                       <span className="tabular-nums text-xs text-practice-subtle">
-                        {t.durationMinutes}min · {formatEuros(t.price)}
+                        {t.durationMinutes}min · {formatEuroCents(t.price)}
                       </span>
                       <Plus
                         className={`h-4 w-4 shrink-0 ${

@@ -1,3 +1,4 @@
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -131,7 +132,7 @@ export async function POST(
   const entryById = new Map(entries.map((e) => [e.id, e]));
 
   const fmt = slot.startTime.toLocaleString("nl-NL", {
-    timeZone: "Europe/Amsterdam",
+    timeZone: PRACTICE_TIME_ZONE,
     weekday: "long",
     day: "numeric",
     month: "long",

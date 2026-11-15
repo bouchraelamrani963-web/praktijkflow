@@ -1,5 +1,7 @@
 "use client";
 
+import { formatEuroCents } from "@/lib/currency";
+import { PRACTICE_TIME_ZONE, amsterdamCalendarDayDifference } from "@/lib/practice-time";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -95,30 +97,13 @@ const statusLabels: Record<AppointmentRow["status"], string> = {
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function isSameLocalDay(iso: string, day: Date): boolean {
-  const date = new Date(iso);
-  return (
-    date.getFullYear() === day.getFullYear() &&
-    date.getMonth() === day.getMonth() &&
-    date.getDate() === day.getDate()
-  );
-}
-
-function isWithinCurrentWeek(iso: string): boolean {
-  const date = new Date(iso);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const weekEnd = new Date(today);
-  weekEnd.setDate(today.getDate() + 7);
-  return date >= today && date < weekEnd;
 }
 
 /**
@@ -130,12 +115,7 @@ function isWithinCurrentWeek(iso: string): boolean {
  * still reads as "Vandaag" and a 00:30 next-day appointment reads as "Morgen".
  */
 function relativeDayLabel(iso: string): { label: string; tone: "info" | "success" | "neutral" } | null {
-  const start = new Date(iso);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const startDay = new Date(start);
-  startDay.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((startDay.getTime() - today.getTime()) / 86_400_000);
+  const diffDays = amsterdamCalendarDayDifference(new Date(iso), new Date());
 
   if (diffDays === 0)  return { label: "Vandaag",     tone: "success" };
   if (diffDays === 1)  return { label: "Morgen",      tone: "info" };
@@ -189,12 +169,8 @@ function Inner({
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
-    if (dateFrom) params.set("dateFrom", new Date(dateFrom).toISOString());
-    if (dateTo) {
-      const end = new Date(dateTo);
-      end.setHours(23, 59, 59, 999);
-      params.set("dateTo", end.toISOString());
-    }
+    if (dateFrom) params.set("dateFrom", dateFrom);
+    if (dateTo) params.set("dateTo", dateTo);
     if (status) params.set("status", status);
     if (risk) params.set("riskLevel", risk);
     if (practitionerId) params.set("practitionerId", practitionerId);
@@ -232,10 +208,14 @@ function Inner({
   const items = useMemo(() => data?.items ?? [], [data]);
   const visibleItems = useMemo(() => {
     if (agendaView === "day") {
-      return items.filter((appointment) => isSameLocalDay(appointment.startTime, new Date()));
+      return items.filter((appointment) => amsterdamCalendarDayDifference(new Date(appointment.startTime), new Date()) === 0);
     }
     if (agendaView === "week") {
-      return items.filter((appointment) => isWithinCurrentWeek(appointment.startTime));
+      const today = new Date();
+      return items.filter((appointment) => {
+        const days = amsterdamCalendarDayDifference(new Date(appointment.startTime), today);
+        return days >= 0 && days < 7;
+      });
     }
     return items;
   }, [agendaView, items]);
@@ -260,7 +240,7 @@ function Inner({
           </h1>
           <p className="mt-1 text-sm text-practice-subtle">
             {data
-              ? `${data.total} afspra${data.total === 1 ? "ak" : "ken"} · Geschatte omzet €${((Number.isFinite(totalRevenue) ? totalRevenue : 0) / 100).toFixed(2)}`
+              ? `${data.total} afspra${data.total === 1 ? "ak" : "ken"} · Geschatte omzet ${formatEuroCents(totalRevenue)}`
               : "Laden…"}
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-practice-subtle">
@@ -497,7 +477,7 @@ function Inner({
                       <td className="px-4 py-3 text-right text-sm font-mono">
                         {countsForRevenue(a) ? (
                           <span className="text-practice-ink">
-                            €{((Number.isFinite(a.revenueEstimateCents) ? a.revenueEstimateCents : 0) / 100).toFixed(2)}
+                            {formatEuroCents(a.revenueEstimateCents)}
                           </span>
                         ) : (
                           <span
@@ -508,7 +488,7 @@ function Inner({
                                 : "Niet verschenen — geen omzet"
                             }
                           >
-                            €0,00
+                            {formatEuroCents(0)}
                           </span>
                         )}
                       </td>

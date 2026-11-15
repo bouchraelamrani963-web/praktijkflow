@@ -1,3 +1,4 @@
+import { formatEuros } from "@/lib/currency";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -5,10 +6,9 @@ import { PublicAccountNav } from "@/components/brand/PublicAccountNav";
 import { plans } from "@/lib/stripe/plans";
 
 const vatRate = 1.21;
-const euros = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
 // Prices in the plan catalog are customer-facing gross prices, including 21% VAT.
 // No Stripe price IDs or checkout behavior are changed by this display calculation.
-const priceExVat = (gross: number) => euros.format(gross / vatRate);
+const priceExVat = (gross: number) => formatEuros(gross / vatRate);
 
 const benefitText: Record<string, string[]> = {
   starter: [
@@ -75,7 +75,7 @@ export default function PricingPage() {
                 <h2>{plan.name}</h2>
                 <p className="ns-pricing-tagline">{plan.tagline}</p>
                 <p className="ns-pricing-price">
-                  <strong>€{plan.price}</strong>
+                  <strong>{formatEuros(plan.price)}</strong>
                   <span>/ maand</span>
                 </p>
                 <p className="ns-pricing-tax">Inclusief 21% btw</p>

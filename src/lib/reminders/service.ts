@@ -1,3 +1,4 @@
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import type { AppointmentStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { sendSms } from "@/lib/twilio";
@@ -100,13 +101,15 @@ export async function sendReminder(
   const ctx: TemplateContext = {
     clientName: `${appt.client.firstName} ${appt.client.lastName}`,
     date: appt.startTime.toLocaleDateString("nl-NL", {
-      weekday: "long",
+      timeZone: PRACTICE_TIME_ZONE,
+    weekday: "long",
       day: "numeric",
       month: "long",
       year: "numeric",
     }),
     time: appt.startTime.toLocaleTimeString("nl-NL", {
-      hour: "2-digit",
+      timeZone: PRACTICE_TIME_ZONE,
+    hour: "2-digit",
       minute: "2-digit",
     }),
     practiceName: appt.practice.name,

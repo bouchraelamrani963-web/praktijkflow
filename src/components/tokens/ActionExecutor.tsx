@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle, XCircle, Clock, CalendarClock, AlertTriangle } from "lucide-react";
+import { formatActionDateTime } from "@/lib/practice-time";
 import type { LucideIcon } from "lucide-react";
 
 const ACTION_LABELS: Record<string, { verb: string; description: string; icon: LucideIcon }> = {
@@ -23,6 +24,7 @@ type Outcome = "idle" | "loading" | "success" | "expired" | "already_used" | "in
 export function ActionExecutor({ token, action, practiceName, clientName, appointmentTime }: Props) {
   const [outcome, setOutcome] = useState<Outcome>("idle");
   const [message, setMessage] = useState("");
+  const [confirmedStartTime, setConfirmedStartTime] = useState<string>();
 
   const isClaim = action === "claim_open_slot";
 
@@ -40,6 +42,9 @@ export function ActionExecutor({ token, action, practiceName, clientName, appoin
       const data = await res.json();
       setOutcome(data.outcome ?? "failed");
       setMessage(data.message ?? "");
+      if (data.outcome === "success" && typeof data.appointmentStartTime === "string") {
+        setConfirmedStartTime(formatActionDateTime(new Date(data.appointmentStartTime)));
+      }
     } catch {
       setOutcome("failed");
       setMessage("Kan geen verbinding maken. Probeer het opnieuw.");
@@ -73,8 +78,8 @@ export function ActionExecutor({ token, action, practiceName, clientName, appoin
   if (outcome === "success") {
     const title = isClaim ? "De afspraak is voor u gereserveerd" : message;
     const subtitle = isClaim
-      ? appointmentTime
-        ? `U wordt verwacht op ${appointmentTime} bij ${practiceName}.`
+      ? confirmedStartTime
+        ? `U wordt verwacht op ${confirmedStartTime} bij ${practiceName}.`
         : `U wordt verwacht bij ${practiceName}.`
       : "U kunt deze pagina sluiten.";
 

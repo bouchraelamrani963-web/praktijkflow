@@ -1,3 +1,4 @@
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { findMatchesForSlot } from "./matching";
@@ -130,7 +131,7 @@ export async function autoOfferSlot(
   const topCandidates = matches.slice(0, MAX_OFFERS);
 
   const fmtDate = slot.startTime.toLocaleString("nl-NL", {
-    timeZone: "Europe/Amsterdam",
+    timeZone: PRACTICE_TIME_ZONE,
     weekday: "long",
     day: "numeric",
     month: "long",

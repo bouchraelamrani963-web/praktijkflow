@@ -1,3 +1,4 @@
+import { formatEuros } from "@/lib/currency";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { DemoShell } from "../DemoShell";
@@ -33,7 +34,7 @@ export default function DemoPricingPage() {
                 )}
                 <h2 className="text-sm font-semibold text-slate-950">{plan.name}</h2>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-3xl font-semibold text-slate-950">&euro;{plan.price}</span>
+                  <span className="text-3xl font-semibold text-slate-950">{formatEuros(Number(plan.price))}</span>
                   <span className="text-slate-600">/ maand</span>
                 </div>
                 <p className="mt-4 text-sm leading-6 text-slate-600">{plan.tagline}</p>

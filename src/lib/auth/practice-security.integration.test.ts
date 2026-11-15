@@ -18,7 +18,14 @@ import { POST as createSlot } from "@/app/api/open-slots/route";
 import { GET as readSlot, PATCH as editSlot } from "@/app/api/open-slots/[id]/route";
 import { POST as createToken } from "@/app/api/tokens/route";
 import { findMatchesForSlot } from "@/lib/waitlist/matching";
-import { lookupToken } from "@/lib/tokens/service";
+import { renderToStaticMarkup } from "react-dom/server";
+import { POST as offerSlot } from "@/app/api/open-slots/[id]/offer/route";
+import { POST as executePatientAction } from "@/app/api/tokens/execute/route";
+import { GET as readDashboard } from "@/app/api/dashboard/route";
+import { GET as listAppointments } from "@/app/api/appointments/route";
+import ActionPage from "@/app/action/[token]/page";
+import { amsterdamDateKey, formatActionDateTime } from "@/lib/practice-time";
+import { createActionToken, lookupToken } from "@/lib/tokens/service";
 import { hashToken } from "@/lib/tokens/crypto";
 import type { Role } from "@/generated/prisma/client";
 
@@ -211,5 +218,110 @@ describe.runIf(testDatabase)("practice rights against PostgreSQL with mocked Fir
     await prisma.user.create({ data: { firebaseUid: legacy, email: `${legacy}@example.test`, firstName: "Demo", lastName: "Ouder account" } });
     expect((await login(request(legacy, { idToken: legacy }))).status).toBe(200);
     expect((await (await me(request(legacy))).json()).user.role).toBe("OWNER");
+  });
+});
+
+describe.runIf(testDatabase)("appointment claim in Dutch practice time", () => {
+  it.each([
+    ["2026-11-15T12:00:00Z", "2026-11-18", "09:00", "email"],
+    ["2026-07-15T12:00:00Z", "2026-07-18", "08:00", "sms"],
+    ["2026-03-28T23:10:00Z", "2026-03-29", "08:00", "email"],
+    ["2026-10-24T22:10:00Z", "2026-10-25", "09:00", "email"],
+  ] as const)("preserves the slot time through cancellation, %s matching, claim and confirmation", async (now, day, utcTime, channel) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(now));
+    vi.stubEnv("EMAIL_TEST_MODE", "true");
+    vi.stubEnv("SMS_TEST_MODE", "true");
+    vi.stubEnv("AUTO_OFFER_ENABLED", "false");
+    try {
+      const { owner, organization, booking, client, entry, type } = await practice("Fictieve claimpraktijk");
+      const practiceId = organization.id;
+      const uid = owner.firebaseUid;
+      const fixtureStart = new Date(`${day}T${utcTime}:00Z`);
+      const fixtureEnd = new Date(+fixtureStart + 30 * 60_000);
+      await prisma.appointment.update({
+        where: { id: booking.id },
+        data: { startTime: fixtureStart, endTime: fixtureEnd, revenueEstimateCents: 5701 },
+      });
+      const waitingClient = await prisma.client.create({
+        data: { practiceId, firstName: "Wachtlijst", lastName: "Fictief", email: "wachtlijst@example.test", phone: "0612345678" },
+      });
+      await prisma.waitlistEntry.update({
+        where: { id: entry.id },
+        data: { clientId: waitingClient.id, preferredTime: "10:00-11:00", status: "EXPIRED" },
+      });
+
+      const cancel = await createActionToken({ practiceId, appointmentId: booking.id, clientId: client.id, action: "cancel_appointment" });
+      expect((await executePatientAction(request(uid, { token: cancel.rawToken }))).status).toBe(200);
+      const slot = await prisma.openSlot.findUniqueOrThrow({ where: { sourceAppointmentId: booking.id } });
+      expect(slot).toMatchObject({ startTime: fixtureStart, endTime: fixtureEnd, status: "AVAILABLE" });
+
+      await prisma.waitlistEntry.update({ where: { id: entry.id }, data: { status: "WAITING" } });
+
+      // Simulate the persisted divergence found in the November Preview.
+      await prisma.appointment.update({
+        where: { id: booking.id },
+        data: { startTime: new Date(+fixtureStart - 3_600_000), endTime: new Date(+fixtureEnd - 3_600_000) },
+      });
+      await prisma.messageLog.create({
+        data: { practiceId, appointmentId: booking.id, clientId: client.id, channel: "email", to: "", body: "Andere afspraakmelding", status: "sent" },
+      });
+      const before = await (await readDashboard(request(uid))).json();
+      expect(before.automation.summary).toMatchObject({ open: 1, inProgress: 0 });
+      expect(before.automation.worklist[0]).toMatchObject({ startTime: fixtureStart.toISOString() });
+      expect(before.automation.worklist[0].details).toContainEqual(expect.stringContaining("10:00"));
+      expect(await findMatchesForSlot(slot.id, practiceId)).toContainEqual(expect.objectContaining({
+        id: entry.id, reasons: expect.arrayContaining(["Preferred time (10:00-11:00) matches"]),
+      }));
+
+      const offerResponse = await offerSlot(request(uid, { waitlistEntryId: entry.id, channel }), ctx(slot.id));
+      expect(offerResponse.status).toBe(200);
+      const { results } = await offerResponse.json();
+      expect(results[0].status).toBe("test");
+      const claimToken = new URL(results[0].claimUrl).pathname.split("/").pop()!;
+      const offered = await (await readDashboard(request(uid))).json();
+      expect(offered.automation.summary).toMatchObject({ open: 0, inProgress: 1 });
+      expect(offered.automation.worklist[0].offerSummary).toMatchObject({ mock: 1, sent: 0, total: 1 });
+      expect(renderToStaticMarkup(await ActionPage({ params: Promise.resolve({ token: claimToken }) }))).toContain("10:00");
+
+      if (channel === "sms") {
+        const legacy = await createActionToken({ practiceId, appointmentId: booking.id, clientId: waitingClient.id, action: "claim_open_slot" });
+        expect(renderToStaticMarkup(await ActionPage({ params: Promise.resolve({ token: legacy.rawToken }) }))).toContain("10:00");
+      }
+
+      const response = await executePatientAction(request(uid, { token: claimToken }));
+      expect(response.status).toBe(200);
+      const result = await response.json();
+      expect(result).toMatchObject({ outcome: "success", appointmentStartTime: fixtureStart.toISOString() });
+      expect(formatActionDateTime(new Date(result.appointmentStartTime))).toContain("10:00");
+      expect(await prisma.appointment.findUniqueOrThrow({ where: { id: result.appointmentId } })).toMatchObject({
+        practiceId, clientId: waitingClient.id, status: "CONFIRMED", startTime: fixtureStart, endTime: fixtureEnd,
+        appointmentTypeId: type.id, revenueEstimateCents: 5701,
+      });
+      expect(await prisma.waitlistEntry.findUniqueOrThrow({ where: { id: entry.id } })).toMatchObject({ status: "ACCEPTED" });
+      const agenda = await (await listAppointments(request(uid, undefined, `?dateFrom=${day}&dateTo=${day}`))).json();
+      expect(agenda.items).toContainEqual(expect.objectContaining({ id: result.appointmentId, startTime: fixtureStart.toISOString() }));
+      const dashboard = await (await readDashboard(request(uid))).json();
+      expect(dashboard.automation.summary).toMatchObject({ open: 0, inProgress: 0, filled: 1 });
+      expect(dashboard.automation.worklist[0]).toMatchObject({ startTime: fixtureStart.toISOString() });
+      if (amsterdamDateKey(new Date(now)) === day) expect(dashboard.kpis.appointmentsToday).toBe(2);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.useRealTimers();
+    }
+  });
+
+  it("counts open slots beyond the worklist limit", async () => {
+    const { owner, organization, type } = await practice("Fictieve tellerspraktijk");
+    const startTime = new Date(Date.now() + 86_400_000);
+    await prisma.openSlot.createMany({
+      data: Array.from({ length: 61 }, () => ({
+        practiceId: organization.id, practitionerId: owner.id, appointmentTypeId: type.id,
+        startTime, endTime: new Date(+startTime + 1_800_000), durationMinutes: 30,
+      })),
+    });
+    const response = await (await readDashboard(request(owner.firebaseUid))).json();
+    expect(response.automation.summary.open).toBe(61);
+    expect(response.automation.worklist).toHaveLength(12);
   });
 });

@@ -1,3 +1,4 @@
+import { parsePracticeTimestamp } from "@/lib/practice-time";
 import { can } from "@/lib/auth/permissions";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -148,7 +149,7 @@ export async function PATCH(
   }
 
   // Recompute times if startTime, duration, type or treatments changed.
-  const startTime = data.startTime ? new Date(data.startTime) : existing.startTime;
+  const startTime = data.startTime ? parsePracticeTimestamp(data.startTime)! : existing.startTime;
   let endTime = existing.endTime;
   const treatmentsChanged = resolvedTreatments !== null;
   const treatmentDurationSum =
@@ -157,7 +158,7 @@ export async function PATCH(
       : null;
 
   if (data.endTime) {
-    endTime = new Date(data.endTime);
+    endTime = parsePracticeTimestamp(data.endTime)!;
   } else if (data.startTime || data.durationMinutes || data.appointmentTypeId || treatmentsChanged) {
     const dur =
       data.durationMinutes ??

@@ -5,13 +5,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { loadAppointmentFormOptions } from "@/lib/appointments/formOptions";
 import { AppointmentForm, type AppointmentFormValues } from "@/components/appointments/AppointmentForm";
+import { amsterdamDateTimeInput } from "@/lib/practice-time";
 import { isUuid } from "@/lib/validations/uuid";
-
-function toLocalDatetime(d: Date): string {
-  const dt = new Date(d);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-}
 
 export default async function EditAppointmentPage({
   params,
@@ -61,7 +56,7 @@ export default async function EditAppointmentPage({
     practitionerId: appt.practitionerId,
     treatments,
     appointmentTypeId: appt.appointmentTypeId ?? "",
-    startTime: toLocalDatetime(appt.startTime),
+    startTime: amsterdamDateTimeInput(appt.startTime).slice(0, 16),
     durationMinutes: dur,
     revenueEstimateEuros: ((Number.isFinite(appt.revenueEstimateCents) ? appt.revenueEstimateCents : 0) / 100).toFixed(2),
     // Edit mode: persisted duration/revenue counts as user-set, so the
@@ -84,7 +79,13 @@ export default async function EditAppointmentPage({
       </Link>
       <h1 className="mb-6 text-2xl font-bold text-practice-heading">Afspraak bewerken</h1>
       <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
-        <AppointmentForm mode="edit" appointmentId={appt.id} initial={initial} {...options} />
+        <AppointmentForm
+        mode="edit"
+        appointmentId={appt.id}
+        originalStartTime={appt.startTime.toISOString()}
+        initial={initial}
+        {...options}
+      />
       </div>
     </div>
   );

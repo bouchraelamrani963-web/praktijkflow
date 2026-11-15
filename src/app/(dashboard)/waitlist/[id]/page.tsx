@@ -1,3 +1,4 @@
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Mail, Phone, CalendarClock, Send, CheckCheck, Clock3 } from "lucide-react";
@@ -49,6 +50,7 @@ function outcomeClass(outcome: string): string {
 
 function formatDateTime(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -59,6 +61,7 @@ function formatDateTime(d: Date) {
 
 function formatDate(d: Date) {
   return new Date(d).toLocaleDateString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     day: "numeric",
     month: "short",
     year: "numeric",

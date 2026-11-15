@@ -1,3 +1,4 @@
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
@@ -44,11 +45,11 @@ function openSlotLogMarker(slotId: string): string {
 
 function fmtDateTime(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
-    timeZone: "Europe/Amsterdam",
     hour: "2-digit",
     minute: "2-digit",
   });

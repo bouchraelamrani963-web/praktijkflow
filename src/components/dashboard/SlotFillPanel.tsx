@@ -1,5 +1,7 @@
 "use client";
 
+import { formatEuroCents } from "@/lib/currency";
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -25,11 +27,6 @@ interface Metrics {
   recoveredRevenueCents: number;
 }
 
-function formatEuros(cents: number | null | undefined) {
-  // Defensive: null/undefined/NaN must never render as "€NaN". Coerce to 0.
-  const safe = Number.isFinite(cents as number) ? (cents as number) : 0;
-  return `€${(safe / 100).toFixed(0)}`;
-}
 
 interface LogItem {
   id: string;
@@ -91,6 +88,7 @@ function outcomeClass(outcome: string): string {
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -195,7 +193,7 @@ export function SlotFillPanel({
         },
         {
           label: "Waarde ingevulde plekken",
-          value: formatEuros(safeData.recoveredRevenueCents),
+          value: formatEuroCents(safeData.recoveredRevenueCents),
           icon: Euro,
           color: "text-teal-600",
           href: "/open-slots?status=CLAIMED",

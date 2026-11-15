@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { parsePracticeDateFilter, parsePracticeTimestamp } from "@/lib/practice-time";
 import { UuidSchema } from "@/lib/validations/uuid";
 
 const isoDate = z
   .string()
-  .refine((s) => !Number.isNaN(Date.parse(s)), { message: "Invalid date/time" });
+  .refine((s) => parsePracticeTimestamp(s) !== null, { message: "Invalid date/time" });
 
 const uuid = UuidSchema;
 
@@ -39,11 +40,11 @@ export const openSlotQuerySchema = z.object({
   dateFrom: z
     .string()
     .optional()
-    .transform((s) => (s && !Number.isNaN(Date.parse(s)) ? new Date(s) : undefined)),
+    .transform((s) => parsePracticeDateFilter(s)),
   dateTo: z
     .string()
     .optional()
-    .transform((s) => (s && !Number.isNaN(Date.parse(s)) ? new Date(s) : undefined)),
+    .transform((s) => parsePracticeDateFilter(s, true)),
   page: z
     .string()
     .optional()

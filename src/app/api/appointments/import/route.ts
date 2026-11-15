@@ -1,3 +1,4 @@
+import { parsePracticeTimestamp } from "@/lib/practice-time";
 import { can } from "@/lib/auth/permissions";
 import { NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
-    const startTime = new Date(row.start_iso);
+    const startTime = parsePracticeTimestamp(row.start_iso)!;
     const duration = row.duration_minutes ?? type?.durationMinutes ?? 60;
     const endTime = new Date(startTime.getTime() + duration * 60_000);
     const revenueEstimateCents = row.revenue_cents ?? type?.price ?? 0;

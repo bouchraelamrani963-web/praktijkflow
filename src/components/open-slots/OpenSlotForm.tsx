@@ -1,5 +1,6 @@
 "use client";
 
+import { amsterdamDateTimeInput, parseAmsterdamDateTime } from "@/lib/practice-time";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -45,13 +46,15 @@ export function OpenSlotForm({ practitioners, types }: Props) {
     setSubmitting(true);
 
     try {
+      const instant = parseAmsterdamDateTime(startTime);
+      if (!instant) throw new Error("Deze starttijd bestaat niet in de Nederlandse tijdzone. Kies een andere starttijd.");
       const res = await fetch("/api/open-slots", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           practitionerId,
           appointmentTypeId: appointmentTypeId || undefined,
-          startTime: new Date(startTime).toISOString(),
+          startTime: instant.toISOString(),
           durationMinutes,
           notes: notes || undefined,
         }),
@@ -121,15 +124,11 @@ export function OpenSlotForm({ practitioners, types }: Props) {
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
           required
-          min={(() => {
-            const d = new Date(); d.setHours(0, 0, 0, 0);
-            const pad = (n: number) => String(n).padStart(2, "0");
-            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-          })()}
+          min={`${amsterdamDateTimeInput(new Date()).slice(0, 10)}T00:00`}
           max={(() => {
-            const d = new Date(); d.setFullYear(d.getFullYear() + 5);
-            const pad = (n: number) => String(n).padStart(2, "0");
-            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            const d = new Date();
+            d.setUTCFullYear(d.getUTCFullYear() + 5);
+            return amsterdamDateTimeInput(d).slice(0, 16);
           })()}
           className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
         />

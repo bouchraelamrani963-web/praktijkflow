@@ -1,3 +1,4 @@
+import { parsePracticeTimestamp } from "@/lib/practice-time";
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -197,7 +198,7 @@ export async function POST(req: NextRequest) {
       }, 0)
     : (data.revenueEstimateCents ?? 0);
 
-  const startTime = new Date(data.startTime);
+  const startTime = parsePracticeTimestamp(data.startTime)!;
   let durationMinutes = data.durationMinutes;
   if (durationMinutes === undefined && treatmentSpec.length > 0) {
     const sum = treatmentSpec.reduce((acc, t) => {
@@ -208,7 +209,7 @@ export async function POST(req: NextRequest) {
   }
   durationMinutes = durationMinutes ?? 60;
   const endTime = data.endTime
-    ? new Date(data.endTime)
+    ? parsePracticeTimestamp(data.endTime)!
     : new Date(startTime.getTime() + durationMinutes * 60_000);
 
   const risk = await calculateRiskForClient(user.practiceId, data.clientId, startTime, data.status);

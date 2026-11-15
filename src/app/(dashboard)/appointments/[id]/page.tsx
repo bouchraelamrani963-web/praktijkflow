@@ -1,6 +1,8 @@
+import { formatEuroCents } from "@/lib/currency";
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Pencil, Clock, User, Calendar, DollarSign, ShieldAlert, Zap, TrendingUp } from "lucide-react";
+import { ArrowLeft, Pencil, Clock, User, Calendar, Euro, ShieldAlert, Zap, TrendingUp } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { StatusSelector } from "@/components/appointments/StatusSelector";
@@ -20,7 +22,7 @@ const riskColors: Record<string, string> = {
 
 function fmt(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
-    timeZone: "Europe/Amsterdam",
+    timeZone: PRACTICE_TIME_ZONE,
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -247,10 +249,10 @@ export default async function AppointmentDetailPage({
                           </span>
                         )}
                         <span className="w-20 text-right font-mono text-xs tabular-nums text-practice-ink">
-                          €{((Number.isFinite(t.tariffCents) ? t.tariffCents : 0) / 100).toFixed(2)}
+                          {formatEuroCents(t.tariffCents)}
                         </span>
                         <span className="w-20 text-right font-mono text-sm font-medium tabular-nums text-practice-heading">
-                          €{((Number.isFinite(t.tariffCents * t.quantity) ? t.tariffCents * t.quantity : 0) / 100).toFixed(2)}
+                          {formatEuroCents(t.tariffCents * t.quantity)}
                         </span>
                       </li>
                     ))}
@@ -260,7 +262,7 @@ export default async function AppointmentDetailPage({
                       {appt.treatments.reduce((s, t) => s + t.quantity, 0)} regel{appt.treatments.length === 1 ? "" : "s"} · totaal
                     </span>
                     <span className="font-mono font-semibold tabular-nums text-practice-heading">
-                      €{(appt.treatments.reduce((s, t) => s + t.tariffCents * t.quantity, 0) / 100).toFixed(2)}
+                      {formatEuroCents(appt.treatments.reduce((s, t) => s + t.tariffCents * t.quantity, 0))}
                     </span>
                   </div>
                 </dd>
@@ -285,11 +287,11 @@ export default async function AppointmentDetailPage({
               impression that lost time equals money.
             */}
             <div className="flex items-center gap-2 border-t border-practice-line pt-3">
-              <DollarSign className="h-4 w-4 text-practice-subtle" />
+              <Euro className="h-4 w-4 text-practice-subtle" />
               {appt.status === "CANCELLED" || appt.status === "NO_SHOW" ? (
                 <>
                   <span className="font-mono text-practice-subtle line-through">
-                    €{((Number.isFinite(appt.revenueEstimateCents) ? appt.revenueEstimateCents : 0) / 100).toFixed(2)}
+                    {formatEuroCents(appt.revenueEstimateCents)}
                   </span>
                   <span className="text-xs text-red-600 dark:text-red-400">
                     Geen omzet — {appt.status === "CANCELLED" ? "geannuleerd" : "niet verschenen"}
@@ -298,7 +300,7 @@ export default async function AppointmentDetailPage({
               ) : (
                 <>
                   <span className="font-mono text-practice-ink">
-                    €{((Number.isFinite(appt.revenueEstimateCents) ? appt.revenueEstimateCents : 0) / 100).toFixed(2)}
+                    {formatEuroCents(appt.revenueEstimateCents)}
                   </span>
                   <span className="text-xs text-practice-subtle">geschat</span>
                 </>
@@ -386,7 +388,7 @@ export default async function AppointmentDetailPage({
                   <dt className="text-xs uppercase text-emerald-700 dark:text-emerald-400">Opnieuw ingevuld op</dt>
                   <dd className="mt-1 text-emerald-900 dark:text-emerald-200">
                     {new Date(claimLog.createdAt).toLocaleString("nl-NL", {
-    timeZone: "Europe/Amsterdam",
+                      timeZone: PRACTICE_TIME_ZONE,
                       weekday: "long",
                       day: "numeric",
                       month: "long",
@@ -403,7 +405,7 @@ export default async function AppointmentDetailPage({
                   <dd className="mt-1 text-emerald-900 dark:text-emerald-200">
                     Annulering op{" "}
                     {new Date(claimedSlot.sourceAppointment.startTime).toLocaleString("nl-NL", {
-    timeZone: "Europe/Amsterdam",
+                      timeZone: PRACTICE_TIME_ZONE,
                       day: "numeric",
                       month: "long",
                       year: "numeric",
@@ -423,7 +425,7 @@ export default async function AppointmentDetailPage({
                 <dt className="text-xs uppercase text-emerald-700 dark:text-emerald-400">Open plek aangemaakt</dt>
                 <dd className="mt-1 text-emerald-900 dark:text-emerald-200">
                   {new Date(claimedSlot.createdAt).toLocaleString("nl-NL", {
-    timeZone: "Europe/Amsterdam",
+                    timeZone: PRACTICE_TIME_ZONE,
                     day: "numeric",
                     month: "long",
                     hour: "2-digit",
@@ -479,7 +481,7 @@ export default async function AppointmentDetailPage({
               <div className="border-t border-emerald-200 pt-3 dark:border-emerald-800">
                 <dt className="text-xs uppercase text-emerald-700 dark:text-emerald-400">Geschatte waarde</dt>
                 <dd className="mt-1 font-mono font-semibold text-emerald-900 dark:text-emerald-200">
-                  €{((Number.isFinite(recoveredDetail.revenueEstimateCents) ? recoveredDetail.revenueEstimateCents : 0) / 100).toFixed(2)}
+                  {formatEuroCents(recoveredDetail.revenueEstimateCents)}
                 </dd>
               </div>
             </dl>
@@ -582,7 +584,7 @@ export default async function AppointmentDetailPage({
           recoveredDetail?.revenueEstimateCents ?? appt.revenueEstimateCents ?? 0;
         const recoveredLabel =
           recoveredCents > 0
-            ? `€${(recoveredCents / 100).toFixed(2).replace(".", ",")} geschatte omzet voor de opnieuw ingeplande afspraak`
+            ? `${formatEuroCents(recoveredCents)} geschatte omzet voor de opnieuw ingeplande afspraak`
             : "Afspraak opnieuw ingepland (geschatte omzet onbekend)";
 
         return (
@@ -635,7 +637,7 @@ export default async function AppointmentDetailPage({
                     href="/pricing"
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-semibold text-practice-on-primary shadow-sm transition hover:bg-practice-primary-hover"
                   >
-                    Start met terugwinnen (€79 / maand)
+                    Start met terugwinnen ({formatEuroCents(7900)} / maand)
                   </Link>
                   <Link
                     href="mailto:demo@noshowcontrol.nl?subject=Demo%20aanvraag"

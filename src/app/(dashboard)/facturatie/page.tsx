@@ -1,5 +1,7 @@
 "use client";
 
+import { formatEuroCents } from "@/lib/currency";
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import { useCallback, useEffect, useState } from "react";
 import { CreditCard, TrendingUp, FileText, AlertCircle } from "lucide-react";
 
@@ -36,14 +38,10 @@ const statusColors: Record<string, string> = {
   CANCELLED: "bg-practice-muted text-practice-subtle ",
 };
 
-function euro(cents: number | null | undefined) {
-  // Guard: null/undefined/NaN must never render as "€NaN". Coerce to 0.
-  const safe = Number.isFinite(cents as number) ? (cents as number) : 0;
-  return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(safe / 100);
-}
-
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE, day: "numeric", month: "short", year: "numeric",
+  });
 }
 
 export default function FacturatiePage() {
@@ -89,7 +87,7 @@ export default function FacturatiePage() {
         <KpiCard
           icon={TrendingUp}
           label="Totale omzet"
-          value={stats ? euro(stats.totalRevenue) : "—"}
+          value={stats ? formatEuroCents(stats.totalRevenue) : "—"}
           color="text-emerald-700 dark:text-emerald-300"
         />
         <KpiCard
@@ -101,13 +99,13 @@ export default function FacturatiePage() {
         <KpiCard
           icon={CreditCard}
           label="Betaald"
-          value={stats ? euro(stats.paidTotal) : "—"}
+          value={stats ? formatEuroCents(stats.paidTotal) : "—"}
           color="text-emerald-700 dark:text-emerald-300"
         />
         <KpiCard
           icon={AlertCircle}
           label="Openstaand"
-          value={stats ? euro(stats.openTotal) : "—"}
+          value={stats ? formatEuroCents(stats.openTotal) : "—"}
           color="text-orange-600"
         />
       </div>
@@ -165,7 +163,7 @@ export default function FacturatiePage() {
                     <td className="px-4 py-3 text-sm font-medium text-practice-heading">
                       {inv.client.firstName} {inv.client.lastName}
                     </td>
-                    <td className="px-4 py-3 text-sm font-mono text-practice-ink">{euro(inv.total)}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-practice-ink">{formatEuroCents(inv.total)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[inv.status] ?? ""}`}>
                         {statusLabels[inv.status] ?? inv.status}

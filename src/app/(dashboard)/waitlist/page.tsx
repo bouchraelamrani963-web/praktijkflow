@@ -1,5 +1,6 @@
 "use client";
 
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, Search } from "lucide-react";
@@ -46,6 +47,7 @@ const statusLabels: Record<WaitlistStatus, string> = {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     day: "numeric",
     month: "short",
     year: "numeric",

@@ -1,5 +1,6 @@
 "use client";
 
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -81,7 +82,7 @@ const CATEGORY_COPY: Record<
   },
   filled: {
     label: "Ingevuld",
-    description: "Geclaimd binnen NoShow Control.",
+    description: "Deze maand geclaimd binnen NoShow Control.",
     icon: CheckCircle2,
     cardClass: "border-teal-200 bg-teal-50/60 dark:border-teal-900/50 dark:bg-teal-950/20",
     badgeClass: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
@@ -97,6 +98,7 @@ const CATEGORY_COPY: Record<
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     weekday: "short",
     day: "numeric",
     month: "short",

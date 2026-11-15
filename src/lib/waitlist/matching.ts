@@ -1,3 +1,4 @@
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import type { DayOfWeek } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 
@@ -12,7 +13,7 @@ const DUTCH_WEEKDAY_TO_ENUM: Record<string, DayOfWeek> = {
 };
 
 const DUTCH_TIME_FORMAT = new Intl.DateTimeFormat("en-GB", {
-  timeZone: "Europe/Amsterdam",
+  timeZone: PRACTICE_TIME_ZONE,
   weekday: "long",
   hour: "2-digit",
   hourCycle: "h23",
@@ -61,16 +62,11 @@ export async function findMatchesForSlot(
 
   if (!slot) return [];
 
-  // Match against the appointment's Dutch wall-clock time (incl. DST),
-  // never the Vercel server's UTC timezone.
-  const localParts = DUTCH_TIME_FORMAT.formatToParts(slot.startTime);
-  const weekday = localParts.find((part) => part.type === "weekday")?.value.toLowerCase() ?? "";
-  const slotDay = DUTCH_WEEKDAY_TO_ENUM[weekday];
-  const slotHour = Number(localParts.find((part) => part.type === "hour")?.value);
-  if (!slotDay || !Number.isFinite(slotHour)) return [];
+  return scoreWaitlistMatches(slot, await loadWaitingEntries(practiceId));
+}
 
-  // Load all WAITING entries for this practice
-  const entries = await prisma.waitlistEntry.findMany({
+export function loadWaitingEntries(practiceId: string) {
+  return prisma.waitlistEntry.findMany({
     where: { practiceId, status: "WAITING", client: { practiceId }, OR: [{ appointmentTypeId: null }, { appointmentType: { practiceId } }] },
     include: {
       client: { select: { id: true, firstName: true, lastName: true, phone: true, email: true } },
@@ -78,6 +74,19 @@ export async function findMatchesForSlot(
     },
     orderBy: { createdAt: "asc" },
   });
+}
+
+export function scoreWaitlistMatches(
+  slot: { appointmentTypeId: string | null; startTime: Date },
+  entries: Awaited<ReturnType<typeof loadWaitingEntries>>,
+): MatchedEntry[] {
+  // Match against the appointment's Dutch wall-clock time (incl. DST),
+  // never the Vercel server's UTC timezone.
+  const localParts = DUTCH_TIME_FORMAT.formatToParts(slot.startTime);
+  const weekday = localParts.find((part) => part.type === "weekday")?.value.toLowerCase() ?? "";
+  const slotDay = DUTCH_WEEKDAY_TO_ENUM[weekday];
+  const slotHour = Number(localParts.find((part) => part.type === "hour")?.value);
+  if (!slotDay || !Number.isFinite(slotHour)) return [];
 
   const results: MatchedEntry[] = [];
 

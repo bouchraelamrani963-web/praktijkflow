@@ -1,3 +1,5 @@
+import { formatEuroCents } from "@/lib/currency";
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import { CalendarX, Clock3, Send, CheckCheck, CalendarCheck } from "lucide-react";
 import { prisma } from "@/lib/db";
 
@@ -10,7 +12,7 @@ interface Props {
 
 function fmt(d: Date) {
   return new Date(d).toLocaleString("nl-NL", {
-    timeZone: "Europe/Amsterdam",
+    timeZone: PRACTICE_TIME_ZONE,
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -182,7 +184,7 @@ export async function RecoveryTimeline({
       tone: "emerald" as const,
       time: newAppt && claimedAt ? fmt(claimedAt) : null,
       detail: newAppt
-        ? `Geschatte waarde: €${((Number.isFinite(newAppt.revenueEstimateCents) ? newAppt.revenueEstimateCents : 0) / 100).toFixed(2)}`
+        ? `Geschatte waarde: ${formatEuroCents(newAppt.revenueEstimateCents)}`
         : "Nog niet ingepland",
       isCurrent: currentAppointmentId === newAppt?.id,
     },

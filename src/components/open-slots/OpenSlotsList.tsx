@@ -1,5 +1,7 @@
 "use client";
 
+import { formatEuroCents } from "@/lib/currency";
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -61,6 +63,7 @@ const statusLabels: Record<SlotStatus, string> = {
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -69,11 +72,6 @@ function formatDateTime(iso: string) {
   });
 }
 
-function formatEuros(cents: number | null | undefined) {
-  // Guard: null/undefined/NaN must never render as "€NaN". Coerce to 0.
-  const safe = Number.isFinite(cents as number) ? (cents as number) : 0;
-  return `€${(safe / 100).toFixed(2)}`;
-}
 
 export function OpenSlotsList({ practitioners }: { practitioners: PractitionerOption[] }) {
   return (
@@ -348,7 +346,7 @@ function Inner({ practitioners }: { practitioners: PractitionerOption[] }) {
                         {s.status === "CLAIMED" ? (
                           s.recoveredRevenueCents !== null ? (
                             <span className="text-teal-700 dark:text-teal-300">
-                              {formatEuros(s.recoveredRevenueCents)}
+                              {formatEuroCents(s.recoveredRevenueCents)}
                             </span>
                           ) : (
                             <span className="text-xs italic text-practice-subtle">

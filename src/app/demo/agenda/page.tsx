@@ -4,6 +4,7 @@ import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Filter } from "lucide-react";
 import { DemoShell } from "../DemoShell";
+import { PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import { demoAgendaItems } from "../demo-data";
 
 const views = [
@@ -29,7 +30,6 @@ type DatedAgendaItem = DemoAgendaItem & {
   fullDateLabel: string;
 };
 
-const TIME_ZONE = "Europe/Amsterdam";
 
 function startOfLocalDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -53,7 +53,7 @@ function formatLongDate(date: Date): string {
     day: "numeric",
     month: "long",
     year: "numeric",
-    timeZone: TIME_ZONE,
+    timeZone: PRACTICE_TIME_ZONE,
   }).format(date);
 }
 
@@ -62,7 +62,7 @@ function formatShortDate(date: Date): string {
     weekday: "short",
     day: "numeric",
     month: "short",
-    timeZone: TIME_ZONE,
+    timeZone: PRACTICE_TIME_ZONE,
   }).format(date);
 }
 

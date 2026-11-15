@@ -1,6 +1,7 @@
+import { amsterdamMonthRange, PRACTICE_TIME_ZONE } from "@/lib/practice-time";
 import type { OpenSlotStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
-import { findMatchesForSlot } from "@/lib/waitlist/matching";
+import { loadWaitingEntries, scoreWaitlistMatches } from "@/lib/waitlist/matching";
 
 type MessageStatus = "pending" | "sent" | "failed" | "mock" | string;
 
@@ -55,12 +56,9 @@ export const EMPTY_AUTOMATION_DASHBOARD: AutomationDashboardModel = {
   worklist: [],
 };
 
-function openSlotLogMarker(slotId: string): string {
-  return `open-slot:${slotId}`;
-}
-
 function formatShortDateTime(date: Date): string {
   return date.toLocaleString("nl-NL", {
+    timeZone: PRACTICE_TIME_ZONE,
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -104,20 +102,18 @@ function categorySortValue(category: AutomationCategory): number {
 export async function buildAutomationDashboardModel(
   practiceId: string,
 ): Promise<AutomationDashboardModel> {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const { start: monthStart, end: monthEnd } = amsterdamMonthRange(new Date());
 
   const slots = await prisma.openSlot.findMany({
     where: {
       practiceId,
       OR: [
         { status: { in: ["AVAILABLE", "OFFERED"] } },
-        { status: "CLAIMED", claimedAt: { gte: monthStart, not: null } },
-        { status: "EXPIRED", updatedAt: { gte: monthStart } },
+        { status: "CLAIMED", claimedAt: { gte: monthStart, lt: monthEnd } },
+        { status: "EXPIRED", updatedAt: { gte: monthStart, lt: monthEnd } },
       ],
     },
     orderBy: [{ status: "asc" }, { startTime: "asc" }],
-    take: 60,
     include: {
       practitioner: { select: { firstName: true, lastName: true } },
       appointmentType: { select: { name: true } },
@@ -126,61 +122,41 @@ export async function buildAutomationDashboardModel(
 
   if (slots.length === 0) return EMPTY_AUTOMATION_DASHBOARD;
 
-  const sourceAppointmentIds = slots
-    .map((slot) => slot.sourceAppointmentId)
-    .filter((id): id is string => Boolean(id));
-
-  const logFilters = slots.flatMap((slot) => [
-    { body: { contains: `/action/${slot.id}.` } },
-    { body: { contains: openSlotLogMarker(slot.id) } },
-  ]);
-
-  const logs = await prisma.messageLog.findMany({
-    where: {
-      practiceId,
-      channel: "email",
-      OR: [
-        ...(sourceAppointmentIds.length > 0
-          ? [{ appointmentId: { in: sourceAppointmentIds } }]
-          : []),
-        ...logFilters,
-      ],
-    },
-    select: {
-      id: true,
-      appointmentId: true,
-      body: true,
-      status: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const logsBySlotId = new Map<string, typeof logs>();
-  for (const slot of slots) {
-    const relatedLogs = logs.filter((log) => {
-      if (slot.sourceAppointmentId && log.appointmentId === slot.sourceAppointmentId) {
-        return true;
-      }
-      return (
-        log.body.includes(`/action/${slot.id}.`) ||
-        log.body.includes(openSlotLogMarker(slot.id))
-      );
+  const slotsWithOffers = slots.filter(({ status }) => status === "AVAILABLE" || status === "OFFERED");
+  const activeSlotIds = new Set(slotsWithOffers.map(({ id }) => id));
+  const logsBySlotId = new Map<string, { status: string }[]>();
+  // Fetch each batch once and associate it by its unique slot marker. A
+  // cancellation or reminder tied to the same appointment is not an offer.
+  const batchSize = 200;
+  for (let start = 0; start < slotsWithOffers.length; start += batchSize) {
+    const logs = await prisma.messageLog.findMany({
+      where: {
+        practiceId,
+        channel: { in: ["email", "sms"] },
+        OR: slotsWithOffers.slice(start, start + batchSize).flatMap(({ id }) => [
+          { body: { contains: `/action/${id}.` } },
+          { body: `open-slot:${id}` },
+        ]),
+      },
+      select: { body: true, status: true },
     });
-    logsBySlotId.set(slot.id, relatedLogs);
+    for (const log of logs) {
+      const slotId = log.body.match(/(?:^open-slot:|\/action\/)([0-9a-f-]{36})(?:\.|$)/i)?.[1];
+      if (!slotId || !activeSlotIds.has(slotId)) continue;
+      const entries = logsBySlotId.get(slotId) ?? [];
+      entries.push(log);
+      logsBySlotId.set(slotId, entries);
+    }
   }
 
-  const matchCountBySlotId = new Map<string, number>();
-  const matchableSlots = slots.filter((slot) => slot.status === "AVAILABLE");
-  for (const slot of matchableSlots) {
-    const matches = await findMatchesForSlot(slot.id, practiceId);
-    matchCountBySlotId.set(slot.id, matches.length);
-  }
+  const waitingEntries = slots.some(({ status }) => status === "AVAILABLE")
+    ? await loadWaitingEntries(practiceId)
+    : [];
 
   const worklist = slots.map<AutomationDashboardItem>((slot) => {
     const relatedLogs = logsBySlotId.get(slot.id) ?? [];
     const offerSummary = countStatuses(relatedLogs);
-    const matchCount = matchCountBySlotId.get(slot.id) ?? null;
+    const matchCount = slot.status === "AVAILABLE" ? scoreWaitlistMatches(slot, waitingEntries).length : null;
     const practitionerName = `${slot.practitioner.firstName} ${slot.practitioner.lastName}`;
     const slotTime = formatShortDateTime(slot.startTime);
     const sourceLabel = sourceText(Boolean(slot.sourceAppointmentId));

@@ -24,6 +24,7 @@ export interface ExecuteResult {
   outcome: "success" | "expired" | "already_used" | "invalid" | "failed";
   message: string;
   appointmentId?: string;
+  appointmentStartTime?: string;
 }
 
 function createRawToken(input: CreateTokenInput): string {
@@ -100,9 +101,16 @@ export async function lookupToken(rawToken: string) {
   )) return null;
 
   const openSlotId = token.action === "claim_open_slot" ? extractOpenSlotId(rawToken) : null;
-  const openSlot = openSlotId
+  // Older tokens lacked a slot prefix. Resolve those through the source
+  // appointment, within the same practice, for both viewing and execution.
+  const slotReference = openSlotId
+    ? { id: openSlotId }
+    : token.appointmentId && !rawToken.includes(".")
+      ? { sourceAppointmentId: token.appointmentId }
+      : null;
+  const openSlot = token.action === "claim_open_slot" && slotReference
     ? await prisma.openSlot.findFirst({
-        where: { id: openSlotId, practiceId: token.practiceId },
+        where: { ...slotReference, practiceId: token.practiceId },
         select: {
           id: true,
           practiceId: true,
@@ -248,24 +256,7 @@ async function cancelAppointment(token: TokenWithRelations): Promise<ExecuteResu
 }
 
 async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> {
-  const slot = token.openSlot ?? (
-    token.appointment
-      ? await prisma.openSlot.findFirst({
-          where: { sourceAppointmentId: token.appointment.id, practiceId: token.practiceId },
-          select: {
-            id: true,
-            practiceId: true,
-            status: true,
-            practitionerId: true,
-            appointmentTypeId: true,
-            startTime: true,
-            endTime: true,
-            durationMinutes: true,
-            appointmentType: { select: { name: true, price: true } },
-          },
-        })
-      : null
-  );
+  const slot = token.openSlot;
 
   if (!slot) {
     if (token.appointment) {
@@ -281,8 +272,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
     return { outcome: "failed", message: "Deze plek is al ingevuld." };
   }
 
-  const startTime = token.appointment?.startTime ?? slot.startTime;
-  const endTime = token.appointment?.endTime ?? slot.endTime;
+  const { startTime, endTime } = slot;
   const appointmentTypeId = token.appointment?.appointmentTypeId ?? slot.appointmentTypeId;
   const recoveredRevenueCents = token.appointment?.revenueEstimateCents
     ?? slot.appointmentType?.price
@@ -428,7 +418,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
         });
       }
 
-      return { claimed: true as const, newAppointmentId: newAppt.id, expiredCount };
+      return { newAppointmentId: newAppt.id, startTime: newAppt.startTime, expiredCount };
     });
 
     console.log(
@@ -439,6 +429,7 @@ async function claimOpenSlot(token: TokenWithRelations): Promise<ExecuteResult> 
       outcome: "success",
       message: "De afspraak is voor u gereserveerd.",
       appointmentId: result.newAppointmentId,
+      appointmentStartTime: result.startTime.toISOString(),
     };
   } catch (err) {
     if (err instanceof SlotRaceLostError) {
