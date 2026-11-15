@@ -69,15 +69,15 @@ const CATEGORY_COPY: Record<
     label: "Open plekken",
     description: "Beschikbaar en klaar om aan de wachtlijst aan te bieden.",
     icon: Inbox,
-    cardClass: "border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
-    badgeClass: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    cardClass: "border-practice-line bg-practice-surface ",
+    badgeClass: "bg-practice-muted text-practice-ink ",
   },
   in_progress: {
     label: "In behandeling",
     description: "Aanbod loopt; er wordt gewacht op reactie.",
     icon: Clock3,
     cardClass: "border-blue-200 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/20",
-    badgeClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    badgeClass: "bg-blue-100 text-practice-link dark:bg-blue-900/40 ",
   },
   filled: {
     label: "Ingevuld",
@@ -114,18 +114,18 @@ function categoryCount(data: DashboardData, category: AutomationCategory): numbe
 
 function WorklistEmptyState() {
   return (
-    <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-6 py-10 text-center dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded-lg border border-dashed border-practice-field bg-practice-surface px-6 py-10 text-center">
       <CheckCircle2 className="mx-auto h-8 w-8 text-teal-600 dark:text-teal-400" />
-      <h2 className="mt-3 text-sm font-semibold text-zinc-900 dark:text-white">
+      <h2 className="mt-3 text-sm font-semibold text-practice-heading">
         Geen lopende open plekken
       </h2>
-      <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+      <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-practice-subtle">
         Zodra een afspraak wordt geannuleerd, als no-show wordt gemarkeerd of handmatig als open plek wordt
         aangemaakt, verschijnt deze hier.
       </p>
       <Link
         href="/open-slots/new"
-        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-practice-focus"
       >
         Nieuwe open plek
         <ArrowRight className="h-4 w-4" />
@@ -163,8 +163,8 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex min-h-64 items-center justify-center">
-        <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+        <div className="flex items-center gap-3 text-sm text-practice-subtle">
+          <Loader2 className="h-5 w-5 animate-spin text-practice-link" />
           Dashboard laden...
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
         <button
           type="button"
           onClick={() => void loadDashboard()}
-          className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900/60 dark:bg-zinc-950 dark:text-red-300"
+          className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-practice-surface px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-900/60 dark:text-red-300"
         >
           <RefreshCw className="h-4 w-4" />
           Opnieuw proberen
@@ -198,10 +198,10 @@ export default function DashboardPage() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="ns-app-eyebrow">PRAKTIJKOVERZICHT · NOSHOW CONTROL</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950 dark:text-white">
+          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-practice-heading">
             Welkom, {greetingName}
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-practice-subtle">
             Zie direct welke plekken automatisch worden opgevolgd en waar de praktijk moet ingrijpen.
             Statussen zijn gebaseerd op bestaande open plekken, aanbiedingen en claims.
           </p>
@@ -209,7 +209,7 @@ export default function DashboardPage() {
         <button
           type="button"
           onClick={() => void loadDashboard()}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm font-medium text-practice-ink hover:bg-practice-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-practice-focus"
         >
           <RefreshCw className="h-4 w-4" />
           Vernieuwen
@@ -225,12 +225,12 @@ export default function DashboardPage() {
 
       <section className="ns-app-overview" aria-labelledby="automation-summary-heading">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 id="automation-summary-heading" className="text-base font-semibold text-zinc-950 dark:text-white">
+          <h2 id="automation-summary-heading" className="text-base font-semibold text-practice-heading">
             Overzicht
           </h2>
           <Link
             href="/open-slots"
-            className="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-800 dark:text-blue-300"
+            className="inline-flex items-center gap-1 text-sm font-medium text-practice-link hover:text-practice-heading"
           >
             Alle open plekken
             <ArrowRight className="h-4 w-4" />
@@ -249,10 +249,10 @@ export default function DashboardPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                    <h3 className="text-sm font-semibold text-practice-heading">
                       {copy.label}
                     </h3>
-                    <p className="mt-1 min-h-10 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 min-h-10 text-xs leading-5 text-practice-subtle">
                       {copy.description}
                     </p>
                   </div>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
                     <Icon className="h-4 w-4" />
                   </span>
                 </div>
-                <p className="mt-3 text-2xl font-semibold tabular-nums text-zinc-950 dark:text-white">
+                <p className="mt-3 text-2xl font-semibold tabular-nums text-practice-heading">
                   {count}
                 </p>
               </article>
@@ -272,16 +272,16 @@ export default function DashboardPage() {
       <section className="ns-app-worklist" aria-labelledby="worklist-heading">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 id="worklist-heading" className="text-base font-semibold text-zinc-950 dark:text-white">
+            <h2 id="worklist-heading" className="text-base font-semibold text-practice-heading">
               Werklijst
             </h2>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-practice-subtle">
               Belangrijkste uitzonderingen staan bovenaan. Technische details staan ingeklapt.
             </p>
           </div>
           <Link
             href="/waitlist?status=WAITING"
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm font-medium text-practice-ink hover:bg-practice-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-practice-focus"
           >
             <Search className="h-4 w-4" />
             Wachtlijst bekijken
@@ -291,8 +291,8 @@ export default function DashboardPage() {
         {sortedWorklist.length === 0 ? (
           <WorklistEmptyState />
         ) : (
-          <div className="ns-app-worklist-panel overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <div className="ns-app-worklist-panel overflow-hidden rounded-lg border border-practice-line bg-practice-surface shadow-sm">
+            <ul className="divide-y divide-practice-line">
               {sortedWorklist.map((item) => {
                 const copy = CATEGORY_COPY[item.category];
                 const hasException = item.category === "action_needed";
@@ -304,7 +304,7 @@ export default function DashboardPage() {
                           <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${copy.badgeClass}`}>
                             {copy.label}
                           </span>
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          <span className="text-xs text-practice-subtle">
                             {formatDateTime(item.startTime)}
                           </span>
                           {hasException && (
@@ -313,28 +313,28 @@ export default function DashboardPage() {
                             </span>
                           )}
                         </div>
-                        <h3 className="mt-2 text-sm font-semibold text-zinc-950 dark:text-white">
+                        <h3 className="mt-2 text-sm font-semibold text-practice-heading">
                           {item.title}
                         </h3>
-                        <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                        <p className="mt-1 text-sm leading-6 text-practice-subtle">
                           {item.description}
                         </p>
 
-                        <dl className="mt-3 grid gap-2 text-xs text-zinc-500 sm:grid-cols-2 lg:grid-cols-4 dark:text-zinc-400">
+                        <dl className="mt-3 grid gap-2 text-xs text-practice-subtle sm:grid-cols-2 lg:grid-cols-4">
                           <div>
-                            <dt className="font-medium text-zinc-700 dark:text-zinc-300">Status</dt>
+                            <dt className="font-medium text-practice-ink">Status</dt>
                             <dd>{item.statusLabel}</dd>
                           </div>
                           <div>
-                            <dt className="font-medium text-zinc-700 dark:text-zinc-300">Behandelaar</dt>
+                            <dt className="font-medium text-practice-ink">Behandelaar</dt>
                             <dd>{item.practitionerName}</dd>
                           </div>
                           <div>
-                            <dt className="font-medium text-zinc-700 dark:text-zinc-300">Type</dt>
+                            <dt className="font-medium text-practice-ink">Type</dt>
                             <dd>{item.appointmentTypeName ?? "Niet ingesteld"}</dd>
                           </div>
                           <div>
-                            <dt className="font-medium text-zinc-700 dark:text-zinc-300">Aanbiedingen</dt>
+                            <dt className="font-medium text-practice-ink">Aanbiedingen</dt>
                             <dd>
                               {item.offerSummary.total === 0
                                 ? "Geen"
@@ -344,10 +344,10 @@ export default function DashboardPage() {
                         </dl>
 
                         <details className="mt-3">
-                          <summary className="cursor-pointer text-xs font-medium text-blue-700 hover:text-blue-800 dark:text-blue-300">
+                          <summary className="cursor-pointer text-xs font-medium text-practice-link hover:text-practice-heading">
                             Details tonen
                           </summary>
-                          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-practice-subtle">
                             {item.details.map((detail) => (
                               <li key={detail}>{detail}</li>
                             ))}
@@ -362,7 +362,7 @@ export default function DashboardPage() {
 
                       <Link
                         href={item.href}
-                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:min-w-40"
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-practice-focus lg:min-w-40"
                       >
                         {item.primaryActionLabel}
                         <ArrowRight className="h-4 w-4" />

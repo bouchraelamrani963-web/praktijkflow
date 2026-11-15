@@ -45,15 +45,15 @@ export default function DashboardSegmentError({
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-practice-heading">
           Er ging iets mis bij het laden van deze pagina
         </h2>
-        <p className="mt-2 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 max-w-md text-sm text-practice-subtle">
           Probeer het opnieuw of ga terug naar het dashboard. Blijft de fout
           terugkomen, neem dan contact op met support.
         </p>
         {error.digest && (
-          <p className="mt-3 font-mono text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="mt-3 font-mono text-xs text-practice-subtle">
             Ref: {error.digest}
           </p>
         )}
@@ -63,14 +63,14 @@ export default function DashboardSegmentError({
         <button
           type="button"
           onClick={() => reset()}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-blue-500/20 transition hover:from-blue-700 hover:to-indigo-700"
+          className="inline-flex items-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary shadow-sm transition hover:bg-practice-primary-hover"
         >
           <RotateCcw className="h-4 w-4" />
           Opnieuw proberen
         </button>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-4 py-2 text-sm font-medium text-practice-ink transition hover:bg-practice-hover"
         >
           <Home className="h-4 w-4" />
           Naar dashboard

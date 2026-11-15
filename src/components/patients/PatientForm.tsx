@@ -45,8 +45,8 @@ interface Props {
 }
 
 const inputCls =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white";
-const labelCls = "block text-sm font-medium text-zinc-700 dark:text-zinc-300";
+  "mt-1 block w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading placeholder-practice-subtle focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20 ";
+const labelCls = "block text-sm font-medium text-practice-ink ";
 
 export function PatientForm({ initial, mode, patientId }: Props) {
   const router = useRouter();
@@ -86,7 +86,7 @@ export function PatientForm({ initial, mode, patientId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <section>
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-white">Persoonsgegevens</h2>
+        <h2 className="text-base font-semibold text-practice-heading">Persoonsgegevens</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <label className={labelCls} htmlFor="firstName">Voornaam *</label>
@@ -120,7 +120,7 @@ export function PatientForm({ initial, mode, patientId }: Props) {
       </section>
 
       <section>
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-white">Contact</h2>
+        <h2 className="text-base font-semibold text-practice-heading">Contact</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <label className={labelCls} htmlFor="email">E-mail</label>
@@ -160,7 +160,7 @@ export function PatientForm({ initial, mode, patientId }: Props) {
       </section>
 
       <section>
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-white">Klinisch</h2>
+        <h2 className="text-base font-semibold text-practice-heading">Klinisch</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <label className={labelCls} htmlFor="riskLevel">Risiconiveau</label>
@@ -177,10 +177,10 @@ export function PatientForm({ initial, mode, patientId }: Props) {
             </select>
           </div>
           <div className="flex items-end">
-            <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <label className="flex items-center gap-2 text-sm text-practice-ink">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-practice-field text-practice-link focus:ring-practice-focus"
                 checked={values.waitlistOptIn}
                 onChange={(e) => set("waitlistOptIn", e.target.checked)}
               />
@@ -200,10 +200,10 @@ export function PatientForm({ initial, mode, patientId }: Props) {
           </div>
           {mode === "edit" && (
             <div className="flex items-end">
-              <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <label className="flex items-center gap-2 text-sm text-practice-ink">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-practice-field text-practice-link focus:ring-practice-focus"
                   checked={values.isActive}
                   onChange={(e) => set("isActive", e.target.checked)}
                 />
@@ -214,18 +214,18 @@ export function PatientForm({ initial, mode, patientId }: Props) {
         </div>
       </section>
 
-      <div className="flex items-center justify-end gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="flex items-center justify-end gap-3 border-t border-practice-line pt-6">
         <button
           type="button"
           onClick={() => router.back()}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-practice-field px-4 py-2 text-sm font-medium text-practice-ink hover:bg-practice-hover"
         >
           Annuleren
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover disabled:opacity-50"
         >
           {saving ? "Opslaan…" : mode === "create" ? "Patiënt aanmaken" : "Wijzigingen opslaan"}
         </button>

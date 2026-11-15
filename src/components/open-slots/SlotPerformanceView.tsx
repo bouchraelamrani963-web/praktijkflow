@@ -41,16 +41,16 @@ export function SlotPerformanceView({ metrics }: { metrics: PerformanceMetrics }
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-practice-heading">
             Omzet-herstel prestatie
           </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-practice-subtle">
             Hoe snel en hoe vaak vrijgekomen plekken opnieuw worden ingevuld — en hoeveel omzet u daarmee terugwint.
           </p>
         </div>
         <Link
           href="/open-slots"
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-3 py-1.5 text-sm font-medium text-practice-ink hover:bg-practice-hover"
         >
           <ArrowLeft className="h-4 w-4" />
           Terug naar lijst
@@ -61,19 +61,19 @@ export function SlotPerformanceView({ metrics }: { metrics: PerformanceMetrics }
         {cards.map((card) => (
           <div
             key={card.label}
-            className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-800"
+            className="rounded-xl border border-practice-line bg-practice-surface p-5"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">{card.label}</span>
+              <span className="text-sm text-practice-subtle">{card.label}</span>
               <card.icon className={`h-5 w-5 ${card.color}`} />
             </div>
-            <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">{card.value}</p>
+            <p className="mt-2 text-2xl font-bold text-practice-heading">{card.value}</p>
           </div>
         ))}
       </div>
 
       {metrics.totalSlots === 0 && (
-        <p className="mt-6 text-sm text-zinc-500">
+        <p className="mt-6 text-sm text-practice-subtle">
           Er zijn nog geen vrijgekomen plekken — goed teken, er gaat momenteel geen omzet verloren.
         </p>
       )}

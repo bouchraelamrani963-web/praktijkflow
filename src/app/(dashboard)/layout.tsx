@@ -53,9 +53,7 @@ function NavList({
     <>
       {sidebarLinks.map((link) => {
         const active = isLinkActive(link.href, pathname);
-        const cls = active
-          ? "ns-app-navlink ns-app-navlink-active relative flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 ring-1 ring-blue-100 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700"
-          : "ns-app-navlink flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800";
+        const cls = `ns-app-navlink relative flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors${active ? " ns-app-navlink-active" : ""}`;
         return (
           <Link
             key={link.label}
@@ -67,10 +65,10 @@ function NavList({
             {active && (
               <span
                 aria-hidden="true"
-                className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-blue-700"
+                className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[#b66f50]"
               />
             )}
-            <link.icon className={`h-4 w-4 ${active ? "text-blue-700 dark:text-blue-300" : ""}`} />
+            <link.icon className="h-4 w-4" />
             {link.label}
           </Link>
         );
@@ -97,23 +95,23 @@ function UserFooter({
   signOutError: string | null;
 }) {
   return (
-    <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+    <div className="ns-app-user-footer border-t border-practice-line p-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-sm font-medium text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-practice-muted text-sm font-medium text-practice-ink ring-1 ring-practice-line">
           {firstName?.[0]?.toUpperCase() ?? "U"}
         </div>
         <div className="flex-1 truncate">
-          <p className="truncate text-sm font-medium text-zinc-900 dark:text-white">
+          <p className="truncate text-sm font-medium text-practice-heading">
             {fullName}
           </p>
-          <p className="truncate text-xs text-zinc-500">{email ?? ""}</p>
+          <p className="truncate text-xs text-practice-subtle">{email ?? ""}</p>
         </div>
       </div>
       <button
         type="button"
         onClick={onSignOut}
         disabled={signingOut}
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm font-medium text-practice-ink transition-colors hover:bg-practice-hover hover:text-practice-heading disabled:cursor-not-allowed disabled:opacity-60"
       >
         <LogOut className="h-4 w-4" />
         Uitloggen
@@ -176,9 +174,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-50 px-4 text-center dark:bg-zinc-950">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-practice-muted px-4 text-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-practice-subtle">
           Sessie verlopen. U wordt doorgestuurd naar inloggen...
         </p>
       </div>
@@ -202,11 +200,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="ns-app flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="ns-app flex min-h-screen">
       {/* ─── Desktop sidebar (lg+) ─────────────────────────────────────── */}
-      <aside className="ns-app-sidebar hidden w-52 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
-        <div className="ns-app-brand-row flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800">
-          <Link href="/" className="ns-app-brand text-lg font-bold text-zinc-900 dark:text-white">
+      <aside className="ns-app-sidebar hidden shrink-0 flex-col border-r border-practice-line bg-practice-surface lg:flex">
+        <div className="ns-app-brand-row flex h-14 items-center border-b border-practice-line px-4">
+          <Link href="/" className="ns-app-brand text-lg font-bold text-practice-heading">
             <BrandLogo inverse compact />
           </Link>
         </div>
@@ -237,15 +235,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           both open and close transitions. translate-x toggles visibility. */}
       <aside
         id="dashboard-drawer"
-        className={`ns-app-sidebar fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85%] flex-col border-r border-zinc-200 bg-white transition-transform duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900 lg:hidden ${
+        className={`ns-app-sidebar fixed inset-y-0 left-0 z-50 flex max-w-[85%] flex-col border-r border-practice-line bg-practice-surface transition-transform duration-200 ease-out lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-hidden={!mobileOpen}
+        inert={!mobileOpen}
       >
-        <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
+        <div className="flex h-14 items-center justify-between border-b border-practice-line px-4">
           <Link
             href="/"
-            className="text-base font-bold text-zinc-900 dark:text-white"
+            className="text-base font-bold text-practice-heading"
             onClick={() => setMobileOpen(false)}
           >
             <BrandLogo inverse compact />
@@ -253,7 +252,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="-mr-1 rounded-md p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
+            className="-mr-1 min-h-11 rounded-md p-2 text-white hover:bg-[#2c5446]"
             aria-label="Sluit menu"
           >
             <X className="h-5 w-5" />
@@ -278,35 +277,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* ─── Main column ───────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Directly accessible account control on desktop; remains visible while scrolling. */}
-        <header className="sticky top-0 z-30 hidden min-h-16 items-center justify-end gap-5 border-b border-[#D8E2D8] bg-[#F8F7F2]/95 px-6 backdrop-blur-sm lg:flex">
-          <span className="truncate text-xs font-medium text-[#64806E]">
-            Ingelogd als <strong className="text-[#234B3B]">{fullName}</strong>
+        <header className="sticky top-0 z-30 hidden min-h-16 items-center justify-end gap-5 border-b border-practice-line bg-practice-paper/95 px-6 backdrop-blur-sm lg:flex">
+          <span className="truncate text-xs font-medium text-practice-subtle">
+            Ingelogd als <strong className="text-practice-heading">{fullName}</strong>
           </span>
           <button
             type="button"
             onClick={handleSignOut}
             disabled={signingOut}
-            className="inline-flex items-center justify-center gap-2 rounded-sm border border-[#C9D8CB] bg-white px-4 py-2.5 text-xs font-bold text-[#234B3B] transition-colors hover:border-[#AEC7B4] hover:bg-[#ECF3EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F7556] disabled:cursor-wait disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-sm border border-practice-field bg-practice-surface px-4 py-2.5 text-xs font-bold text-practice-heading transition-colors hover:bg-practice-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-practice-focus disabled:cursor-wait disabled:opacity-50"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
             {signingOut ? "Uitloggen…" : "Uitloggen"}
           </button>
-          {signOutError && <p role="alert" className="text-xs text-red-700">{signOutError}</p>}
+          {signOutError && <p role="alert" className="text-xs text-red-700 dark:text-red-300">{signOutError}</p>}
         </header>
         {/* Mobile topbar — only on < lg. Has the hamburger button + brand
             + an avatar mirror of the sidebar identity. */}
-        <header className="ns-app-mobile-header sticky top-0 z-30 flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
+        <header className="ns-app-mobile-header sticky top-0 z-30 flex min-h-14 items-center justify-between border-b border-practice-line bg-practice-surface px-4 lg:hidden">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="-ml-2 rounded-md p-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="-ml-2 min-h-11 rounded-md p-2 text-white hover:bg-[#2c5446]"
             aria-label="Open menu"
             aria-expanded={mobileOpen}
             aria-controls="dashboard-drawer"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <Link href="/dashboard" className="ns-app-brand text-base font-bold text-zinc-900 dark:text-white">
+          <Link href="/dashboard" className="ns-app-brand text-base font-bold text-practice-heading">
             NoShow Control
           </Link>
           <button
@@ -321,7 +320,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </button>
         </header>
 
-        <main className="ns-app-main flex-1 overflow-y-auto">
+        <main className="ns-app-main min-w-0 flex-1">
           <div className="ns-app-content mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-7 lg:px-8">
             {children}
           </div>

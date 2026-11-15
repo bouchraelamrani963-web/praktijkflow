@@ -14,11 +14,11 @@ const riskColors: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  SCHEDULED: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  SCHEDULED: "bg-blue-100 text-practice-link dark:bg-blue-900/30 ",
   CONFIRMED: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
   IN_PROGRESS: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   COMPLETED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-  CANCELLED: "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
+  CANCELLED: "bg-practice-line text-practice-subtle ",
   NO_SHOW: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
 };
 
@@ -77,7 +77,7 @@ export default async function PatientDetailPage({
     <div>
       <Link
         href="/patients"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-practice-subtle hover:text-practice-heading"
       >
         <ArrowLeft className="h-4 w-4" />
         Terug naar patiënten
@@ -86,19 +86,19 @@ export default async function PatientDetailPage({
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-practice-heading">
               {patient.firstName} {patient.lastName}
             </h1>
             <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${riskColors[patient.riskLevel]}`}>
               {patient.riskLevel}
             </span>
             {!patient.isActive && (
-              <span className="inline-flex rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+              <span className="inline-flex rounded-full bg-practice-line px-2 py-0.5 text-xs font-medium text-practice-subtle">
                 Inactief
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-practice-subtle">
             Patiënt sinds {formatDate(patient.createdAt)}
           </p>
         </div>
@@ -111,7 +111,7 @@ export default async function PatientDetailPage({
           <AddToWaitlistButton clientId={patient.id} appointmentTypeId={null} />
           <Link
             href={`/patients/${patient.id}/edit`}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="inline-flex items-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-4 py-2 text-sm font-medium text-practice-ink hover:bg-practice-hover"
           >
             <Pencil className="h-4 w-4" />
             Bewerken
@@ -121,20 +121,20 @@ export default async function PatientDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Contact info */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Contactgegevens</h2>
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+          <h2 className="text-sm font-semibold text-practice-heading">Contactgegevens</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <div className="flex items-start gap-2">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-              <span className="text-zinc-700 dark:text-zinc-300">{patient.email ?? "—"}</span>
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-practice-subtle" />
+              <span className="text-practice-ink">{patient.email ?? "—"}</span>
             </div>
             <div className="flex items-start gap-2">
-              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-              <span className="text-zinc-700 dark:text-zinc-300">{patient.phone ?? "—"}</span>
+              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-practice-subtle" />
+              <span className="text-practice-ink">{patient.phone ?? "—"}</span>
             </div>
             <div className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-              <span className="text-zinc-700 dark:text-zinc-300">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-practice-subtle" />
+              <span className="text-practice-ink">
                 {patient.address ? (
                   <>
                     {patient.address}
@@ -146,13 +146,13 @@ export default async function PatientDetailPage({
                 )}
               </span>
             </div>
-            <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
-              <dt className="text-xs uppercase text-zinc-500">Voorkeurskanaal</dt>
-              <dd className="mt-1 text-zinc-700 dark:text-zinc-300">{patient.communicationPreference}</dd>
+            <div className="border-t border-practice-line pt-3">
+              <dt className="text-xs uppercase text-practice-subtle">Voorkeurskanaal</dt>
+              <dd className="mt-1 text-practice-ink">{patient.communicationPreference}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Wachtlijst</dt>
-              <dd className="mt-1 text-zinc-700 dark:text-zinc-300">
+              <dt className="text-xs uppercase text-practice-subtle">Wachtlijst</dt>
+              <dd className="mt-1 text-practice-ink">
                 {patient.waitlistOptIn ? "Aangemeld" : "Niet aangemeld"}
               </dd>
             </div>
@@ -160,41 +160,41 @@ export default async function PatientDetailPage({
         </div>
 
         {/* Personal */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Persoonlijk</h2>
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+          <h2 className="text-sm font-semibold text-practice-heading">Persoonlijk</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Geboortedatum</dt>
-              <dd className="mt-1 text-zinc-700 dark:text-zinc-300">{formatDate(patient.dateOfBirth)}</dd>
+              <dt className="text-xs uppercase text-practice-subtle">Geboortedatum</dt>
+              <dd className="mt-1 text-practice-ink">{formatDate(patient.dateOfBirth)}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-zinc-500">BSN</dt>
-              <dd className="mt-1 font-mono text-zinc-700 dark:text-zinc-300">{patient.bsn ?? "—"}</dd>
+              <dt className="text-xs uppercase text-practice-subtle">BSN</dt>
+              <dd className="mt-1 font-mono text-practice-ink">{patient.bsn ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Notities</dt>
-              <dd className="mt-1 whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">{patient.notes ?? "—"}</dd>
+              <dt className="text-xs uppercase text-practice-subtle">Notities</dt>
+              <dd className="mt-1 whitespace-pre-wrap text-practice-ink">{patient.notes ?? "—"}</dd>
             </div>
           </dl>
         </div>
 
         {/* Recent appointments */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-practice-heading">
             <Calendar className="h-4 w-4" />
             Recente afspraken
           </h2>
           {patient.appointments.length === 0 ? (
-            <p className="mt-4 text-sm text-zinc-500">Nog geen afspraken.</p>
+            <p className="mt-4 text-sm text-practice-subtle">Nog geen afspraken.</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {patient.appointments.map((a) => (
                 <li key={a.id} className="flex items-start justify-between gap-2 text-sm">
                   <div>
-                    <div className="font-medium text-zinc-900 dark:text-white">
+                    <div className="font-medium text-practice-heading">
                       {a.appointmentType?.name ?? "Afspraak"}
                     </div>
-                    <div className="text-xs text-zinc-500">{formatDateTime(a.startTime)}</div>
+                    <div className="text-xs text-practice-subtle">{formatDateTime(a.startTime)}</div>
                   </div>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[a.status] ?? ""}`}>
                     {statusLabels[a.status] ?? a.status}

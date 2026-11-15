@@ -153,7 +153,7 @@ export function AppointmentsList({
   initialData?: ApiResponse;
 }) {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-zinc-500">Laden…</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-practice-subtle">Laden…</div>}>
       <Inner practitioners={practitioners} initialData={initialData} />
     </Suspense>
   );
@@ -255,29 +255,29 @@ function Inner({
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="ns-app-eyebrow">PLANNING & BESCHIKBAARHEID</p>
-          <h1 className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-white">
+          <h1 className="mt-1 text-2xl font-semibold text-practice-heading">
             Beschikbaarheid en afspraken
           </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-practice-subtle">
             {data
               ? `${data.total} afspra${data.total === 1 ? "ak" : "ken"} · Geschatte omzet €${((Number.isFinite(totalRevenue) ? totalRevenue : 0) / 100).toFixed(2)}`
               : "Laden…"}
           </p>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-practice-subtle">
             NoShow Control toont hier de afspraken en vrijgekomen plekken die de app beheert. Dit is geen volledige externe praktijkagenda.
           </p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/appointments/import"
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="inline-flex items-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-4 py-2 text-sm font-medium text-practice-ink hover:bg-practice-hover"
           >
             <Upload className="h-4 w-4" />
             CSV importeren
           </Link>
           <Link
             href="/appointments/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover"
           >
             <Plus className="h-4 w-4" />
             Nieuwe afspraak
@@ -285,7 +285,7 @@ function Inner({
         </div>
       </div>
 
-      <div className="ns-app-view-toggle mb-4 inline-flex w-full rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900 sm:w-fit">
+      <div className="ns-app-view-toggle mb-4 inline-flex w-full rounded-lg border border-practice-line bg-practice-muted p-1 sm:w-fit">
         {[
           { value: "day", label: "Dag" },
           { value: "week", label: "Week" },
@@ -297,8 +297,8 @@ function Inner({
             onClick={() => setAgendaView(view.value as AgendaView)}
             className={`min-h-10 flex-1 rounded-md px-4 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-blue-500 sm:flex-none ${
               agendaView === view.value
-                ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-800 dark:text-white"
-                : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-300"
+                ? "bg-practice-surface text-practice-heading shadow-sm "
+                : "text-practice-subtle hover:text-practice-heading "
             }`}
             aria-pressed={agendaView === view.value}
           >
@@ -310,7 +310,7 @@ function Inner({
       {/* Filters */}
       <div className="ns-app-filters mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
-          <label className="block text-xs font-medium uppercase text-zinc-500">Van</label>
+          <label className="block text-xs font-medium uppercase text-practice-subtle">Van</label>
           {/* Year-spinner bounds — without these, typing a single digit lands
               on year 0009 and the resulting filter range is nonsense. */}
           <input
@@ -320,11 +320,11 @@ function Inner({
             aria-label="Filter vanaf datum"
             min="2000-01-01"
             max="2099-12-31"
-            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium uppercase text-zinc-500">Tot</label>
+          <label className="block text-xs font-medium uppercase text-practice-subtle">Tot</label>
           <input
             type="date"
             value={dateTo}
@@ -332,16 +332,16 @@ function Inner({
             aria-label="Filter tot datum"
             min="2000-01-01"
             max="2099-12-31"
-            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium uppercase text-zinc-500">Status</label>
+          <label className="block text-xs font-medium uppercase text-practice-subtle">Status</label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             aria-label="Filter op status"
-            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
           >
             <option value="">Alle statussen</option>
             <option value="SCHEDULED">Gepland</option>
@@ -353,12 +353,12 @@ function Inner({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium uppercase text-zinc-500">Risico</label>
+          <label className="block text-xs font-medium uppercase text-practice-subtle">Risico</label>
           <select
             value={risk}
             onChange={(e) => setRisk(e.target.value)}
             aria-label="Filter op risiconiveau"
-            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
           >
             <option value="">Alle risiconiveaus</option>
             <option value="LOW">Laag</option>
@@ -368,12 +368,12 @@ function Inner({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium uppercase text-zinc-500">Behandelaar</label>
+          <label className="block text-xs font-medium uppercase text-practice-subtle">Behandelaar</label>
           <select
             value={practitionerId}
             onChange={(e) => setPractitionerId(e.target.value)}
             aria-label="Filter op behandelaar"
-            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
           >
             <option value="">Alle behandelaars</option>
             {practitioners.map((p) => (
@@ -386,9 +386,9 @@ function Inner({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="overflow-hidden rounded-xl border border-practice-line bg-practice-surface">
         {error ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-red-600">
+          <div className="flex items-center gap-2 p-8 text-sm text-red-600 dark:text-red-300">
             <AlertTriangle className="h-4 w-4" />
             {error}
           </div>
@@ -398,18 +398,18 @@ function Inner({
           </div>
         ) : visibleItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 p-14 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-practice-link dark:bg-blue-900/30">
               <Calendar className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">Geen afspraken gevonden</p>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="text-sm font-medium text-practice-heading">Geen afspraken gevonden</p>
+              <p className="mt-1 text-sm text-practice-subtle">
                 Pas de filters of weergave aan, of plan een nieuwe afspraak.
               </p>
             </div>
             <Link
               href="/appointments/new"
-              className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-blue-500/20 transition hover:from-blue-700 hover:to-indigo-700"
+              className="mt-2 inline-flex items-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary shadow-sm transition hover:bg-practice-primary-hover"
             >
               <Plus className="h-4 w-4" />
               Nieuwe afspraak
@@ -417,19 +417,19 @@ function Inner({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
-              <thead className="bg-zinc-50 dark:bg-zinc-800/50">
+            <table className="min-w-full divide-y divide-practice-line">
+              <thead className="bg-practice-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Wanneer</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Patiënt</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Risico</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Behandelaar</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500">Omzet</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Wanneer</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Patiënt</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Risico</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Behandelaar</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-practice-subtle">Omzet</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tbody className="divide-y divide-practice-line">
                 {visibleItems.map((a) => {
                   const StatusIcon = statusIcon[a.status];
                   const rel = relativeDayLabel(a.startTime);
@@ -439,7 +439,7 @@ function Inner({
                       className="cursor-pointer transition hover:bg-blue-50/40 dark:hover:bg-blue-900/10"
                       onClick={() => router.push(`/appointments/${a.id}`)}
                     >
-                      <td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <td className="px-4 py-3 text-sm text-practice-ink">
                         <div className="flex items-center gap-2">
                           <span>{formatDateTime(a.startTime)}</span>
                           {rel && (
@@ -447,19 +447,19 @@ function Inner({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">
+                      <td className="px-4 py-3 text-sm font-medium text-practice-heading">
                         {a.client.firstName} {a.client.lastName}
                       </td>
                       <td className="px-4 py-3">
                         <Badge tone={riskTone[a.riskLevel]}>
                           {RISK_LABELS[a.riskLevel] ?? a.riskLevel}
                         </Badge>
-                        <span className="ml-1 text-xs tabular-nums text-zinc-500">{a.riskScore}</span>
+                        <span className="ml-1 text-xs tabular-nums text-practice-subtle">{a.riskScore}</span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                      <td className="px-4 py-3 text-sm text-practice-subtle">
                         {a.practitioner.firstName} {a.practitioner.lastName}
                       </td>
-                      <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                      <td className="px-4 py-3 text-sm text-practice-subtle">
                         {a.appointmentType ? (
                           <span className="flex items-center gap-1.5">
                             <span className="truncate">
@@ -474,7 +474,7 @@ function Inner({
                               const total = a.treatmentCount ?? a._count?.treatments ?? 0;
                               return total > 1 ? (
                                 <span
-                                  className="shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                  className="shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-practice-link dark:bg-blue-900/30"
                                   title={`${total} behandelcodes — open de afspraak voor details`}
                                 >
                                   +{total - 1}
@@ -496,12 +496,12 @@ function Inner({
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-mono">
                         {countsForRevenue(a) ? (
-                          <span className="text-zinc-700 dark:text-zinc-300">
+                          <span className="text-practice-ink">
                             €{((Number.isFinite(a.revenueEstimateCents) ? a.revenueEstimateCents : 0) / 100).toFixed(2)}
                           </span>
                         ) : (
                           <span
-                            className="text-zinc-400 line-through"
+                            className="text-practice-subtle line-through"
                             title={
                               a.status === "CANCELLED"
                                 ? "Geannuleerd — geen omzet"

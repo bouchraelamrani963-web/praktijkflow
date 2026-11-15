@@ -51,7 +51,7 @@ export function StatusSelector({
       value={value}
       disabled={updating}
       onChange={(e) => handleChange(e.target.value as AppointmentStatus)}
-      className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+      className="rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20 disabled:opacity-50"
     >
       {statuses.map((s) => (
         <option key={s.value} value={s.value}>

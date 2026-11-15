@@ -74,14 +74,14 @@ export function OpenSlotForm({ practitioners, types }: Props) {
   return (
     <form onSubmit={handleSubmit} className="ns-app-new-slot-form space-y-5">
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block text-sm font-medium text-practice-ink">
           Behandelaar *
         </label>
         <select
           value={practitionerId}
           onChange={(e) => setPractitionerId(e.target.value)}
           required
-          className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
         >
           <option value="">Kies behandelaar</option>
           {practitioners.map((p) => (
@@ -93,13 +93,13 @@ export function OpenSlotForm({ practitioners, types }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block text-sm font-medium text-practice-ink">
           Type behandeling
         </label>
         <select
           value={appointmentTypeId}
           onChange={(e) => handleTypeChange(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
         >
           <option value="">Geen</option>
           {types.map((t) => (
@@ -111,7 +111,7 @@ export function OpenSlotForm({ practitioners, types }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block text-sm font-medium text-practice-ink">
           Starttijd *
         </label>
         {/* min/max: same bounds as the appointment form so the year-spinner
@@ -131,12 +131,12 @@ export function OpenSlotForm({ practitioners, types }: Props) {
             const pad = (n: number) => String(n).padStart(2, "0");
             return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
           })()}
-          className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block text-sm font-medium text-practice-ink">
           Duur (min) *
         </label>
         <input
@@ -146,19 +146,19 @@ export function OpenSlotForm({ practitioners, types }: Props) {
           value={durationMinutes}
           onChange={(e) => setDurationMinutes(parseInt(e.target.value, 10) || 60)}
           required
-          className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block text-sm font-medium text-practice-ink">
           Notities
         </label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading"
         />
       </div>
 
@@ -166,13 +166,13 @@ export function OpenSlotForm({ practitioners, types }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="ns-app-new-slot-submit rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="ns-app-new-slot-submit rounded-lg bg-practice-primary px-6 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover disabled:opacity-50"
         >
           {submitting ? "Aanmaken…" : "Open plek aanmaken"}
         </button>
         <Link
           href="/open-slots"
-          className="ns-app-new-slot-cancel rounded-lg border border-zinc-300 px-6 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="ns-app-new-slot-cancel rounded-lg border border-practice-field px-6 py-2 text-sm font-medium text-practice-ink hover:bg-practice-hover"
         >
           Annuleren
         </Link>

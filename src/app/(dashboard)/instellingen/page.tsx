@@ -6,6 +6,7 @@ import { Save, Sun, Moon, Monitor, Sparkles, ListPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { can } from "@/lib/auth/permissions";
 import type { Role } from "@/generated/prisma/client";
+import { readPracticeTheme, setPracticeTheme, type PracticeTheme } from "@/lib/practice-theme";
 import { useAuth } from "@/lib/hooks/useAuth";
 
 interface Member {
@@ -60,14 +61,14 @@ function PracticeMembers() {
   }
 
   return (
-    <section className="mt-5 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <section className="mt-5 rounded-xl border border-practice-line bg-practice-surface p-4">
       <h2 className="text-sm font-semibold">Medewerkers en toegang</h2>
-      {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
       {!members && (error
         ? <button type="button" onClick={() => void load()} className="mt-2 text-sm underline">Opnieuw proberen</button>
         : <p role="status" className="mt-2 text-sm">Medewerkers laden…</p>)}
       {members && (
-        <ul className="mt-2 divide-y divide-zinc-200 dark:divide-zinc-700">
+        <ul className="mt-2 divide-y divide-practice-line">
           {members.map((member) => (
             <li key={member.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
               <div className="min-w-0 break-words">
@@ -78,10 +79,10 @@ function PracticeMembers() {
                 confirmation === member.id ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <button type="button" disabled={saving} onClick={() => setConfirmation(null)} className="min-h-10 px-2">Annuleren</button>
-                    <button type="button" disabled={saving} onClick={() => void revoke(member.id)} className="min-h-10 rounded bg-red-700 px-2 text-white">Intrekken bevestigen</button>
+                    <button type="button" disabled={saving} onClick={() => void revoke(member.id)} className="min-h-10 rounded bg-red-700 px-2 text-practice-on-primary">Intrekken bevestigen</button>
                   </div>
                 ) : (
-                  <button type="button" disabled={saving} onClick={() => setConfirmation(member.id)} className="min-h-10 rounded border border-zinc-300 px-2">Toegang intrekken</button>
+                  <button type="button" disabled={saving} onClick={() => setConfirmation(member.id)} className="min-h-10 rounded border border-practice-field px-2">Toegang intrekken</button>
                 )
               )}
             </li>
@@ -101,29 +102,6 @@ interface PracticeData {
   zipCode: string | null;
   kvkNumber: string | null;
   agbCode: string | null;
-}
-
-type Theme = "light" | "dark" | "system";
-
-function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "system";
-  return (localStorage.getItem("pf-theme") as Theme) ?? "system";
-}
-
-function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-  if (theme === "dark") {
-    root.classList.add("dark");
-  } else if (theme === "light") {
-    root.classList.remove("dark");
-  } else {
-    // system
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }
 }
 
 interface LocalSettings {
@@ -150,7 +128,7 @@ export default function InstellingenPage() {
   const [practice, setPractice] = useState<PracticeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [theme, setTheme] = useState<Theme>("system");
+  const [theme, setTheme] = useState<PracticeTheme>("light");
   const [local, setLocal] = useState<LocalSettings>({
     reminder48h: true,
     reminder24h: true,
@@ -173,14 +151,13 @@ export default function InstellingenPage() {
 
   useEffect(() => {
     fetchPractice();
-    setTheme(getStoredTheme());
+    setTheme(readPracticeTheme());
     setLocal(getLocalSettings());
   }, [fetchPractice]);
 
-  function handleTheme(t: Theme) {
+  function handleTheme(t: PracticeTheme) {
     setTheme(t);
-    localStorage.setItem("pf-theme", t);
-    applyTheme(t);
+    setPracticeTheme(t);
   }
 
   function handleLocalChange(key: keyof LocalSettings, value: boolean | string) {
@@ -221,19 +198,19 @@ export default function InstellingenPage() {
     <div className="ns-app-settings">
       <div className="ns-app-settings-heading mb-6">
         <p className="ns-app-eyebrow">PRAKTIJKBEHEER</p>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Instellingen</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="text-2xl font-bold text-practice-heading">Instellingen</h1>
+        <p className="mt-1 text-sm text-practice-subtle">
           Beheer uw praktijkgegevens en voorkeuren
         </p>
       </div>
 
       <div className="ns-app-settings-grid grid gap-6 lg:grid-cols-2">
         {/* Practice info */}
-        <div className="ns-app-settings-panel ns-app-settings-practice rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Praktijkgegevens</h2>
+        <div className="ns-app-settings-panel ns-app-settings-practice rounded-xl border border-practice-line bg-practice-surface p-6">
+          <h2 className="text-sm font-semibold text-practice-heading">Praktijkgegevens</h2>
           {practice && (
             <form onSubmit={handleSavePractice} className="mt-4">
-              {!canEditPractice && <p className="mb-3 text-sm text-zinc-600">Alleen de praktijkeigenaar kan deze gegevens wijzigen.</p>}
+              {!canEditPractice && <p className="mb-3 text-sm text-practice-subtle">Alleen de praktijkeigenaar kan deze gegevens wijzigen.</p>}
               <fieldset disabled={!canEditPractice || saving} className="min-w-0 space-y-4">
                 <Field label="Naam" value={practice.name} onChange={(v) => setPractice({ ...practice, name: v })} />
                 <Field label="E-mail" value={practice.email ?? ""} onChange={(v) => setPractice({ ...practice, email: v || null })} type="email" />
@@ -250,7 +227,7 @@ export default function InstellingenPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover disabled:opacity-50"
                 >
                   <Save className="h-4 w-4" />
                   {saving ? "Opslaan…" : "Opslaan"}
@@ -264,21 +241,22 @@ export default function InstellingenPage() {
         {/* Right column */}
         <div className="ns-app-settings-aside space-y-6">
           {/* Theme */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Thema</h2>
-            <div className="mt-4 flex gap-2">
+          <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+            <h2 className="text-sm font-semibold text-practice-heading">Thema</h2>
+            <div className="mt-4 flex flex-wrap gap-2">
               {([
-                { value: "light" as Theme, icon: Sun, label: "Licht" },
-                { value: "dark" as Theme, icon: Moon, label: "Donker" },
-                { value: "system" as Theme, icon: Monitor, label: "Systeem" },
+                { value: "light" as PracticeTheme, icon: Sun, label: "Licht" },
+                { value: "dark" as PracticeTheme, icon: Moon, label: "Donker" },
+                { value: "system" as PracticeTheme, icon: Monitor, label: "Systeem" },
               ]).map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => handleTheme(opt.value)}
+                  aria-pressed={theme === opt.value}
                   className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                     theme === opt.value
-                      ? "border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                      : "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      ? "border-blue-600 bg-blue-50 text-practice-link dark:bg-blue-900/30 "
+                      : "border-practice-line text-practice-ink hover:bg-practice-hover "
                   }`}
                 >
                   <opt.icon className="h-4 w-4" />
@@ -289,8 +267,8 @@ export default function InstellingenPage() {
           </div>
 
           {/* Reminder settings */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">No-show herinneringen</h2>
+          <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+            <h2 className="text-sm font-semibold text-practice-heading">No-show herinneringen</h2>
             <div className="mt-4 space-y-3">
               <Toggle
                 label="48 uur herinnering"
@@ -320,25 +298,25 @@ export default function InstellingenPage() {
           )}
 
           {/* Opening hours */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Openingstijden</h2>
+          <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+            <h2 className="text-sm font-semibold text-practice-heading">Openingstijden</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-500">Opening</label>
+                <label className="block text-xs font-medium text-practice-subtle">Opening</label>
                 <input
                   type="time"
                   value={local.openingTime}
                   onChange={(e) => handleLocalChange("openingTime", e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-500">Sluiting</label>
+                <label className="block text-xs font-medium text-practice-subtle">Sluiting</label>
                 <input
                   type="time"
                   value={local.closingTime}
                   onChange={(e) => handleLocalChange("closingTime", e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
                 />
               </div>
             </div>
@@ -381,11 +359,11 @@ function Nza2026ImportPanel() {
   }
 
   return (
-    <div className="rounded-xl border border-blue-200 bg-white p-6 dark:border-blue-900 dark:bg-zinc-900">
-      <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+    <div className="rounded-xl border border-blue-200 bg-practice-surface p-6 dark:border-blue-900">
+      <h2 className="text-sm font-semibold text-practice-heading">
         NZa tandheelkundige tarieven 2026 — Preview
       </h2>
-      <p className="mt-2 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 text-xs leading-5 text-practice-subtle">
         Werk 322 vaste NZa-tarieven uit TB/REG-26616-01 bij. De vier codes
         zonder vast bedrag (A20, R90, J050 en Y02) worden niet ingevoerd.
         Orthodontie (F-codes) valt buiten deze bron. Bestaande afspraken en
@@ -395,9 +373,9 @@ function Nza2026ImportPanel() {
         <input type="file" accept=".json,application/json"
           aria-label="NZa 2026 JSON-bestand"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="max-w-full text-xs text-zinc-700 dark:text-zinc-200" />
+          className="max-w-full text-xs text-practice-ink" />
         <button type="button" onClick={importFile} disabled={!file || busy}
-          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          className="rounded-md bg-practice-primary px-3 py-2 text-sm font-semibold text-practice-on-primary disabled:opacity-50">
           {busy ? "Importeren…" : "NZa 2026 importeren"}
         </button>
       </div>
@@ -480,14 +458,14 @@ function DemoDataPanel() {
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
       <div className="flex items-start gap-3">
         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" aria-hidden="true" />
         <div className="flex-1">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+          <h2 className="text-sm font-semibold text-practice-heading">
             Voorbeelddata
           </h2>
-          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-xs text-practice-subtle">
             Vul de praktijk eenmalig met een complete demo-set: 1 praktijk
             met 2 behandelaren, 15 patiënten, 27 afspraken (verleden, vandaag
             en toekomst), 2 open plekken, 4 wachtlijstvermeldingen en 4
@@ -500,12 +478,12 @@ function DemoDataPanel() {
           onClick={handleSeed}
           disabled={seeding}
           aria-busy={seeding}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-practice-field bg-practice-surface px-3 py-1.5 text-xs font-medium text-practice-ink transition hover:bg-practice-hover disabled:opacity-60"
         >
           {seeding && (
             <span
               aria-hidden="true"
-              className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-zinc-700 dark:border-zinc-600 dark:border-t-zinc-200"
+              className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-zinc-700 dark:border-t-zinc-200"
             />
           )}
           {seeding ? "Bezig…" : "Voorbeelddata laden"}
@@ -593,14 +571,14 @@ function RestoreTreatmentTypesPanel() {
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
       <div className="flex items-start gap-3">
         <ListPlus className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" aria-hidden="true" />
         <div className="flex-1">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+          <h2 className="text-sm font-semibold text-practice-heading">
             Standaard behandelcodes 2025 laden
           </h2>
-          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-xs text-practice-subtle">
             Importeert de officiële KNMT-codes uit het Tarievenboekje 2025
             (C, X, M, A, B, V, E, R, G, H, P, T, J, U, Y en F). Tarieven
             zijn de NZa-maximumtarieven 2025. Bestaande codes met dezelfde
@@ -612,12 +590,12 @@ function RestoreTreatmentTypesPanel() {
           onClick={handleRestore}
           disabled={running}
           aria-busy={running}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-practice-field bg-practice-surface px-3 py-1.5 text-xs font-medium text-practice-ink transition hover:bg-practice-hover disabled:opacity-60"
         >
           {running && (
             <span
               aria-hidden="true"
-              className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-zinc-700 dark:border-zinc-600 dark:border-t-zinc-200"
+              className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-zinc-700 dark:border-t-zinc-200"
             />
           )}
           {running ? "Bezig…" : "Standaard behandelcodes 2025 laden"}
@@ -651,12 +629,12 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-zinc-500">{label}</label>
+      <label className="block text-xs font-medium text-practice-subtle">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+        className="mt-1 w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
       />
     </div>
   );
@@ -676,8 +654,8 @@ function Toggle({
   return (
     <label className="flex cursor-pointer items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-zinc-900 dark:text-white">{label}</p>
-        <p className="text-xs text-zinc-500">{description}</p>
+        <p className="text-sm font-medium text-practice-heading">{label}</p>
+        <p className="text-xs text-practice-subtle">{description}</p>
       </div>
       <button
         type="button"
@@ -685,11 +663,11 @@ function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-          checked ? "bg-blue-600" : "bg-zinc-200 dark:bg-zinc-700"
+          checked ? "bg-practice-primary" : "bg-practice-line "
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-practice-surface shadow-sm transition-transform ${
             checked ? "translate-x-5" : "translate-x-0"
           }`}
         />

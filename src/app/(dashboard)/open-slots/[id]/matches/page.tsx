@@ -161,46 +161,46 @@ export default async function OpenSlotMatchesPage({
     <div className="max-w-4xl">
       <Link
         href="/open-slots"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-practice-subtle hover:text-practice-heading"
       >
         <ArrowLeft className="h-4 w-4" />
         Terug naar open plekken
       </Link>
 
-      <h1 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">
+      <h1 className="mb-2 text-2xl font-bold text-practice-heading">
         Patiënten matchen
       </h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mb-6 text-sm text-practice-subtle">
         Stuur wachtlijst-patiënten een persoonlijke claim-link. Wie het eerst
         op de link klikt, krijgt de afspraak.
       </p>
 
       {/* Slot summary card */}
-      <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-6 rounded-xl border border-practice-line bg-practice-surface p-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex items-start gap-2">
-            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-practice-subtle" />
             <div>
-              <div className="text-xs uppercase text-zinc-500">Wanneer</div>
-              <div className="text-sm text-zinc-700 dark:text-zinc-300">
+              <div className="text-xs uppercase text-practice-subtle">Wanneer</div>
+              <div className="text-sm text-practice-ink">
                 {fmtDateTime(slot.startTime)}
               </div>
             </div>
           </div>
           <div className="flex items-start gap-2">
-            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-practice-subtle" />
             <div>
-              <div className="text-xs uppercase text-zinc-500">Duur</div>
-              <div className="text-sm text-zinc-700 dark:text-zinc-300">
+              <div className="text-xs uppercase text-practice-subtle">Duur</div>
+              <div className="text-sm text-practice-ink">
                 {slot.durationMinutes} minuten
               </div>
             </div>
           </div>
           <div className="flex items-start gap-2">
-            <User className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+            <User className="mt-0.5 h-4 w-4 shrink-0 text-practice-subtle" />
             <div>
-              <div className="text-xs uppercase text-zinc-500">Behandelaar</div>
-              <div className="text-sm text-zinc-700 dark:text-zinc-300">
+              <div className="text-xs uppercase text-practice-subtle">Behandelaar</div>
+              <div className="text-sm text-practice-ink">
                 {slot.practitioner.firstName} {slot.practitioner.lastName}
               </div>
             </div>
@@ -213,8 +213,8 @@ export default async function OpenSlotMatchesPage({
                 aria-hidden="true"
               />
               <div>
-                <div className="text-xs uppercase text-zinc-500">Type</div>
-                <div className="text-sm text-zinc-700 dark:text-zinc-300">
+                <div className="text-xs uppercase text-practice-subtle">Type</div>
+                <div className="text-sm text-practice-ink">
                   {slot.appointmentType.name}
                 </div>
               </div>
@@ -223,7 +223,7 @@ export default async function OpenSlotMatchesPage({
         </div>
 
         {slot.status !== "AVAILABLE" && slot.status !== "OFFERED" && (
-          <p className="mt-4 rounded-md bg-zinc-100 px-3 py-2 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+          <p className="mt-4 rounded-md bg-practice-muted px-3 py-2 text-xs text-practice-subtle">
             Deze plek is niet meer beschikbaar (status:{" "}
             <span className="font-semibold">{slot.status}</span>). U kunt geen
             nieuwe aanbiedingen meer versturen.

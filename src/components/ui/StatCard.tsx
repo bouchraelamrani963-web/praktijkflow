@@ -13,29 +13,29 @@ const toneAccents: Record<
   { iconBg: string; iconText: string; hoverBorder: string }
 > = {
   neutral: {
-    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
-    iconText:    "text-zinc-600 dark:text-zinc-300",
-    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
+    iconBg:      "bg-practice-muted ",
+    iconText:    "text-practice-subtle ",
+    hoverBorder: "hover:border-practice-field ",
   },
   info: {
-    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
-    iconText:    "text-blue-600 dark:text-blue-400",
-    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
+    iconBg:      "bg-practice-muted ",
+    iconText:    "text-practice-link ",
+    hoverBorder: "hover:border-practice-field ",
   },
   success: {
-    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
+    iconBg:      "bg-practice-muted ",
     iconText:    "text-emerald-600 dark:text-emerald-400",
-    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
+    hoverBorder: "hover:border-practice-field ",
   },
   warning: {
-    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
+    iconBg:      "bg-practice-muted ",
     iconText:    "text-amber-600 dark:text-amber-400",
-    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
+    hoverBorder: "hover:border-practice-field ",
   },
   danger: {
-    iconBg:      "bg-zinc-100 dark:bg-zinc-800",
+    iconBg:      "bg-practice-muted ",
     iconText:    "text-red-600 dark:text-red-400",
-    hoverBorder: "hover:border-zinc-300 dark:hover:border-zinc-700",
+    hoverBorder: "hover:border-practice-field ",
   },
 };
 
@@ -73,7 +73,7 @@ export function StatCard({
   const inner = (
     <>
       <div className="flex items-start justify-between gap-3">
-        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+        <span className="text-xs font-medium text-practice-subtle">
           {label}
         </span>
         <span
@@ -82,17 +82,17 @@ export function StatCard({
           <Icon className={`h-4 w-4 ${accent.iconText}`} />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-bold tabular-nums text-zinc-900 dark:text-white">
+      <p className="mt-3 text-2xl font-bold tabular-nums text-practice-heading">
         {value}
       </p>
       {hint && (
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">{hint}</p>
+        <p className="mt-1 text-xs text-practice-subtle">{hint}</p>
       )}
     </>
   );
 
   const baseCls =
-    "block rounded-lg border border-zinc-200 bg-white p-4 transition dark:border-zinc-800 dark:bg-zinc-900";
+    "block rounded-lg border border-practice-line bg-practice-surface p-4 transition ";
   const interactiveCls = href
     ? `cursor-pointer hover:shadow-sm hover:-translate-y-0.5 ${accent.hoverBorder}`
     : "";

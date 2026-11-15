@@ -192,17 +192,17 @@ export async function RecoveryTimeline({
     red: "bg-red-100 text-red-700 ring-red-200 dark:bg-red-900/30 dark:text-red-300 dark:ring-red-900/40",
     amber:
       "bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-900/40",
-    blue: "bg-blue-100 text-blue-700 ring-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-900/40",
+    blue: "bg-blue-100 text-practice-link ring-blue-200 dark:bg-blue-900/30 dark:ring-blue-900/40",
     emerald:
       "bg-emerald-100 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-900/40",
   };
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+    <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-practice-subtle">
         Recovery timeline
       </h2>
-      <p className="mt-1 text-xs text-zinc-500">
+      <p className="mt-1 text-xs text-practice-subtle">
         Van annulering tot nieuwe afspraak
       </p>
 
@@ -210,14 +210,14 @@ export async function RecoveryTimeline({
         {steps.map((step, i) => {
           const Icon = step.icon;
           const isLast = i === steps.length - 1;
-          const ringTone = step.done ? tones[step.tone] : "bg-zinc-100 text-zinc-400 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-500 dark:ring-zinc-700";
+          const ringTone = step.done ? tones[step.tone] : "bg-practice-muted text-practice-subtle ring-practice-line ";
           return (
             <li key={step.key} className="relative flex gap-4 pb-6 last:pb-0">
               {!isLast && (
                 <span
                   aria-hidden="true"
                   className={`absolute left-[19px] top-10 -bottom-2 w-px ${
-                    step.done ? "bg-emerald-200 dark:bg-emerald-900/40" : "bg-zinc-200 dark:bg-zinc-800"
+                    step.done ? "bg-emerald-200 dark:bg-emerald-900/40" : "bg-practice-line "
                   }`}
                 />
               )}
@@ -231,28 +231,28 @@ export async function RecoveryTimeline({
                   <p
                     className={`text-sm font-semibold ${
                       step.isCurrent
-                        ? "text-blue-700 dark:text-blue-300"
-                        : "text-zinc-900 dark:text-white"
+                        ? "text-practice-link "
+                        : "text-practice-heading "
                     }`}
                   >
                     {step.title}
                     {step.isCurrent && (
-                      <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                      <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-practice-link dark:bg-blue-900/30">
                         Huidige
                       </span>
                     )}
                   </p>
                   {step.time && (
-                    <span className="text-xs tabular-nums text-zinc-500">{step.time}</span>
+                    <span className="text-xs tabular-nums text-practice-subtle">{step.time}</span>
                   )}
                 </div>
                 {step.detail && (
-                  <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+                  <p className="mt-0.5 text-xs text-practice-subtle">
                     {step.detail}
                   </p>
                 )}
                 {"sublist" in step && step.sublist && step.sublist.length > 0 && (
-                  <ul className="mt-2 space-y-0.5 text-xs text-zinc-500">
+                  <ul className="mt-2 space-y-0.5 text-xs text-practice-subtle">
                     {step.sublist.map((name, idx) => (
                       <li key={idx}>• {name}</li>
                     ))}

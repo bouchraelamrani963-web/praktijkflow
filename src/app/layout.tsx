@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { Toaster } from "react-hot-toast";
+import { practiceThemeBootstrap } from "@/lib/practice-theme";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -34,7 +35,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("pf-theme");if(t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()`,
+            __html: practiceThemeBootstrap,
           }}
         />
       </head>

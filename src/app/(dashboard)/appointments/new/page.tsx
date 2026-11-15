@@ -24,12 +24,12 @@ export default async function NewAppointmentPage() {
     <div className="max-w-3xl">
       <Link
         href="/appointments"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-practice-subtle hover:text-practice-heading"
       >
         <ArrowLeft className="h-4 w-4" />
         Terug naar afspraken
       </Link>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-white">
+      <h1 className="mb-6 text-2xl font-bold text-practice-heading">
         Nieuwe afspraak
       </h1>
 
@@ -49,7 +49,7 @@ export default async function NewAppointmentPage() {
                 {options.clients.length === 0 && (
                   <Link
                     href="/patients/new"
-                    className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+                    className="inline-flex items-center gap-2 rounded-lg bg-practice-primary px-3 py-1.5 text-xs font-medium text-practice-on-primary hover:bg-practice-primary-hover"
                   >
                     <UserPlus className="h-3.5 w-3.5" />
                     Voeg eerste patiënt toe
@@ -57,7 +57,7 @@ export default async function NewAppointmentPage() {
                 )}
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center gap-2 rounded-lg border border-amber-400/60 bg-white/60 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-white dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-100 dark:hover:bg-amber-900/50"
+                  className="inline-flex items-center gap-2 rounded-lg border border-amber-400/60 bg-practice-surface/60 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-practice-surface dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-100 dark:hover:bg-amber-900/50"
                 >
                   Terug naar dashboard
                 </Link>
@@ -71,7 +71,7 @@ export default async function NewAppointmentPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
           <AppointmentForm mode="create" initial={emptyAppointment} {...options} />
         </div>
       )}

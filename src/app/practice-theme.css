@@ -1,0 +1,139 @@
+/* Shared surfaces and foreground roles for the authenticated application. */
+@theme inline {
+  --color-practice-paper: var(--practice-paper, #f7f8f4);
+  --color-practice-surface: var(--practice-surface, #fff);
+  --color-practice-muted: var(--practice-muted, #edf2ed);
+  --color-practice-hover: var(--practice-hover, #e8efe8);
+  --color-practice-line: var(--practice-line, #ced9d0);
+  --color-practice-field: var(--practice-field, #85998b);
+  --color-practice-ink: var(--practice-ink, #24392f);
+  --color-practice-heading: var(--practice-heading, #1d4234);
+  --color-practice-subtle: var(--practice-subtle, #50675b);
+  --color-practice-link: var(--practice-link, #245e47);
+  --color-practice-primary: var(--practice-primary, #246047);
+  --color-practice-primary-hover: var(--practice-primary-hover, #194934);
+  --color-practice-on-primary: var(--practice-on-primary, #fff);
+  --color-practice-focus: var(--practice-focus, #386e53);
+}
+
+.ns-app {
+  --practice-paper: #f7f8f4;
+  --practice-surface: #fff;
+  --practice-muted: #edf2ed;
+  --practice-hover: #e8efe8;
+  --practice-line: #ced9d0;
+  --practice-field: #85998b;
+  --practice-ink: #24392f;
+  --practice-heading: #1d4234;
+  --practice-subtle: #50675b;
+  --practice-link: #245e47;
+  --practice-primary: #246047;
+  --practice-primary-hover: #194934;
+  --practice-on-primary: #fff;
+  --practice-focus: #386e53;
+  color-scheme: light;
+  background: var(--practice-paper);
+  color: var(--practice-ink);
+  font-family: "DM Sans", Arial, sans-serif;
+}
+
+@utility practice-dark-palette {
+  --practice-paper: #141d19;
+  --practice-surface: #202d26;
+  --practice-muted: #29382f;
+  --practice-hover: #32453a;
+  --practice-line: #41574a;
+  --practice-field: #788f80;
+  --practice-ink: #e6eee8;
+  --practice-heading: #d4ebda;
+  --practice-subtle: #b0c5b7;
+  --practice-link: #a7d9b8;
+  --practice-primary: #a8d5b6;
+  --practice-primary-hover: #c1e3ca;
+  --practice-on-primary: #132c20;
+  --practice-focus: #aedcbb;
+  color-scheme: dark;
+}
+
+[data-practice-theme="dark"] .ns-app { @apply practice-dark-palette; }
+@media (prefers-color-scheme: dark) {
+  [data-practice-theme="system"] .ns-app { @apply practice-dark-palette; }
+}
+
+.ns-app h1,
+.ns-app h2,
+.ns-app h3 {
+  color: var(--practice-heading);
+  font-family: Manrope, "DM Sans", sans-serif;
+}
+.ns-app h1 { font-size: clamp(1.5rem, 3vw, 2.125rem); line-height: 1.25; }
+.ns-app :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.ns-app :is(input, select, textarea) { accent-color: var(--practice-link); }
+.ns-app :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  border-color: var(--practice-field);
+  background: var(--practice-surface);
+  color: var(--practice-ink);
+}
+.ns-app :is(input, textarea)::placeholder { color: var(--practice-subtle); }
+.ns-app :is(input, select, textarea):disabled { background: var(--practice-muted); }
+
+.ns-app table thead { background: var(--practice-muted); color: var(--practice-subtle); }
+.ns-app th { color: var(--practice-subtle); }
+.ns-app :is(.ns-app-table-shell, .ns-app-collection-table) { background: var(--practice-surface); }
+.ns-app .ns-app-content { max-width: 1370px; min-width: 0; }
+.ns-app .ns-app-eyebrow {
+  color: var(--practice-subtle);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .065em;
+}
+.ns-app :is(.ns-app-filters, .ns-app-patient-filters, .ns-app-slot-filters, .ns-app-advanced) {
+  background: var(--practice-muted);
+  border: 1px solid var(--practice-line);
+  border-radius: .75rem;
+  padding: 1rem;
+}
+.ns-app .ns-app-advanced summary { cursor: pointer; font-weight: 700; }
+.ns-app .ns-app-advanced-content { display: grid; gap: 1rem; margin-top: 1rem; }
+.ns-app .ns-app-new-slot { max-width: 58rem; }
+.ns-app .ns-app-new-slot-heading { margin-bottom: 1.5rem; }
+.ns-app .ns-app-new-slot-back { color: var(--practice-link); }
+.ns-app .ns-app-new-slot-section {
+  background: var(--practice-surface);
+  border: 1px solid var(--practice-line);
+  border-radius: .75rem;
+}
+.ns-app .ns-app-new-slot-section-heading { border-bottom: 1px solid var(--practice-line); }
+.ns-app :is(.ns-app-new-slot-section-heading, .ns-app-new-slot-form) { padding: clamp(1rem, 3vw, 2rem); }
+.ns-app .ns-app-new-slot-actions { flex-wrap: wrap; }
+
+.ns-app :is(.ns-app-sidebar, .ns-app-mobile-header) {
+  background: #193e34;
+  border-color: #456456;
+  color: #edf5ee;
+}
+.ns-app .ns-app-sidebar { width: clamp(14rem, 20vw, 15rem); color-scheme: dark; }
+.ns-app .ns-app-brand { color: #f7f5ec; }
+.ns-app .ns-app-navlink { color: #e0ece3; }
+.ns-app .ns-app-navlink:hover { background: #2c5446; }
+.ns-app .ns-app-navlink-active, .ns-app .ns-app-navlink-active:hover { background: #eaf2e9; color: #1e4738; }
+.ns-app :is(.ns-app-sidebar, .ns-app-mobile-header) :focus-visible { outline-color: #c4e4cc; }
+
+@media (max-width: 640px) {
+  .ns-app input, .ns-app select, .ns-app textarea { font-size: 1rem; }
+  .ns-app .ns-app-new-slot-section-heading { display: block; }
+  .ns-app :is(.ns-app-collection-header, header) { min-width: 0; overflow-wrap: anywhere; }
+}
+.ns-app .ns-app-sidebar .ns-app-user-footer { border-color: #456456; }
+.ns-app .ns-app-sidebar .ns-app-user-footer p { color: #edf5ee; }
+.ns-app .ns-app-sidebar .ns-app-user-footer button {
+  background: #285345;
+  border-color: #91aa9b;
+  color: #fff;
+}
+.ns-app .ns-app-sidebar .ns-app-user-footer button:hover { background: #326352; }

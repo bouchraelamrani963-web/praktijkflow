@@ -107,8 +107,8 @@ export default function HelpPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Hulp & uitleg</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="text-2xl font-bold text-practice-heading">Hulp & uitleg</h1>
+        <p className="mt-1 text-sm text-practice-subtle">
           Leer hoe u met NoShow Control open plekken, wachtlijst en aanbiedingen beheert.
         </p>
       </div>
@@ -117,13 +117,13 @@ export default function HelpPage() {
         {sections.map((section) => (
           <div
             key={section.title}
-            className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
+            className="rounded-xl border border-practice-line bg-practice-surface p-6"
           >
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-white">
-              <section.icon className="h-5 w-5 text-blue-600" />
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-practice-heading">
+              <section.icon className="h-5 w-5 text-practice-link" />
               {section.title}
             </h2>
-            <div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-practice-subtle">
               {section.content}
             </div>
           </div>

@@ -85,8 +85,8 @@ interface Props {
 }
 
 const inputCls =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white";
-const labelCls = "block text-sm font-medium text-zinc-700 dark:text-zinc-300";
+  "mt-1 block w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading placeholder-practice-subtle focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20 ";
+const labelCls = "block text-sm font-medium text-practice-ink ";
 
 /** Format Date as `YYYY-MM-DDTHH:mm` in local timezone for datetime-local. */
 function localDateTime(d: Date): string {
@@ -322,20 +322,20 @@ export function AppointmentForm({
       {/* ─── Multi-code treatment picker ────────────────────────────────── */}
       <section
         aria-labelledby="treatments-heading"
-        className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50"
+        className="rounded-lg border border-practice-line bg-practice-muted/50 p-4"
       >
         <div className="mb-3 flex items-center justify-between gap-3">
           <h3
             id="treatments-heading"
-            className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white"
+            className="flex items-center gap-2 text-sm font-semibold text-practice-heading"
           >
             <ListPlus className="h-4 w-4 text-blue-500" aria-hidden="true" />
             Behandelcodes
-            <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-normal text-practice-subtle">
               — Prijzen uit praktijkcatalogus
             </span>
           </h3>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-practice-subtle">
             {v.treatments.length} {v.treatments.length === 1 ? "code" : "codes"} · totaal {formatEuros(totals.cents)}
           </span>
         </div>
@@ -350,15 +350,15 @@ export function AppointmentForm({
               return (
                 <li
                   key={sel.appointmentTypeId}
-                  className="flex flex-wrap items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                  className="flex flex-wrap items-center gap-2 rounded-md border border-practice-line bg-practice-surface px-3 py-2 text-sm"
                 >
-                  <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                  <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-practice-link dark:bg-blue-900/40">
                     {codeOf(t.name)}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">
+                  <span className="min-w-0 flex-1 truncate text-practice-ink">
                     {descOf(TYPE_LABELS[t.name] ?? t.name)}
                   </span>
-                  <span className="tabular-nums text-xs text-zinc-500">
+                  <span className="tabular-nums text-xs text-practice-subtle">
                     {formatEuros(t.price)}
                   </span>
                   <input
@@ -368,16 +368,16 @@ export function AppointmentForm({
                     max={50}
                     value={sel.quantity}
                     onChange={(e) => updateQuantity(sel.appointmentTypeId, Number(e.target.value))}
-                    className="w-14 rounded border border-zinc-300 px-2 py-1 text-right text-xs tabular-nums dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
+                    className="w-14 rounded border border-practice-field px-2 py-1 text-right text-xs tabular-nums"
                   />
-                  <span className="w-20 text-right tabular-nums text-sm font-medium text-zinc-900 dark:text-white">
+                  <span className="w-20 text-right tabular-nums text-sm font-medium text-practice-heading">
                     {formatEuros(subtotal)}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeTreatment(sel.appointmentTypeId)}
                     aria-label={`Verwijder ${codeOf(t.name)}`}
-                    className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                    className="rounded p-1 text-practice-subtle hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -390,14 +390,14 @@ export function AppointmentForm({
         {/* Picker */}
         <div className="space-y-2">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-practice-subtle" />
             <input
               type="search"
               value={pickerQuery}
               onChange={(e) => setPickerQuery(e.target.value)}
               placeholder="Zoek op code (bv. C001) of omschrijving (bv. consult)…"
               aria-label="Zoek behandelcodes"
-              className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+              className="w-full rounded-md border border-practice-field bg-practice-surface py-2 pl-9 pr-3 text-sm text-practice-heading placeholder-practice-subtle focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
             />
           </div>
 
@@ -411,10 +411,10 @@ export function AppointmentForm({
             <ul
               role="listbox"
               aria-label="Behandelcodes, scroll voor alle codes"
-              className="max-h-96 overflow-y-auto overscroll-contain rounded-md border border-zinc-200 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              className="max-h-96 overflow-y-auto overscroll-contain rounded-md border border-practice-line bg-practice-surface text-sm"
             >
               {filteredTypes.length === 0 && (
-                <li className="px-3 py-2 text-xs text-zinc-500">Geen resultaten.</li>
+                <li className="px-3 py-2 text-xs text-practice-subtle">Geen resultaten.</li>
               )}
               {filteredTypes.map((t) => {
                 const alreadySelected = v.treatments.some((sel) => sel.appointmentTypeId === t.id);
@@ -425,13 +425,13 @@ export function AppointmentForm({
                       onClick={() => addTreatment(t.id)}
                       className="flex w-full items-center gap-2 px-3 py-1.5 text-left transition hover:bg-blue-50 dark:hover:bg-blue-900/20"
                     >
-                      <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                      <span className="rounded bg-practice-muted px-1.5 py-0.5 font-mono text-xs text-practice-subtle">
                         {codeOf(t.name)}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">
+                      <span className="min-w-0 flex-1 truncate text-practice-ink">
                         {descOf(TYPE_LABELS[t.name] ?? t.name)}
                       </span>
-                      <span className="tabular-nums text-xs text-zinc-500">
+                      <span className="tabular-nums text-xs text-practice-subtle">
                         {t.durationMinutes}min · {formatEuros(t.price)}
                       </span>
                       <Plus
@@ -453,7 +453,7 @@ export function AppointmentForm({
           <label className={labelCls} htmlFor="durationMinutes">
             Duur (minuten)
             {!v.durationDirty && totals.minutes > 0 && (
-              <span className="ml-2 text-xs font-normal text-zinc-500">
+              <span className="ml-2 text-xs font-normal text-practice-subtle">
                 — automatisch
               </span>
             )}
@@ -477,7 +477,7 @@ export function AppointmentForm({
           <label className={labelCls} htmlFor="revenueEstimateEuros">
             Omzetverwachting (€)
             {!v.revenueDirty && totals.cents > 0 && (
-              <span className="ml-2 text-xs font-normal text-zinc-500">
+              <span className="ml-2 text-xs font-normal text-practice-subtle">
                 — uit codes
               </span>
             )}
@@ -526,18 +526,18 @@ export function AppointmentForm({
         />
       </div>
 
-      <div className="flex items-center justify-end gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="flex items-center justify-end gap-3 border-t border-practice-line pt-6">
         <button
           type="button"
           onClick={() => router.back()}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-practice-field px-4 py-2 text-sm font-medium text-practice-ink hover:bg-practice-hover"
         >
           Annuleren
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover disabled:opacity-50"
         >
           {saving ? "Opslaan…" : mode === "create" ? "Afspraak aanmaken" : "Wijzigingen opslaan"}
         </button>

@@ -56,7 +56,7 @@ export function ReminderButton({
   if (!hasPhone) {
     return (
       <span
-        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-practice-line bg-practice-muted px-3 py-2 text-xs font-medium text-practice-subtle"
         title="Patiënt heeft geen telefoonnummer"
       >
         <MessageSquare className="h-3.5 w-3.5" />
@@ -104,7 +104,7 @@ export function ReminderButton({
     <button
       onClick={handleSend}
       disabled={sending}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-medium text-practice-link hover:bg-blue-100 disabled:opacity-50 dark:border-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
     >
       <MessageSquare className="h-3.5 w-3.5" />
       {sending ? "Verzenden..." : `Verstuur ${label}`}

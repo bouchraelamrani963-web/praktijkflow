@@ -159,7 +159,7 @@ export default async function AppointmentDetailPage({
     <div>
       <Link
         href="/appointments"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-practice-subtle hover:text-practice-heading"
       >
         <ArrowLeft className="h-4 w-4" />
         Terug naar afspraken
@@ -167,8 +167,8 @@ export default async function AppointmentDetailPage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold text-practice-heading">
               {appt.appointmentType
                 ? (TYPE_LABELS[appt.appointmentType.name] ?? appt.appointmentType.name)
                 : "Afspraak"}
@@ -180,9 +180,9 @@ export default async function AppointmentDetailPage({
               {RISK_LABELS[appt.riskLevel] ?? appt.riskLevel}
             </span>
           </div>
-          <p className="mt-1 text-sm text-zinc-500">{fmt(appt.startTime)}</p>
+          <p className="mt-1 text-sm text-practice-subtle">{fmt(appt.startTime)}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <StatusSelector
             appointmentId={appt.id}
             current={appt.status as Parameters<typeof StatusSelector>[0]["current"]}
@@ -193,7 +193,7 @@ export default async function AppointmentDetailPage({
           />
           <Link
             href={`/appointments/${appt.id}/edit`}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="inline-flex items-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-4 py-2 text-sm font-medium text-practice-ink hover:bg-practice-hover"
           >
             <Pencil className="h-4 w-4" />
             Bewerken
@@ -201,31 +201,31 @@ export default async function AppointmentDetailPage({
         </div>
       </div>
 
-      <div className={`grid gap-6 ${claimedSlot || recoveredDetail ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+      <div className={`grid grid-cols-1 gap-6 ${claimedSlot || recoveredDetail ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         {/* Scheduling */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-practice-heading">
             <Calendar className="h-4 w-4" />
             Planning
           </h2>
           <dl className="mt-4 space-y-3 text-sm">
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Start</dt>
-              <dd className="mt-1 text-zinc-700 dark:text-zinc-300">{fmt(appt.startTime)}</dd>
+              <dt className="text-xs uppercase text-practice-subtle">Start</dt>
+              <dd className="mt-1 text-practice-ink">{fmt(appt.startTime)}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Einde</dt>
-              <dd className="mt-1 text-zinc-700 dark:text-zinc-300">{fmt(appt.endTime)}</dd>
+              <dt className="text-xs uppercase text-practice-subtle">Einde</dt>
+              <dd className="mt-1 text-practice-ink">{fmt(appt.endTime)}</dd>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-zinc-400" />
-              <span className="text-zinc-700 dark:text-zinc-300">{dur} minuten</span>
+              <Clock className="h-4 w-4 text-practice-subtle" />
+              <span className="text-practice-ink">{dur} minuten</span>
             </div>
             {/* Multi-code list when present (new appointments), single-type
                 fallback for legacy rows that pre-date the treatments table. */}
             {appt.treatments.length > 0 ? (
-              <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
-                <dt className="mb-2 text-xs uppercase text-zinc-500">
+              <div className="border-t border-practice-line pt-3">
+                <dt className="mb-2 text-xs uppercase text-practice-subtle">
                   Behandelcodes — Tarief bij vastleggen
                 </dt>
                 <dd>
@@ -235,31 +235,31 @@ export default async function AppointmentDetailPage({
                         key={t.id}
                         className="flex flex-wrap items-center gap-2 text-sm"
                       >
-                        <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                        <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-practice-link dark:bg-blue-900/40">
                           {t.code}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">
+                        <span className="min-w-0 flex-1 truncate text-practice-ink">
                           {t.name.replace(/^[A-Z]\d{2,4}[A-Z]?\s*[—–-]\s*/, "")}
                         </span>
                         {t.quantity > 1 && (
-                          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs tabular-nums text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                          <span className="rounded bg-practice-muted px-1.5 py-0.5 text-xs tabular-nums text-practice-subtle">
                             ×{t.quantity}
                           </span>
                         )}
-                        <span className="w-20 text-right font-mono text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
+                        <span className="w-20 text-right font-mono text-xs tabular-nums text-practice-ink">
                           €{((Number.isFinite(t.tariffCents) ? t.tariffCents : 0) / 100).toFixed(2)}
                         </span>
-                        <span className="w-20 text-right font-mono text-sm font-medium tabular-nums text-zinc-900 dark:text-white">
+                        <span className="w-20 text-right font-mono text-sm font-medium tabular-nums text-practice-heading">
                           €{((Number.isFinite(t.tariffCents * t.quantity) ? t.tariffCents * t.quantity : 0) / 100).toFixed(2)}
                         </span>
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-2 flex items-center justify-between border-t border-zinc-200 pt-2 text-sm dark:border-zinc-800">
-                    <span className="text-xs text-zinc-500">
+                  <div className="mt-2 flex items-center justify-between border-t border-practice-line pt-2 text-sm">
+                    <span className="text-xs text-practice-subtle">
                       {appt.treatments.reduce((s, t) => s + t.quantity, 0)} regel{appt.treatments.length === 1 ? "" : "s"} · totaal
                     </span>
-                    <span className="font-mono font-semibold tabular-nums text-zinc-900 dark:text-white">
+                    <span className="font-mono font-semibold tabular-nums text-practice-heading">
                       €{(appt.treatments.reduce((s, t) => s + t.tariffCents * t.quantity, 0) / 100).toFixed(2)}
                     </span>
                   </div>
@@ -267,8 +267,8 @@ export default async function AppointmentDetailPage({
               </div>
             ) : appt.appointmentType ? (
               <div>
-                <dt className="text-xs uppercase text-zinc-500">Type</dt>
-                <dd className="mt-1 flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
+                <dt className="text-xs uppercase text-practice-subtle">Type</dt>
+                <dd className="mt-1 flex items-center gap-2 text-practice-ink">
                   <span
                     className="inline-block h-3 w-3 rounded-full"
                     style={{ backgroundColor: appt.appointmentType.color }}
@@ -284,11 +284,11 @@ export default async function AppointmentDetailPage({
               "Geen omzet" instead of the stale estimate to avoid creating the
               impression that lost time equals money.
             */}
-            <div className="flex items-center gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-              <DollarSign className="h-4 w-4 text-zinc-400" />
+            <div className="flex items-center gap-2 border-t border-practice-line pt-3">
+              <DollarSign className="h-4 w-4 text-practice-subtle" />
               {appt.status === "CANCELLED" || appt.status === "NO_SHOW" ? (
                 <>
-                  <span className="font-mono text-zinc-400 line-through">
+                  <span className="font-mono text-practice-subtle line-through">
                     €{((Number.isFinite(appt.revenueEstimateCents) ? appt.revenueEstimateCents : 0) / 100).toFixed(2)}
                   </span>
                   <span className="text-xs text-red-600 dark:text-red-400">
@@ -297,21 +297,21 @@ export default async function AppointmentDetailPage({
                 </>
               ) : (
                 <>
-                  <span className="font-mono text-zinc-700 dark:text-zinc-300">
+                  <span className="font-mono text-practice-ink">
                     €{((Number.isFinite(appt.revenueEstimateCents) ? appt.revenueEstimateCents : 0) / 100).toFixed(2)}
                   </span>
-                  <span className="text-xs text-zinc-500">geschat</span>
+                  <span className="text-xs text-practice-subtle">geschat</span>
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-              <ShieldAlert className="h-4 w-4 text-zinc-400" />
+            <div className="flex items-center gap-2 border-t border-practice-line pt-3">
+              <ShieldAlert className="h-4 w-4 text-practice-subtle" />
               <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${riskColors[appt.riskLevel]}`}>
                 {RISK_LABELS[appt.riskLevel] ?? appt.riskLevel}
               </span>
-              <span className="text-xs tabular-nums text-zinc-500">Score: {appt.riskScore}/100</span>
+              <span className="text-xs tabular-nums text-practice-subtle">Score: {appt.riskScore}/100</span>
             </div>
-            <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+            <div className="flex flex-wrap gap-2 border-t border-practice-line pt-3">
               {/* Appointment reminders are separate from e-mail waitlist offers.
                   Keep this disabled unless real reminder delivery is active. */}
               <ReminderButton
@@ -333,25 +333,25 @@ export default async function AppointmentDetailPage({
         </div>
 
         {/* Patient */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-practice-heading">
             <User className="h-4 w-4" />
             Patiënt
           </h2>
           <dl className="mt-4 space-y-3 text-sm">
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Naam</dt>
+              <dt className="text-xs uppercase text-practice-subtle">Naam</dt>
               <dd className="mt-1">
                 <Link
                   href={`/patients/${appt.client.id}`}
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  className="font-medium text-practice-link hover:text-practice-heading"
                 >
                   {appt.client.firstName} {appt.client.lastName}
                 </Link>
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Risiconiveau</dt>
+              <dt className="text-xs uppercase text-practice-subtle">Risiconiveau</dt>
               <dd className="mt-1">
                 <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${riskColors[appt.client.riskLevel]}`}>
                   {RISK_LABELS[appt.client.riskLevel] ?? appt.client.riskLevel}
@@ -360,14 +360,14 @@ export default async function AppointmentDetailPage({
             </div>
             {appt.client.email && (
               <div>
-                <dt className="text-xs uppercase text-zinc-500">E-mail</dt>
-                <dd className="mt-1 text-zinc-700 dark:text-zinc-300">{appt.client.email}</dd>
+                <dt className="text-xs uppercase text-practice-subtle">E-mail</dt>
+                <dd className="mt-1 text-practice-ink">{appt.client.email}</dd>
               </div>
             )}
             {appt.client.phone && (
               <div>
-                <dt className="text-xs uppercase text-zinc-500">Telefoon</dt>
-                <dd className="mt-1 text-zinc-700 dark:text-zinc-300">{appt.client.phone}</dd>
+                <dt className="text-xs uppercase text-practice-subtle">Telefoon</dt>
+                <dd className="mt-1 text-practice-ink">{appt.client.phone}</dd>
               </div>
             )}
           </dl>
@@ -487,19 +487,19 @@ export default async function AppointmentDetailPage({
         )}
 
         {/* Practitioner + Notes */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 lg:col-span-1">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Details</h2>
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-6 lg:col-span-1">
+          <h2 className="text-sm font-semibold text-practice-heading">Details</h2>
 
           <dl className="mt-4 space-y-3 text-sm">
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Behandelaar</dt>
-              <dd className="mt-1 text-zinc-700 dark:text-zinc-300">
+              <dt className="text-xs uppercase text-practice-subtle">Behandelaar</dt>
+              <dd className="mt-1 text-practice-ink">
                 {appt.practitioner.firstName} {appt.practitioner.lastName}
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-zinc-500">Notities</dt>
-              <dd className="mt-1 whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+              <dt className="text-xs uppercase text-practice-subtle">Notities</dt>
+              <dd className="mt-1 whitespace-pre-wrap text-practice-ink">
                 {appt.notes ?? "—"}
               </dd>
             </div>
@@ -633,13 +633,13 @@ export default async function AppointmentDetailPage({
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                   <Link
                     href="/pricing"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-semibold text-practice-on-primary shadow-sm transition hover:bg-practice-primary-hover"
                   >
                     Start met terugwinnen (€79 / maand)
                   </Link>
                   <Link
                     href="mailto:demo@noshowcontrol.nl?subject=Demo%20aanvraag"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-practice-field bg-practice-surface px-4 py-2 text-sm font-semibold text-practice-heading transition hover:bg-practice-hover"
                   >
                     Plan korte demo
                   </Link>

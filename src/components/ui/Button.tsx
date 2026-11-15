@@ -18,18 +18,17 @@ type Size = "sm" | "md" | "lg";
 
 const base =
   "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition " +
-  "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 " +
-  "focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900 " +
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-practice-focus/40 focus-visible:ring-offset-2 " +
+  "focus-visible:ring-offset-practice-surface " +
   "disabled:opacity-50 disabled:pointer-events-none";
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-blue-700 text-white shadow-sm hover:bg-blue-800",
+    "bg-practice-primary text-practice-on-primary shadow-sm hover:bg-practice-primary-hover",
   secondary:
-    "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50 " +
-    "dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700",
+    "border border-practice-field bg-practice-surface text-practice-ink hover:bg-practice-hover",
   ghost:
-    "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
+    "text-practice-ink hover:bg-practice-hover",
   danger:
     "bg-red-600 text-white hover:bg-red-700",
 };

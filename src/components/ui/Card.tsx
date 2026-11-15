@@ -11,7 +11,7 @@ interface CardProps {
 
 /**
  * Base surface container. Replaces the repeated
- *   `rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900`
+ *   `rounded-xl border border-practice-line bg-practice-surface `
  * pattern that's inlined dozens of times across the app.
  */
 export function Card({ children, className = "", interactive, glow }: CardProps) {
@@ -19,12 +19,12 @@ export function Card({ children, className = "", interactive, glow }: CardProps)
     ? "transition hover:border-blue-300 hover:shadow-sm dark:hover:border-blue-700"
     : "";
   const glowCls = glow
-    ? "shadow-lg shadow-blue-500/5 ring-1 ring-blue-500/10 dark:shadow-blue-500/10"
+    ? "shadow-lg shadow-blue-500/5 ring-1 ring-practice-focus/10 dark:shadow-blue-500/10"
     : "";
 
   return (
     <div
-      className={`rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 ${interactiveCls} ${glowCls} ${className}`}
+      className={`rounded-xl border border-practice-line bg-practice-surface ${interactiveCls} ${glowCls} ${className}`}
     >
       {children}
     </div>

@@ -14,12 +14,12 @@ type BadgeTone =
   | "muted";    // zinc — cancelled, expired
 
 const toneClasses: Record<BadgeTone, string> = {
-  neutral: "bg-zinc-100 text-zinc-700 ring-zinc-200/60 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700/60",
-  info:    "bg-blue-50 text-blue-700 ring-blue-200/60 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-800/60",
+  neutral: "bg-practice-muted text-practice-ink ring-practice-line/60 ",
+  info:    "bg-blue-50 text-practice-link ring-blue-200/60 dark:bg-blue-900/30 dark:ring-blue-800/60",
   success: "bg-emerald-50 text-emerald-700 ring-emerald-200/60 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800/60",
   warning: "bg-amber-50 text-amber-800 ring-amber-200/60 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-800/60",
   danger:  "bg-red-50 text-red-700 ring-red-200/60 dark:bg-red-900/30 dark:text-red-300 dark:ring-red-800/60",
-  muted:   "bg-zinc-100 text-zinc-500 ring-zinc-200/60 line-through dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700/60",
+  muted:   "bg-practice-muted text-practice-subtle ring-practice-line/60 line-through ",
 };
 
 interface BadgeProps extends Omit<ComponentProps<"span">, "children"> {

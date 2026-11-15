@@ -35,7 +35,7 @@ const riskColors: Record<Patient["riskLevel"], string> = {
 
 export default function PatientsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-zinc-500">Laden…</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-practice-subtle">Laden…</div>}>
       <PatientsList />
     </Suspense>
   );
@@ -97,14 +97,14 @@ function PatientsList() {
       <div className="ns-app-collection-header mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="ns-app-eyebrow">PATIËNTENADMINISTRATIE</p>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Patiënten</h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <h1 className="text-2xl font-bold text-practice-heading">Patiënten</h1>
+          <p className="mt-1 text-sm text-practice-subtle">
             {data ? `${data.total} patiënt${data.total === 1 ? "" : "en"}` : "Laden…"}
           </p>
         </div>
         <Link
           href="/patients/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover"
         >
           <Plus className="h-4 w-4" />
           Nieuwe patiënt
@@ -114,21 +114,21 @@ function PatientsList() {
       {/* Filters */}
       <div className="ns-app-patient-filters mb-6 flex flex-wrap gap-3">
         <div className="relative min-w-[240px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-practice-subtle" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Zoek op naam, e-mail, telefoon…"
             aria-label="Zoek patiënten"
-            className="w-full rounded-lg border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="w-full rounded-lg border border-practice-field bg-practice-surface py-2 pl-9 pr-3 text-sm text-practice-heading placeholder-practice-subtle focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
           />
         </div>
         <select
           value={risk}
           onChange={(e) => setRisk(e.target.value)}
           aria-label="Filter op risiconiveau"
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
         >
           <option value="">Alle risiconiveaus</option>
           <option value="LOW">Laag</option>
@@ -140,7 +140,7 @@ function PatientsList() {
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           aria-label="Filter op patiëntstatus"
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
         >
           <option value="true">Actief</option>
           <option value="false">Inactief</option>
@@ -150,7 +150,7 @@ function PatientsList() {
           value={waitlist}
           onChange={(e) => setWaitlist(e.target.value)}
           aria-label="Filter op wachtlijst-aanmelding"
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
         >
           <option value="">Wachtlijst</option>
           <option value="true">Aangemeld</option>
@@ -159,9 +159,9 @@ function PatientsList() {
       </div>
 
       {/* Table */}
-      <div className="ns-app-collection-table overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="ns-app-collection-table overflow-hidden rounded-xl border border-practice-line bg-practice-surface">
         {error ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-red-600">
+          <div className="flex items-center gap-2 p-8 text-sm text-red-600 dark:text-red-300">
             <AlertTriangle className="h-4 w-4" />
             {error}
           </div>
@@ -171,52 +171,52 @@ function PatientsList() {
           </div>
         ) : items.length === 0 ? (
           <div className="p-12 text-center">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Geen patiënten gevonden.</p>
-            <Link href="/patients/new" className="mt-4 inline-flex text-sm font-medium text-blue-600 hover:text-blue-500">
+            <p className="text-sm text-practice-subtle">Geen patiënten gevonden.</p>
+            <Link href="/patients/new" className="mt-4 inline-flex text-sm font-medium text-practice-link hover:text-practice-heading">
               Voeg je eerste patiënt toe
             </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
-              <thead className="bg-zinc-50 dark:bg-zinc-800/50">
+            <table className="min-w-full divide-y divide-practice-line">
+              <thead className="bg-practice-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Naam</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Contact</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Plaats</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Risico</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Wachtlijst</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Naam</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Contact</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Plaats</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Risico</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Wachtlijst</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tbody className="divide-y divide-practice-line">
                 {items.map((p) => (
                   <tr
                     key={p.id}
-                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    className="cursor-pointer hover:bg-practice-hover"
                     onClick={() => router.push(`/patients/${p.id}`)}
                   >
-                    <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">
+                    <td className="px-4 py-3 text-sm font-medium text-practice-heading">
                       {p.firstName} {p.lastName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-sm text-practice-subtle">
                       <div>{p.email ?? "—"}</div>
-                      <div className="text-xs text-zinc-500">{p.phone ?? ""}</div>
+                      <div className="text-xs text-practice-subtle">{p.phone ?? ""}</div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">{p.city ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-practice-subtle">{p.city ?? "—"}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${riskColors[p.riskLevel]}`}>
                         {RISK_LABELS[p.riskLevel] ?? p.riskLevel}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-sm text-practice-subtle">
                       {p.waitlistOptIn ? "Aangemeld" : "—"}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {p.isActive ? (
-                        <span className="text-emerald-600">Actief</span>
+                        <span className="text-emerald-700 dark:text-emerald-300">Actief</span>
                       ) : (
-                        <span className="text-zinc-400">Inactief</span>
+                        <span className="text-practice-subtle">Inactief</span>
                       )}
                     </td>
                   </tr>

@@ -51,7 +51,7 @@ export function AddToWaitlistButton({ clientId, appointmentTypeId }: Props) {
         </span>
         <Link
           href={entryId ? `/waitlist/${entryId}` : "/waitlist?status=WAITING"}
-          className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+          className="inline-flex items-center gap-1 text-sm font-medium text-practice-link hover:text-practice-heading"
         >
           Bekijk wachtlijst
           <ArrowRight className="h-4 w-4" />
@@ -65,7 +65,7 @@ export function AddToWaitlistButton({ clientId, appointmentTypeId }: Props) {
       <button
         onClick={handleClick}
         disabled={state === "loading"}
-        className="inline-flex items-center gap-2 rounded-lg border border-purple-300 bg-white px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50 dark:border-purple-700 dark:bg-zinc-800 dark:text-purple-300 dark:hover:bg-zinc-700"
+        className="inline-flex items-center gap-2 rounded-lg border border-purple-300 bg-practice-surface px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-practice-hover"
       >
         {state === "loading" ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -75,7 +75,7 @@ export function AddToWaitlistButton({ clientId, appointmentTypeId }: Props) {
         Voeg toe aan wachtlijst
       </button>
       {state === "error" && (
-        <p className="text-xs text-red-600">{msg}</p>
+        <p className="text-xs text-red-600 dark:text-red-300">{msg}</p>
       )}
     </div>
   );

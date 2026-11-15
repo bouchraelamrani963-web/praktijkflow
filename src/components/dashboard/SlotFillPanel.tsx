@@ -86,7 +86,7 @@ function outcomeClass(outcome: string): string {
   if (outcome === "failed") {
     return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
   }
-  return "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300";
+  return "bg-practice-muted text-practice-ink ";
 }
 
 function formatDateTime(iso: string) {
@@ -180,8 +180,8 @@ export function SlotFillPanel({
 
   const metricCards = (metrics || isDemoMode)
     ? [
-        { label: "Vrijgekomen plekken", value: safeData.slotsFreed ?? 0, icon: CalendarX, color: "text-slate-500", href: "/open-slots" },
-        { label: "Aanbiedingen", value: safeData.offersSent ?? 0, icon: Send, color: "text-blue-600", href: "/open-slots?status=OFFERED" },
+        { label: "Vrijgekomen plekken", value: safeData.slotsFreed ?? 0, icon: CalendarX, color: "text-practice-subtle", href: "/open-slots" },
+        { label: "Aanbiedingen", value: safeData.offersSent ?? 0, icon: Send, color: "text-practice-link", href: "/open-slots?status=OFFERED" },
         { label: "Opnieuw ingevuld", value: safeData.slotsFilled ?? 0, icon: CheckCheck, color: "text-teal-600", href: "/open-slots?status=CLAIMED" },
         {
           label: "Gemiddelde invultijd",
@@ -190,7 +190,7 @@ export function SlotFillPanel({
               ? `${safeData.avgMinutesToFill} min`
               : "Nog geen",
           icon: Clock3,
-          color: "text-slate-500",
+          color: "text-practice-subtle",
           href: "/open-slots",
         },
         {
@@ -206,15 +206,15 @@ export function SlotFillPanel({
   return (
     <div className="mt-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-white">
-          <Activity className="h-5 w-5 text-blue-600" />
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-practice-heading">
+          <Activity className="h-5 w-5 text-practice-link" />
           Agenda-herstel via de wachtlijst
         </h2>
         <div className="flex items-center gap-2">
           <button
             onClick={load}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-practice-field bg-practice-surface px-3 py-1.5 text-xs font-medium text-practice-ink hover:bg-practice-hover disabled:opacity-50"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             Vernieuwen
@@ -223,7 +223,7 @@ export function SlotFillPanel({
             <button
               onClick={runDemo}
               disabled={demoState === "loading"}
-              className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-slate-600"
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-60 dark:hover:bg-slate-600"
             >
               {demoState === "loading" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -250,13 +250,13 @@ export function SlotFillPanel({
             <Link
               key={card.label}
               href={card.href}
-            className="group block cursor-pointer rounded-lg border border-zinc-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-blue-500"
+            className="group block cursor-pointer rounded-lg border border-practice-line bg-practice-surface p-5 transition hover:border-blue-300 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-practice-focus dark:hover:border-blue-500"
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">{card.label}</span>
+                <span className="text-sm text-practice-subtle">{card.label}</span>
                 <card.icon className={`h-5 w-5 ${card.color}`} />
               </div>
-              <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">{card.value}</p>
+              <p className="mt-2 text-2xl font-bold text-practice-heading">{card.value}</p>
             </Link>
           ))}
         </div>
@@ -265,14 +265,14 @@ export function SlotFillPanel({
       {/* Fill rate sub-bar — guarded via safeData so a missing fillRate
           never renders as "NaN%" and never explodes inline styles. */}
       {metrics && (safeData.slotsFreed ?? 0) > 0 && (
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-600 dark:text-zinc-400">Invulpercentage</span>
-            <span className="font-semibold text-zinc-900 dark:text-white">
+            <span className="text-practice-subtle">Invulpercentage</span>
+            <span className="font-semibold text-practice-heading">
               {Number.isFinite(safeData.fillRate) ? safeData.fillRate : 0}%
             </span>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-practice-muted">
             <div
               className="h-full bg-teal-600 transition-all"
               style={{
@@ -326,13 +326,13 @@ export function SlotFillPanel({
 
       {/* Admin log viewer */}
       {isAdmin && logs !== null && (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
-            <Activity className="h-4 w-4 text-zinc-400" />
+        <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-practice-heading">
+            <Activity className="h-4 w-4 text-practice-subtle" />
             Recente activiteit (admin)
           </h3>
           {logs.length === 0 ? (
-            <p className="mt-4 text-sm text-zinc-400">Nog geen activiteit.</p>
+            <p className="mt-4 text-sm text-practice-subtle">Nog geen activiteit.</p>
           ) : (
             <ul className="mt-4 space-y-2">
               {logs.map((log) => {
@@ -340,12 +340,12 @@ export function SlotFillPanel({
                 return (
                   <li
                     key={log.id}
-                    className="flex items-start gap-3 rounded-lg border border-zinc-100 p-3 dark:border-zinc-700"
+                    className="flex items-start gap-3 rounded-lg border border-practice-line p-3"
                   >
-                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-practice-subtle" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                        <span className="text-sm font-medium text-practice-heading">
                           {ACTION_LABELS[log.action] ?? log.action}
                         </span>
                         <span
@@ -354,14 +354,14 @@ export function SlotFillPanel({
                           {OUTCOME_LABELS[log.outcome] ?? log.outcome}
                         </span>
                         {log.clientName && (
-                          <span className="text-xs text-zinc-500">— {log.clientName}</span>
+                          <span className="text-xs text-practice-subtle">— {log.clientName}</span>
                         )}
                       </div>
                       {log.details && (
-                        <p className="mt-0.5 truncate text-xs text-zinc-500">{log.details}</p>
+                        <p className="mt-0.5 truncate text-xs text-practice-subtle">{log.details}</p>
                       )}
                     </div>
-                    <span className="shrink-0 text-xs tabular-nums text-zinc-400">
+                    <span className="shrink-0 text-xs tabular-nums text-practice-subtle">
                       {formatDateTime(log.createdAt)}
                     </span>
                   </li>

@@ -9,13 +9,13 @@ export default function NewPatientPage() {
     <div className="max-w-3xl">
       <Link
         href="/patients"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-practice-subtle hover:text-practice-heading"
       >
         <ArrowLeft className="h-4 w-4" />
         Terug naar patiënten
       </Link>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-white">Nieuwe patiënt</h1>
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <h1 className="mb-6 text-2xl font-bold text-practice-heading">Nieuwe patiënt</h1>
+      <div className="rounded-xl border border-practice-line bg-practice-surface p-6">
         <PatientForm mode="create" initial={emptyPatient} />
       </div>
     </div>

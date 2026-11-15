@@ -57,29 +57,29 @@ export default function ImportAppointmentsPage() {
     <div className="max-w-3xl">
       <Link
         href="/appointments"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-practice-subtle hover:text-practice-heading"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to appointments
       </Link>
-      <h1 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-white">Import appointments</h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <h1 className="mb-2 text-2xl font-bold text-practice-heading">Import appointments</h1>
+      <p className="mb-6 text-sm text-practice-subtle">
         Upload or paste CSV. Required columns: <code>client_email</code>, <code>practitioner_email</code>, <code>start_iso</code>.
         Optional: <code>type_name</code>, <code>duration_minutes</code>, <code>status</code>, <code>revenue_cents</code>, <code>notes</code>.
       </p>
 
-      <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="space-y-4 rounded-xl border border-practice-line bg-practice-surface p-6">
         <div>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">CSV file</label>
+          <label className="block text-sm font-medium text-practice-ink">CSV file</label>
           <input
             type="file"
             accept=".csv,text/csv"
             onChange={handleFile}
-            className="mt-1 block w-full text-sm text-zinc-700 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700 dark:text-zinc-300"
+            className="mt-1 block w-full text-sm text-practice-ink file:mr-3 file:rounded-lg file:border-0 file:bg-practice-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-practice-on-primary hover:file:bg-practice-primary-hover"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label className="block text-sm font-medium text-practice-ink">
             Or paste CSV content
           </label>
           <textarea
@@ -87,21 +87,21 @@ export default function ImportAppointmentsPage() {
             value={csv}
             onChange={(e) => setCsv(e.target.value)}
             placeholder={EXAMPLE_CSV}
-            className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-xs text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="mt-1 block w-full rounded-lg border border-practice-field bg-practice-surface px-3 py-2 font-mono text-xs text-practice-heading placeholder-practice-subtle focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
           />
         </div>
         <div className="flex items-center justify-between">
           <button
             type="button"
             onClick={() => setCsv(EXAMPLE_CSV)}
-            className="text-sm text-blue-600 hover:text-blue-500"
+            className="text-sm text-practice-link hover:text-practice-heading"
           >
             Load example
           </button>
           <button
             onClick={handleImport}
             disabled={importing || !csv.trim()}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-practice-primary px-4 py-2 text-sm font-medium text-practice-on-primary hover:bg-practice-primary-hover disabled:opacity-50"
           >
             <Upload className="h-4 w-4" />
             {importing ? "Importing…" : "Import"}
@@ -110,13 +110,13 @@ export default function ImportAppointmentsPage() {
       </div>
 
       {result && (
-        <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mt-6 rounded-xl border border-practice-line bg-practice-surface p-6">
           <div className="flex items-center gap-2 text-sm">
-            <CheckCircle className="h-5 w-5 text-emerald-600" />
-            <span className="font-medium text-zinc-900 dark:text-white">
+            <CheckCircle className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+            <span className="font-medium text-practice-heading">
               {result.created} created
             </span>
-            <span className="text-zinc-500">of {result.total} rows</span>
+            <span className="text-practice-subtle">of {result.total} rows</span>
             {result.skipped > 0 && (
               <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
                 {result.skipped} skipped

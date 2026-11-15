@@ -37,14 +37,14 @@ export function Section({
     variant === "eyebrow" ? (
       <h2
         id={headingId}
-        className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+        className="text-sm font-semibold uppercase tracking-wide text-practice-subtle"
       >
         {title}
       </h2>
     ) : (
       <h2
         id={headingId}
-        className="text-lg font-semibold text-zinc-900 dark:text-white"
+        className="text-lg font-semibold text-practice-heading"
       >
         {title}
       </h2>
@@ -57,7 +57,7 @@ export function Section({
           <div>
             {title && heading}
             {subtitle && (
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{subtitle}</p>
+              <p className="mt-1 text-sm text-practice-subtle">{subtitle}</p>
             )}
           </div>
           {action}

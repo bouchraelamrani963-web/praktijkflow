@@ -29,11 +29,11 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  DRAFT: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  SENT: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  DRAFT: "bg-practice-muted text-practice-ink ",
+  SENT: "bg-blue-100 text-practice-link dark:bg-blue-900/30 ",
   PAID: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
   OVERDUE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  CANCELLED: "bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500",
+  CANCELLED: "bg-practice-muted text-practice-subtle ",
 };
 
 function euro(cents: number | null | undefined) {
@@ -78,8 +78,8 @@ export default function FacturatiePage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Facturatie</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <h1 className="text-2xl font-bold text-practice-heading">Facturatie</h1>
+        <p className="mt-1 text-sm text-practice-subtle">
           Overzicht van facturen en omzet
         </p>
       </div>
@@ -90,19 +90,19 @@ export default function FacturatiePage() {
           icon={TrendingUp}
           label="Totale omzet"
           value={stats ? euro(stats.totalRevenue) : "—"}
-          color="text-emerald-600"
+          color="text-emerald-700 dark:text-emerald-300"
         />
         <KpiCard
           icon={FileText}
           label="Aantal facturen"
           value={stats ? String(stats.invoiceCount) : "—"}
-          color="text-blue-600"
+          color="text-practice-link"
         />
         <KpiCard
           icon={CreditCard}
           label="Betaald"
           value={stats ? euro(stats.paidTotal) : "—"}
-          color="text-emerald-600"
+          color="text-emerald-700 dark:text-emerald-300"
         />
         <KpiCard
           icon={AlertCircle}
@@ -118,7 +118,7 @@ export default function FacturatiePage() {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           aria-label="Filter op status"
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="rounded-lg border border-practice-field bg-practice-surface px-3 py-2 text-sm text-practice-heading focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-practice-focus/20"
         >
           <option value="ALL">Alle statussen</option>
           <option value="DRAFT">Concept</option>
@@ -130,9 +130,9 @@ export default function FacturatiePage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="overflow-hidden rounded-xl border border-practice-line bg-practice-surface">
         {error ? (
-          <div className="flex items-center gap-2 p-8 text-sm text-red-600">
+          <div className="flex items-center gap-2 p-8 text-sm text-red-600 dark:text-red-300">
             <AlertCircle className="h-4 w-4" />
             {error}
           </div>
@@ -142,36 +142,36 @@ export default function FacturatiePage() {
           </div>
         ) : invoices.length === 0 ? (
           <div className="p-12 text-center">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Geen facturen gevonden.</p>
+            <p className="text-sm text-practice-subtle">Geen facturen gevonden.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
-              <thead className="bg-zinc-50 dark:bg-zinc-800/50">
+            <table className="min-w-full divide-y divide-practice-line">
+              <thead className="bg-practice-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Nummer</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Datum</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Patiënt</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Bedrag</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Vervaldatum</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Nummer</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Datum</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Patiënt</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Bedrag</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-practice-subtle">Vervaldatum</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <tbody className="divide-y divide-practice-line">
                 {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                    <td className="px-4 py-3 text-sm font-mono text-zinc-900 dark:text-white">{inv.number}</td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">{fmtDate(inv.issueDate)}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">
+                  <tr key={inv.id} className="hover:bg-practice-hover">
+                    <td className="px-4 py-3 text-sm font-mono text-practice-heading">{inv.number}</td>
+                    <td className="px-4 py-3 text-sm text-practice-subtle">{fmtDate(inv.issueDate)}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-practice-heading">
                       {inv.client.firstName} {inv.client.lastName}
                     </td>
-                    <td className="px-4 py-3 text-sm font-mono text-zinc-700 dark:text-zinc-300">{euro(inv.total)}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-practice-ink">{euro(inv.total)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[inv.status] ?? ""}`}>
                         {statusLabels[inv.status] ?? inv.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">{fmtDate(inv.dueDate)}</td>
+                    <td className="px-4 py-3 text-sm text-practice-subtle">{fmtDate(inv.dueDate)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -195,12 +195,12 @@ function KpiCard({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-xl border border-practice-line bg-practice-surface p-5">
       <div className="flex items-center gap-3">
         <Icon className={`h-5 w-5 ${color}`} />
-        <span className="text-sm text-zinc-500">{label}</span>
+        <span className="text-sm text-practice-subtle">{label}</span>
       </div>
-      <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-white">{value}</p>
+      <p className="mt-2 text-2xl font-bold text-practice-heading">{value}</p>
     </div>
   );
 }
